@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema path="/io/github/Nyeksenn/groovebox/" id="io.github.Nyeksenn.groovebox">
+    <key name="username" type="s">
+      <summary>Username</summary>
+      <default>""</default>
+      <description>The Subsonic API Username</description>
+    </key>
+  </schema>
+</schemalist>
