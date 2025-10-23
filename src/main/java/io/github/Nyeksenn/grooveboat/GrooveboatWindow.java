@@ -9,6 +9,7 @@ import org.gnome.gio.Settings;
 import org.gnome.gtk.GtkBuilder;
 import org.gnome.gtk.MenuButton;
 
+
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/window.ui")
 public class GrooveboatWindow extends Window {
     @GtkChild(name = "headerbar-menu-button")
