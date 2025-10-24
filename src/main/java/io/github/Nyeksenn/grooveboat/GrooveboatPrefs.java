@@ -8,7 +8,7 @@ import org.gnome.adw.PreferencesDialog;
 import org.gnome.gio.Settings;
 import org.gnome.gio.SettingsBindFlags;
 
-@GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/prefs.ui")
+@GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/prefs.ui", name = "GrooveboatPrefs")
 public class GrooveboatPrefs extends PreferencesDialog {
     @GtkChild(name = "entry_username")
     public EntryRow username;

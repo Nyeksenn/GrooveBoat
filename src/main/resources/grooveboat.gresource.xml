@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
-    <gresource prefix="/io/github/Nyeksenn/grooveboat">
-        <file preprocess="xml-stripblanks">window.ui</file>
-        <file preprocess="xml-stripblanks">headerbar-menu.ui</file>
-        <file preprocess="xml-stripblanks">prefs.ui</file>
+  <gresource prefix="/io/github/Nyeksenn/grooveboat">
+    <file preprocess="xml-stripblanks">music-chooser.ui</file>
+    <file preprocess="xml-stripblanks">window.ui</file>
+    <file preprocess="xml-stripblanks">headerbar-menu.ui</file>
+    <file preprocess="xml-stripblanks">prefs.ui</file>
 
-        <file preprocess="xml-stripblanks">icons/interlinked-rectangles-symbolic.svg</file>
-    </gresource>
+    <file preprocess="xml-stripblanks">icons/interlinked-rectangles-symbolic.svg</file>
+  </gresource>
 </gresources>

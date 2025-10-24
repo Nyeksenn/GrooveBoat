@@ -1,13 +1,14 @@
 package io.github.Nyeksenn.grooveboat;
 
-import org.gnome.glib.Variant;
 import org.gnome.adw.Application;
 import org.gnome.gio.ApplicationFlags;
 import org.gnome.gio.SimpleAction;
+import org.gnome.glib.Variant;
 
 public class GrooveboatApp extends Application {
     @Override
     public void activate() {
+        MusicChooser mc = new MusicChooser();
         GrooveboatWindow win = new GrooveboatWindow(this);
         win.present();
     }
@@ -34,7 +35,7 @@ public class GrooveboatApp extends Application {
         quit.onActivate(this::quitActivated);
         addAction(quit);
 
-        String[] quitAccels = new String[] { "<Ctrl>q" };
+        String[] quitAccels = new String[]{"<Ctrl>q"};
         setAccelsForAction("app.quit", quitAccels);
     }
 
