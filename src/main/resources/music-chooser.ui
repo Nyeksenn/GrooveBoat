@@ -6,10 +6,11 @@
     <property name="child">
       <object class="AdwToolbarView">
         <child type="top">
-          <object class="AdwHeaderBar" id="header_bar">
+          <object class="AdwHeaderBar" id="music-chooser-header">
             <property name="title-widget">
-              <object class="AdwWindowTitle">
-                <property name="title" translatable="yes">GroveBoat</property>
+              <object class="AdwViewSwitcher" id="music-switcher-title">
+                <property name="stack">music-chooser-stack</property>
+                <property name="policy">1</property>
               </object>
             </property>
             <child type="start">
@@ -20,23 +21,85 @@
           </object>
         </child>
         <property name="content">
-          <object class="AdwStatusPage">
-            <property name="title" translatable="yes">Content</property>
+          <object class="AdwViewStack" id="music-chooser-stack">
+            <property name="vexpand">true</property>
             <child>
-              <object class="GtkButton" id="sidebar-toogle-button">
-                <property name="visible">false</property>
-                <property name="halign">3</property>
-                <property name="can-shrink">true</property>
-                <property name="label" translatable="yes">Open Sidebar</property>
-                <property name="action-name">navigation.push</property>
-                <property name="action-target">'sidebar'</property>
-                <style>
-                  <class name="pill"/>
-                </style>
+              <object class="AdwViewStackPage" id="page1">
+                <property name="name">page1</property>
+                <property name="title" translatable="yes">Favorites</property>
+                <property name="icon-name">star-filled-rounded-symbolic</property>
+                <property name="use-underline">true</property>
+                <property name="child">
+                  <object class="AdwStatusPage">
+                    <property name="title" bind-source="page1" bind-property="title" bind-flags="sync-create"/>
+                    <property name="icon-name" bind-source="page1" bind-property="icon-name" bind-flags="sync-create"/>
+                    <property name="child">
+                      <object class="GtkBox">
+                        <property name="orientation">1</property>
+                        <property name="valign">3</property>
+                        <child>
+                          <object class="GtkLinkButton">
+                            <property name="label" translatable="yes">API Reference</property>
+                            <property name="uri">
+                              https://gnome.pages.gitlab.gnome.org/libadwaita/doc/1.6/class.ViewSwitcher.html
+                            </property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLinkButton">
+                            <property name="label" translatable="yes">Human Interface Guidelines</property>
+                            <property name="uri">https://developer.gnome.org/hig/patterns/nav/view-switchers.html
+                            </property>
+                          </object>
+                        </child>
+                      </object>
+                    </property>
+                  </object>
+                </property>
+              </object>
+            </child>
+            <child>
+              <object class="AdwViewStackPage" id="page2">
+                <property name="name">page2</property>
+                <property name="title" translatable="yes">Recents</property>
+                <property name="icon-name">clock-alt-symbolic</property>
+                <property name="use-underline">true</property>
+                <property name="child">
+                  <object class="AdwStatusPage">
+                    <property name="title" bind-source="page2" bind-property="title" bind-flags="sync-create"/>
+                    <property name="icon-name" bind-source="page2" bind-property="icon-name" bind-flags="sync-create"/>
+                    <property name="child">
+                      <object class="GtkBox">
+                        <property name="orientation">1</property>
+                        <property name="valign">3</property>
+                        <child>
+                          <object class="GtkLinkButton">
+                            <property name="label" translatable="yes">API Reference</property>
+                            <property name="uri">
+                              https://gnome.pages.gitlab.gnome.org/libadwaita/doc/1.6/class.ViewSwitcher.html
+                            </property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLinkButton">
+                            <property name="label" translatable="yes">Human Interface Guidelines</property>
+                            <property name="uri">https://developer.gnome.org/hig/patterns/nav/view-switchers.html
+                            </property>
+                          </object>
+                        </child>
+                      </object>
+                    </property>
+                  </object>
+                </property>
               </object>
             </child>
           </object>
         </property>
+        <child type="bottom">
+          <object class="AdwViewSwitcherBar" id="music-switcher-bar">
+            <property name="stack">music-chooser-stack</property>
+          </object>
+        </child>
       </object>
     </property>
   </template>

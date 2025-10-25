@@ -6,9 +6,11 @@ import io.github.jwharm.javagi.gobject.annotations.RegisteredType;
 import io.github.jwharm.javagi.gtk.annotations.GtkCallback;
 import io.github.jwharm.javagi.gtk.annotations.GtkChild;
 import io.github.jwharm.javagi.gtk.annotations.GtkTemplate;
+import org.gnome.adw.HeaderBar;
 import org.gnome.adw.NavigationPage;
+import org.gnome.adw.ViewSwitcher;
+import org.gnome.adw.ViewSwitcherBar;
 import org.gnome.gio.MenuModel;
-import org.gnome.gtk.Button;
 import org.gnome.gtk.GtkBuilder;
 import org.gnome.gtk.MenuButton;
 import org.slf4j.Logger;
@@ -27,8 +29,17 @@ public class MusicChooser extends NavigationPage {
     @GtkChild(name = "headerbar-menu-button")
     public MenuButton headerbarMenuButton;
 
-    @GtkChild(name = "sidebar-toogle-button")
-    public Button sidebarToggle;
+    @GtkChild(name = "music-chooser-header")
+    public HeaderBar musicChooserHeader;
+
+    @GtkChild(name = "music-switcher-title")
+    public ViewSwitcher musicSwitcherTitle;
+
+    @GtkChild(name = "music-switcher-bar")
+    public ViewSwitcherBar musicSwitcherBar;
+
+//    @GtkChild(name = "sidebar-toogle-button")
+//    public Button sidebarToggle;
 
     @GtkCallback(name = "ping-button-clicked")
     public void pingButtonClicked() {
