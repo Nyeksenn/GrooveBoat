@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="AlbumListView" parent="GtkBox">
+    <child>
+      <object class="GtkStack" id="album-list-stack">
+        <property name="transition-type">1</property>
+        <property name="hexpand">True</property>
+        <!--        <child>-->
+        <!--          <object class="GtkStackPage" id="stackpage-noalbums">-->
+        <!--            <property name="name">albums-missing</property>-->
+        <!--            <property name="child">-->
+        <!--              <object class="AdwStatusPage" id="noalbums-status-page">-->
+        <!--                <property name="title" translatable="yes">Albums Missing</property>-->
+        <!--                <property name="description" translatable="yes">No albums were found on the server.</property>-->
+        <!--                <property name="icon-name">item-missing-symbolic</property>-->
+        <!--              </object>-->
+        <!--            </property>-->
+        <!--          </object>-->
+        <!--        </child>-->
+        <child>
+          <object class="GtkStackPage" id="stackpage-albums">
+            <property name="name">albums-found</property>
+            <property name="child">
+              <object class="GtkScrolledWindow">
+                <property name="hscrollbar-policy">GTK_POLICY_NEVER</property>
+                <child>
+                  <object class="AdwClampScrollable">
+                    <property name="child">
+                      <object class="GtkGridView" id="grid_view">
+                        <property name="orientation">1</property>
+                        <property name="factory">
+                          <object class="GtkSignalListItemFactory">
+                            <signal name="setup" handler="album-grid-setup"/>
+                            <signal name="bind" handler="album-grid-bind"/>
+                          </object>
+                        </property>
+                      </object>
+                    </property>
+                  </object>
+                </child>
+              </object>
+            </property>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

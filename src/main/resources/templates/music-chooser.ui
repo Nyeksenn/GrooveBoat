@@ -24,15 +24,27 @@
           <object class="AdwViewStack" id="music-chooser-stack">
             <property name="vexpand">true</property>
             <child>
-              <object class="AdwViewStackPage" id="page1">
-                <property name="name">page1</property>
-                <property name="title" translatable="yes">Favorites</property>
-                <property name="icon-name">star-filled-rounded-symbolic</property>
+              <object class="AdwViewStackPage" id="albumsPage">
+                <property name="name">albums</property>
+                <property name="title" translatable="yes">Albums</property>
+                <property name="icon-name">library-music-symbolic</property>
+                <property name="use-underline">true</property>
+                <property name="child">
+                  <object class="AlbumListView" />
+                </property>
+              </object>
+            </child>
+            <child>
+              <object class="AdwViewStackPage" id="artistsPage">
+                <property name="name">artists</property>
+                <property name="title" translatable="yes">Artists</property>
+                <property name="icon-name">library-artists-symbolic</property>
                 <property name="use-underline">true</property>
                 <property name="child">
                   <object class="AdwStatusPage">
-                    <property name="title" bind-source="page1" bind-property="title" bind-flags="sync-create"/>
-                    <property name="icon-name" bind-source="page1" bind-property="icon-name" bind-flags="sync-create"/>
+                    <property name="title" bind-source="artistsPage" bind-property="title" bind-flags="sync-create"/>
+                    <property name="icon-name" bind-source="artistsPage" bind-property="icon-name"
+                              bind-flags="sync-create"/>
                     <property name="child">
                       <object class="GtkBox">
                         <property name="orientation">1</property>
@@ -59,15 +71,16 @@
               </object>
             </child>
             <child>
-              <object class="AdwViewStackPage" id="page2">
-                <property name="name">page2</property>
-                <property name="title" translatable="yes">Recents</property>
-                <property name="icon-name">clock-alt-symbolic</property>
+              <object class="AdwViewStackPage" id="genresPage">
+                <property name="name">genres</property>
+                <property name="title" translatable="yes">Genres</property>
+                <property name="icon-name">shapes-large-symbolic</property>
                 <property name="use-underline">true</property>
                 <property name="child">
                   <object class="AdwStatusPage">
-                    <property name="title" bind-source="page2" bind-property="title" bind-flags="sync-create"/>
-                    <property name="icon-name" bind-source="page2" bind-property="icon-name" bind-flags="sync-create"/>
+                    <property name="title" bind-source="genresPage" bind-property="title" bind-flags="sync-create"/>
+                    <property name="icon-name" bind-source="genresPage" bind-property="icon-name"
+                              bind-flags="sync-create"/>
                     <property name="child">
                       <object class="GtkBox">
                         <property name="orientation">1</property>

@@ -1,4 +1,4 @@
-package io.github.Nyeksenn.grooveboat;
+package io.github.Nyeksenn.grooveboat.ui;
 
 import io.github.jwharm.javagi.gobject.annotations.InstanceInit;
 import io.github.jwharm.javagi.gtk.annotations.GtkChild;

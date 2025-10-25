@@ -1,4 +1,4 @@
-package io.github.Nyeksenn.grooveboat;
+package io.github.Nyeksenn.grooveboat.ui;
 
 import io.github.Nyeksenn.grooveboat.client.SubsonicClient;
 import io.github.jwharm.javagi.gobject.annotations.InstanceInit;

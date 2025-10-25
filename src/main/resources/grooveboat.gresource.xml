@@ -1,11 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
-  <gresource prefix="/io/github/Nyeksenn/grooveboat">
-    <file preprocess="xml-stripblanks">music-chooser.ui</file>
-    <file preprocess="xml-stripblanks">window.ui</file>
-    <file preprocess="xml-stripblanks">headerbar-menu.ui</file>
-    <file preprocess="xml-stripblanks">prefs.ui</file>
-
-    <file preprocess="xml-stripblanks">icons/interlinked-rectangles-symbolic.svg</file>
+  <gresource prefix="/io/github/Nyeksenn/grooveboat/">
+    <file compressed="true" alias="music-chooser.ui" preprocess="xml-stripblanks">templates/music-chooser.ui</file>
+    <file compressed="true" alias="window.ui" preprocess="xml-stripblanks">templates/window.ui</file>
+    <file compressed="true" alias="headerbar-menu.ui" preprocess="xml-stripblanks">templates/headerbar-menu.ui</file>
+    <file compressed="true" alias="prefs.ui" preprocess="xml-stripblanks">templates/prefs.ui</file>
+    <file compressed="true" alias="album-list.ui" preprocess="xml-stripblanks">templates/album-list.ui</file>
+  </gresource>
+  <gresource prefix="/io/github/Nyeksenn/grooveboat/icons/scalable/actions/">
+    <file alias="interlinked-rectangles-symbolic.svg" preprocess="xml-stripblanks">icons/interlinked-rectangles-symbolic.svg</file>
+    <file alias="shapes-large-symbolic.svg" preprocess="xml-stripblanks">icons/shapes-large-symbolic.svg</file>
+    <file alias="library-music-symbolic.svg" preprocess="xml-stripblanks">icons/library-music-symbolic.svg</file>
+    <file alias="library-artists-symbolic.svg" preprocess="xml-stripblanks">icons/library-artists-symbolic.svg</file>
+    <file alias="item-missing-symbolic.svg" preprocess="xml-stripblanks">icons/item-missing-symbolic.svg</file>
   </gresource>
 </gresources>

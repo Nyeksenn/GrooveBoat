@@ -1,5 +1,8 @@
 package io.github.Nyeksenn.grooveboat;
 
+import io.github.Nyeksenn.grooveboat.ui.AlbumListView;
+import io.github.Nyeksenn.grooveboat.ui.GrooveboatApp;
+import io.github.Nyeksenn.grooveboat.ui.MusicChooser;
 import io.github.jwharm.javagi.base.GErrorException;
 import io.github.jwharm.javagi.gtk.types.TemplateTypes;
 import org.gnome.gio.Resource;
@@ -14,8 +17,8 @@ public class Main {
         var resource = Resource.load(
                 "src/main/resources/grooveboat.gresource");
         resource.resourcesRegister();
-
         TemplateTypes.register(MusicChooser.class);
+        TemplateTypes.register(AlbumListView.class);
 
         new GrooveboatApp().run(args);
     }
