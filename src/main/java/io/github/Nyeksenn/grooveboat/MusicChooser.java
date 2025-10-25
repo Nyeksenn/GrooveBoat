@@ -8,6 +8,7 @@ import io.github.jwharm.javagi.gtk.annotations.GtkChild;
 import io.github.jwharm.javagi.gtk.annotations.GtkTemplate;
 import org.gnome.adw.NavigationPage;
 import org.gnome.gio.MenuModel;
+import org.gnome.gtk.Button;
 import org.gnome.gtk.GtkBuilder;
 import org.gnome.gtk.MenuButton;
 import org.slf4j.Logger;
@@ -23,8 +24,11 @@ public class MusicChooser extends NavigationPage {
 
     private SubsonicClient client;
 
-    @GtkChild(name = "headerbar_menu_button")
+    @GtkChild(name = "headerbar-menu-button")
     public MenuButton headerbarMenuButton;
+
+    @GtkChild(name = "sidebar-toogle-button")
+    public Button sidebarToggle;
 
     @GtkCallback(name = "ping-button-clicked")
     public void pingButtonClicked() {

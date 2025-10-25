@@ -13,7 +13,7 @@
               </object>
             </property>
             <child type="start">
-              <object class="GtkMenuButton" id="headerbar_menu_button">
+              <object class="GtkMenuButton" id="headerbar-menu-button">
                 <property name="direction">none</property>
               </object>
             </child>
@@ -24,24 +24,12 @@
             <property name="title" translatable="yes">Content</property>
             <child>
               <object class="GtkButton" id="sidebar-toogle-button">
-                <property name="visible">true</property>
+                <property name="visible">false</property>
                 <property name="halign">3</property>
                 <property name="can-shrink">true</property>
                 <property name="label" translatable="yes">Open Sidebar</property>
                 <property name="action-name">navigation.push</property>
                 <property name="action-target">'sidebar'</property>
-                <style>
-                  <class name="pill"/>
-                </style>
-              </object>
-            </child>
-            <child>
-              <object class="GtkButton" id="ping-button">
-                <property name="visible">true</property>
-                <property name="halign">3</property>
-                <property name="can-shrink">true</property>
-                <property name="label" translatable="yes">Ping Server</property>
-                <signal name="clicked" handler="ping-button-clicked"/>
                 <style>
                   <class name="pill"/>
                 </style>

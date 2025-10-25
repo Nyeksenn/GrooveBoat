@@ -6,11 +6,13 @@
     <child>
       <object class="AdwBreakpoint">
         <condition>max-width: 400sp</condition>
-        <setter object="split_view" property="collapsed">True</setter>
+        <setter object="split-view" property="collapsed">True</setter>
+        <signal name="apply" handler="breakpoint-apply"/>
+        <signal name="unapply" handler="breakpoint-unapply"/>
       </object>
     </child>
     <property name="content">
-      <object class="AdwNavigationSplitView" id="split_view">
+      <object class="AdwNavigationSplitView" id="split-view">
         <property name="sidebar-position">end</property>
         <property name="sidebar-width-fraction">0.5</property>
         <property name="show-content">true</property>
@@ -43,7 +45,7 @@
           </object>
         </property>
         <property name="content">
-          <object class="MusicChooser" id="music-chooser"></object>
+          <object class="MusicChooser" id="music-chooser"/>
         </property>
       </object>
     </property>

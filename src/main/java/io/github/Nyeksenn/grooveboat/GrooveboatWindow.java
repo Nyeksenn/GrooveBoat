@@ -2,7 +2,8 @@ package io.github.Nyeksenn.grooveboat;
 
 import io.github.Nyeksenn.grooveboat.client.ConnDetails;
 import io.github.jwharm.javagi.gobject.annotations.InstanceInit;
-import io.github.jwharm.javagi.gobject.annotations.RegisteredType;
+import io.github.jwharm.javagi.gtk.annotations.GtkCallback;
+import io.github.jwharm.javagi.gtk.annotations.GtkChild;
 import io.github.jwharm.javagi.gtk.annotations.GtkTemplate;
 import org.gnome.adw.Window;
 import org.gnome.gio.Settings;
@@ -12,12 +13,25 @@ import org.gnome.gobject.ParamSpec;
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/window.ui", name = "GrooveboatWindow")
 public class GrooveboatWindow extends Window {
 
+    @GtkChild(name = "music-chooser")
+    public MusicChooser musicChooser;
+
     public Settings settings;
 
     public ConnDetails connDetails;
 
     public GrooveboatWindow(GrooveboatApp app) {
         setApplication(app);
+    }
+
+    @GtkCallback(name = "breakpoint-apply")
+    public void handleBreakpointApply() {
+        musicChooser.sidebarToggle.setVisible(true);
+    }
+
+    @GtkCallback(name = "breakpoint-unapply")
+    public void handleBreakpointUnapply() {
+        musicChooser.sidebarToggle.setVisible(false);
     }
 
     // Reset Client if connection details change
