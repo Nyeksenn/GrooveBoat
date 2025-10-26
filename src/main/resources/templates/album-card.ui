@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <object class="GtkBox" name="box">
+  <template class="AlbumCard" parent="GtkBox">
     <child>
-      <object class="GtkPicture">
+      <object class="GtkPicture" name="album-picture">
         <property name="halign">3</property>
         <property name="valign">3</property>
         <property name="can-shrink">true</property>
@@ -10,9 +10,9 @@
       </object>
     </child>
     <child>
-      <object class="GtkLabel">
+      <object class="GtkLabel" name="album-name">
         <property name="wrap">true</property>
       </object>
     </child>
-  </object>
+  </template>
 </interface>

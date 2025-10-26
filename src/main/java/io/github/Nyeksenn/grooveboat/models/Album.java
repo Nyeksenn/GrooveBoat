@@ -2,9 +2,8 @@ package io.github.Nyeksenn.grooveboat.models;
 
 import com.jsoniter.annotation.JsonCreator;
 import com.jsoniter.annotation.JsonProperty;
-import org.gnome.gobject.GObject;
 
-public class Album extends GObject {
+public class Album {
     private final String id;
     private final String album;
     private final String title;
