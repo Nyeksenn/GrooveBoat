@@ -1,5 +1,6 @@
 plugins {
     id 'application'
+    id("io.ebean") version "17.1.1"
 }
 
 repositories {
@@ -11,6 +12,11 @@ dependencies {
     implementation 'io.github.jwharm.javagi:adw:0.12.2'
     implementation 'com.jsoniter:jsoniter:0.9.23'
     implementation 'org.apache.httpcomponents.client5:httpclient5:5.5.1'
+    implementation 'io.ebean:ebean:17.1.1'
+    implementation 'io.ebean:ebean-ddl-generator:17.1.1'
+    implementation 'com.h2database:h2:2.4.240'
+
+    annotationProcessor 'io.ebean:querybean-generator:17.1.1'
     runtimeOnly 'org.slf4j:slf4j-api:2.0.17'
     runtimeOnly 'ch.qos.logback:logback-classic:1.5.20'
 }

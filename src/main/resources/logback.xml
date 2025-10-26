@@ -30,4 +30,8 @@
     <appender-ref ref="CONSOLE"/>
     <!--    <appender-ref ref="FILE"/>-->
   </root>
+
+  <logger name="io.ebean.DDL" level="TRACE"/>
+  <logger name="io.ebean.SQL" level="TRACE"/>
+  <logger name="io.ebean.TXN" level="TRACE"/>
 </configuration>
