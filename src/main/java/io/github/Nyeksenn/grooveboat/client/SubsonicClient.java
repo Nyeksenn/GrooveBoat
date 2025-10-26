@@ -12,22 +12,29 @@ import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.apache.hc.core5.net.URIBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.*;
 
 import static org.gnome.glib.GLib.getHostName;
 
 public class SubsonicClient implements AutoCloseable {
+    private static final Logger logger = LoggerFactory.getLogger(SubsonicClient.class);
     private final CloseableHttpClient httpClient;
     private String baseUrl;
     private String username;
     private String password;
     private final String clientId = "GrooveBoat-" + getHostName();
-    private final String apiVersion = "v1.16.1";
+    private final String apiVersion = "1.16.1";
+    private final SecureRandom rng;
 
     public void setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
@@ -45,6 +52,7 @@ public class SubsonicClient implements AutoCloseable {
         this.baseUrl = baseUrl;
         this.username = username;
         this.password = password;
+        this.rng = new SecureRandom();
 
         // Configure connection pooling for performance
         PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
@@ -56,8 +64,42 @@ public class SubsonicClient implements AutoCloseable {
                 .build();
     }
 
+    private String generateSalt() {
+        final int leftLimit = 48; // numeral '0'
+        final int rightLimit = 122; // letter 'z'
+        final int targetStringLength = 10;
+
+        return rng.ints(leftLimit, rightLimit + 1)
+                .filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
+                .limit(targetStringLength)
+                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+                .toString();
+    }
+
     private URI getUri(String endpoint, List<NameValuePair> params) throws URISyntaxException {
-        return new URIBuilder()
+        try {
+            var md = MessageDigest.getInstance("MD5");
+            var salt = generateSalt();
+            var saltedPwd = this.password + salt;
+            md.update(saltedPwd.getBytes(StandardCharsets.UTF_8));
+            var digest = md.digest();
+            var hf = HexFormat.of();
+            var token = hf.formatHex(digest);
+
+            return new URIBuilder()
+                .setHost(baseUrl)
+                .setPathSegments("rest", endpoint)
+                .addParameter("u", username)
+                .addParameter("t", token)
+                .addParameter("s", salt)
+                .addParameter("f", "json")
+                .addParameter("c", clientId)
+                .addParameter("v", apiVersion)
+                .addParameters(params)
+                .build();
+        } catch (NoSuchAlgorithmException e) {
+            logger.warn("Can't create MD5 hash. Using plain password.");
+            return new URIBuilder()
                 .setHost(baseUrl)
                 .setPathSegments("rest", endpoint)
                 .addParameter("u", username)
@@ -67,6 +109,7 @@ public class SubsonicClient implements AutoCloseable {
                 .addParameter("v", apiVersion)
                 .addParameters(params)
                 .build();
+        }
     }
 
     private String executeGetString(String endpoint, List<NameValuePair> params) throws IOException {
@@ -91,16 +134,15 @@ public class SubsonicClient implements AutoCloseable {
         }
     }
 
-    private byte[] executeGetBinary(String endpoint, List<NameValuePair> params) throws IOException {
+    private BinaryResponse executeGetBinary(String endpoint, List<NameValuePair> params) throws IOException {
         try {
             URI uri = getUri(endpoint, params);
 
             return this.httpClient.execute(new HttpGet(uri),
                     response -> {
                         int statusCode = response.getCode();
-
                         if (statusCode >= 200 && statusCode < 300) {
-                            return EntityUtils.toByteArray(response.getEntity());
+                            return new BinaryResponse(EntityUtils.toByteArray(response.getEntity()), response.headerIterator()) ;
                         } else {
                             String errorBody = EntityUtils.toString(response.getEntity());
                             throw new IOException("Request failed with status " + statusCode + ": " + errorBody);
@@ -113,18 +155,35 @@ public class SubsonicClient implements AutoCloseable {
         }
     }
 
-    public AlbumList2 getAlbumList2() throws IOException {
-        var response = executeGetString("getAlbumList2", null);
+    public AlbumList2 getAlbumList2(int size) throws IOException {
+        var params = new ArrayList<NameValuePair>(2);
+        params.add(new BasicNameValuePair("type", "alphabeticalByArtist"));
+        params.add(new BasicNameValuePair("size", String.valueOf(size)));
+
+        var response = executeGetString("getAlbumList2", params);
         var any = JsonIterator.deserialize(response);
         var album_fragment = any.get("subsonic-response", "albumList2", "album").toString();
+
         return JsonIterator.deserialize(album_fragment, AlbumList2.class);
     }
 
     public CoverArt getCoverArt(String id) throws IOException {
         var params = new ArrayList<NameValuePair>(1);
+
         params.add(new BasicNameValuePair("id", id));
         var coverArtData = executeGetBinary("getCoverArt", params);
-        return new CoverArt(id, coverArtData);
+        StringBuilder contentType = new StringBuilder();
+
+        while (coverArtData.headers().hasNext()) {
+            var header = coverArtData.headers().next();
+            if (Objects.equals(header.getName(), "Content-Type")) {
+                contentType.append(header.getValue());
+            }
+        }
+
+        var contentTypeSplit = contentType.toString().split("/", 2);
+
+        return new CoverArt(id, contentTypeSplit[1], coverArtData.data());
     }
 
     public SubsonicResponse ping() throws IOException {
