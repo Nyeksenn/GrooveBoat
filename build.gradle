@@ -14,6 +14,7 @@ dependencies {
     implementation 'org.apache.httpcomponents.client5:httpclient5:5.5.1'
     implementation 'io.ebean:ebean:17.1.1'
     implementation 'io.ebean:ebean-ddl-generator:17.1.1'
+    implementation 'io.ebean:ebean-test:17.1.1'
     implementation 'com.h2database:h2:2.4.240'
 
     annotationProcessor 'io.ebean:querybean-generator:17.1.1'
@@ -50,6 +51,15 @@ abstract class CompileUiFiles extends DefaultTask {
             commandLine 'glib-compile-resources', 'grooveboat.gresource.xml'
         }
     }
+}
+
+tasks.register('generateMigrations', JavaExec) {
+    group = 'migration'
+    description = 'Generate database migrations'
+
+    dependsOn compileTestJava
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'io.github.Nyeksenn.grooveboat.MigrationGenerator'
 }
 
 

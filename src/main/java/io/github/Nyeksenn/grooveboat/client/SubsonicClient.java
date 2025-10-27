@@ -1,8 +1,7 @@
 package io.github.Nyeksenn.grooveboat.client;
 
 import com.jsoniter.JsonIterator;
-import io.github.Nyeksenn.grooveboat.models.AlbumList2;
-import io.github.Nyeksenn.grooveboat.models.CoverArt;
+import io.github.Nyeksenn.grooveboat.models.AlbumList;
 import io.github.Nyeksenn.grooveboat.models.Indices;
 import io.github.Nyeksenn.grooveboat.models.SubsonicResponse;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -160,39 +159,46 @@ public class SubsonicClient implements AutoCloseable {
         }
     }
 
-    public AlbumList2 getAlbumList2(int size) throws IOException {
+    public AlbumList getAlbumsByArtist(String artistId) throws IOException {
         var params = new ArrayList<NameValuePair>(2);
-        params.add(new BasicNameValuePair("type", "alphabeticalByArtist"));
-        params.add(new BasicNameValuePair("size", String.valueOf(size)));
+        params.add(new BasicNameValuePair("id", artistId));
 
-        var response = executeGetString("getAlbumList2", params);
+        var response = executeGetString("getMusicDirectory", params);
         var any = JsonIterator.deserialize(response);
-        var album_fragment = any.get("subsonic-response", "albumList2").toString();
+        var album_fragment = any.get("subsonic-response", "directory").toString();
 
-        return JsonIterator.deserialize(album_fragment, AlbumList2.class);
+        return JsonIterator.deserialize(album_fragment, AlbumList.class);
     }
 
-    public CoverArt getCoverArt(String id) throws IOException {
+    public byte[] getCoverArt(String id) {
         var params = new ArrayList<NameValuePair>(1);
 
         params.add(new BasicNameValuePair("id", id));
-        var coverArtData = executeGetBinary("getCoverArt", params);
-
-        return new CoverArt(id, coverArtData);
+        try {
+            return executeGetBinary("getCoverArt", params);
+        } catch (IOException e) {
+            logger.info("Couldn't fetch album art");
+            return null;
+        }
     }
 
-    public byte[] getArtistImage(String url) throws IOException {
-        return this.httpClient.execute(new HttpGet(url),
-                response -> {
-                    int statusCode = response.getCode();
-                    if (statusCode >= 200 && statusCode < 300) {
-                        return EntityUtils.toByteArray(response.getEntity());
-                    } else {
-                        String errorBody = EntityUtils.toString(response.getEntity());
-                        throw new IOException("Request failed with status " + statusCode + ": " + errorBody);
+    public byte[] getArtistImage(String url) {
+        try {
+            return this.httpClient.execute(new HttpGet(url),
+                    response -> {
+                        int statusCode = response.getCode();
+                        if (statusCode >= 200 && statusCode < 300) {
+                            return EntityUtils.toByteArray(response.getEntity());
+                        } else {
+                            String errorBody = EntityUtils.toString(response.getEntity());
+                            throw new IOException("Request failed with status " + statusCode + ": " + errorBody);
+                        }
                     }
-                }
-        );
+            );
+        } catch (IOException e) {
+            logger.warn("Couldn't fetch artist image");
+            return null;
+        }
     }
 
     public Indices getArtists() throws IOException {

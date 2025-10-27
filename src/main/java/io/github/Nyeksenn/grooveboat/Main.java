@@ -21,8 +21,7 @@ public class Main {
     public static void main(String[] args) throws GErrorException {
         var cfg = new DatabaseConfig();
         var properties = new Properties();
-        properties.put("ebean.db.ddl.generate", "true");
-        properties.put("ebean.db.ddl.run", "true");
+        properties.put("ebean.migration.run", "true");
         properties.put("datasource.db.username", "gb");
         properties.put("datasource.db.password", "");
         properties.put("datasource.db.databaseDriver", "org.h2.Driver");

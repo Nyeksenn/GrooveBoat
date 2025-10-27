@@ -39,6 +39,7 @@ public class GrooveboatApp extends Application {
 
         executor.submit(() -> {
             subsonic.refreshArtists();
+            subsonic.refreshAlbums();
         });
 
         GrooveboatWindow win = new GrooveboatWindow(this);

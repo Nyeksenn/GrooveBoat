@@ -12,11 +12,10 @@ public class Album {
     private final int songCount;
     private final String created;
     private final int duration;
-    private final int playCount;
     private final String artistId;
     private final String artist;
     private final int year;
-    private final String genre;
+//    private final String genre;
 
     public String getId() {
         return id;
@@ -50,10 +49,6 @@ public class Album {
         return duration;
     }
 
-    public int getPlayCount() {
-        return playCount;
-    }
-
     public String getArtistId() {
         return artistId;
     }
@@ -66,9 +61,9 @@ public class Album {
         return year;
     }
 
-    public String getGenre() {
-        return genre;
-    }
+//    public String getGenre() {
+//        return genre;
+//    }
 
     @JsonCreator
     public Album(
@@ -80,11 +75,9 @@ public class Album {
             @JsonProperty("songCount") int songCount,
             @JsonProperty("created") String created,
             @JsonProperty("duration") int duration,
-            @JsonProperty("playCount") int playCount,
             @JsonProperty("artistId") String artistId,
             @JsonProperty("artist") String artist,
-            @JsonProperty("year") int year,
-            @JsonProperty("genre") String genre) {
+            @JsonProperty("year") int year) {
         this.id = id;
         this.album = album;
         this.title = title;
@@ -93,10 +86,8 @@ public class Album {
         this.songCount = songCount;
         this.created = created;
         this.duration = duration;
-        this.playCount = playCount;
         this.artistId = artistId;
         this.artist = artist;
         this.year = year;
-        this.genre = genre;
     }
 }

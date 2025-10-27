@@ -1,18 +1,25 @@
 package io.github.Nyeksenn.grooveboat.entities;
 
+import io.ebean.annotation.Index;
 import io.ebean.annotation.Length;
 import io.ebean.annotation.NotNull;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 @Entity
 @Table(name = "artist")
+@Index(unique = true, columnNames = {"artist_id"})
 public class ArtistModel extends BaseModel {
-    @NotNull @Length(50)
+    @NotNull
+    @Length(100)
     String artistId;
 
-    @NotNull @Length(200)
+    @NotNull
+    @Length(200)
     String name;
 
     @Lob
@@ -42,5 +49,17 @@ public class ArtistModel extends BaseModel {
                 "artistId='" + artistId + '\'' +
                 ", name='" + name + '\'' +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        ArtistModel that = (ArtistModel) o;
+        return Objects.equals(artistId, that.artistId) && Objects.equals(name, that.name) && Arrays.equals(image, that.image);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(artistId, name, Arrays.hashCode(image));
     }
 }
