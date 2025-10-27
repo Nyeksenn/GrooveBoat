@@ -4,11 +4,13 @@ import io.ebean.annotation.Length;
 import io.ebean.annotation.NotNull;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Lob;
+import jakarta.persistence.Table;
 
 import java.time.Duration;
 
 @Entity
-public class Album extends BaseModel {
+@Table(name = "album")
+public class AlbumModel extends BaseModel {
     @NotNull @Length(50)
     String albumId;
 
@@ -26,7 +28,7 @@ public class Album extends BaseModel {
     @NotNull @Length(50)
     String artistId;
 
-    int year;
+    int release_year;
 
     Duration duration;
 
@@ -57,8 +59,8 @@ public class Album extends BaseModel {
         return artistId;
     }
 
-    public int getYear() {
-        return year;
+    public int getReleaseYear() {
+        return release_year;
     }
 
     public Duration getDuration() {
@@ -69,14 +71,14 @@ public class Album extends BaseModel {
         return coverArt;
     }
 
-    public Album(String albumId, String title, int songCount, String genre, String artist, String artistId, int year, Duration duration, byte[] coverArt) {
+    public AlbumModel(String albumId, String title, int songCount, String genre, String artist, String artistId, int release_year, Duration duration, byte[] coverArt) {
         this.albumId = albumId;
         this.title = title;
         this.songCount = songCount;
         this.genre = genre;
         this.artist = artist;
         this.artistId = artistId;
-        this.year = year;
+        this.release_year = release_year;
         this.duration = duration;
         this.coverArt = coverArt;
     }

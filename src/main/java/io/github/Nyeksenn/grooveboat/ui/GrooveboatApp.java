@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
+import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import io.github.Nyeksenn.grooveboat.client.SubsonicClient;
 import org.gnome.adw.Application;
 import org.gnome.gdk.Display;
@@ -11,14 +12,20 @@ import org.gnome.gtk.IconTheme;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class GrooveboatApp extends Application {
     private static final Logger logger = LoggerFactory.getLogger(GrooveboatApp.class);
 
-    public SubsonicClient client;
+    public Subsonic subsonic;
+    public ExecutorService executor;
 
     @Override
     public void activate() {
         Settings settings = new Settings("io.github.Nyeksenn.groovebox");
+
+        this.executor = Executors.newFixedThreadPool(4);
 
         var theme = IconTheme.getForDisplay(Display.getDefault());
         theme.addResourcePath("/io/github/Nyeksenn/grooveboat/icons/");
@@ -27,7 +34,13 @@ public class GrooveboatApp extends Application {
         var username = settings.getString("username");
         var password = settings.getString("password");
         var url = settings.getString("url");
-        client = new SubsonicClient(url, username, password);
+        var client = new SubsonicClient(url, username, password);
+        this.subsonic = new Subsonic(client);
+
+        executor.submit(() -> {
+            subsonic.refreshArtists();
+        });
+
         GrooveboatWindow win = new GrooveboatWindow(this);
         win.present();
     }

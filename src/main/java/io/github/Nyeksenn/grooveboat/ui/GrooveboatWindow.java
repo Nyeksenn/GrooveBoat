@@ -41,7 +41,8 @@ public class GrooveboatWindow extends Window {
     // Reset Client if connection details change
     public void handleConnectionPrefChange(ParamSpec pspec) {
         var app = (GrooveboatApp) getApplication();
-        var client = app.client;
+        var subsonic = app.subsonic;
+        var client = subsonic.client;
         var name = pspec.getName();
         switch (name) {
             case "username":

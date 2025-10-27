@@ -29,7 +29,7 @@ public class Main {
 
         var dataDir = GLib.getUserDataDir();
         var dbPath = Paths.get(dataDir, "grooveboat", "cache");
-        var dbBaseUrl = "jdbc:h2:%s:grooveboat";
+        var dbBaseUrl = "jdbc:h2:file:%s";
         var dbUrl = String.format(dbBaseUrl, dbPath);
         properties.put("datasource.db.databaseUrl",dbUrl);
 

@@ -3,6 +3,7 @@ package io.github.Nyeksenn.grooveboat.client;
 import com.jsoniter.JsonIterator;
 import io.github.Nyeksenn.grooveboat.models.AlbumList2;
 import io.github.Nyeksenn.grooveboat.models.CoverArt;
+import io.github.Nyeksenn.grooveboat.models.Indices;
 import io.github.Nyeksenn.grooveboat.models.SubsonicResponse;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -48,6 +49,10 @@ public class SubsonicClient implements AutoCloseable {
         this.password = password;
     }
 
+    public String getBaseUrl() {
+        return baseUrl;
+    }
+
     public SubsonicClient(String baseUrl, String username, String password) {
         this.baseUrl = baseUrl;
         this.username = username;
@@ -86,35 +91,35 @@ public class SubsonicClient implements AutoCloseable {
             var hf = HexFormat.of();
             var token = hf.formatHex(digest);
 
-            return new URIBuilder()
-                .setHost(baseUrl)
-                .setPathSegments("rest", endpoint)
-                .addParameter("u", username)
-                .addParameter("t", token)
-                .addParameter("s", salt)
-                .addParameter("f", "json")
-                .addParameter("c", clientId)
-                .addParameter("v", apiVersion)
-                .addParameters(params)
-                .build();
+            return new URIBuilder(baseUrl)
+                    .setPathSegments("rest", endpoint)
+                    .addParameter("u", username)
+                    .addParameter("t", token)
+                    .addParameter("s", salt)
+                    .addParameter("f", "json")
+                    .addParameter("c", clientId)
+                    .addParameter("v", apiVersion)
+                    .addParameters(params)
+                    .build();
         } catch (NoSuchAlgorithmException e) {
             logger.warn("Can't create MD5 hash. Using plain password.");
             return new URIBuilder()
-                .setHost(baseUrl)
-                .setPathSegments("rest", endpoint)
-                .addParameter("u", username)
-                .addParameter("p", password)
-                .addParameter("f", "json")
-                .addParameter("c", clientId)
-                .addParameter("v", apiVersion)
-                .addParameters(params)
-                .build();
+                    .setHost(baseUrl)
+                    .setPathSegments("rest", endpoint)
+                    .addParameter("u", username)
+                    .addParameter("p", password)
+                    .addParameter("f", "json")
+                    .addParameter("c", clientId)
+                    .addParameter("v", apiVersion)
+                    .addParameters(params)
+                    .build();
         }
     }
 
     private String executeGetString(String endpoint, List<NameValuePair> params) throws IOException {
         try {
             URI uri = getUri(endpoint, params);
+            logger.info("Built the following URI: {}", uri.toString());
 
             return this.httpClient.execute(new HttpGet(uri),
                     response -> {
@@ -134,7 +139,7 @@ public class SubsonicClient implements AutoCloseable {
         }
     }
 
-    private BinaryResponse executeGetBinary(String endpoint, List<NameValuePair> params) throws IOException {
+    private byte[] executeGetBinary(String endpoint, List<NameValuePair> params) throws IOException {
         try {
             URI uri = getUri(endpoint, params);
 
@@ -142,7 +147,7 @@ public class SubsonicClient implements AutoCloseable {
                     response -> {
                         int statusCode = response.getCode();
                         if (statusCode >= 200 && statusCode < 300) {
-                            return new BinaryResponse(EntityUtils.toByteArray(response.getEntity()), response.headerIterator()) ;
+                            return EntityUtils.toByteArray(response.getEntity());
                         } else {
                             String errorBody = EntityUtils.toString(response.getEntity());
                             throw new IOException("Request failed with status " + statusCode + ": " + errorBody);
@@ -162,7 +167,7 @@ public class SubsonicClient implements AutoCloseable {
 
         var response = executeGetString("getAlbumList2", params);
         var any = JsonIterator.deserialize(response);
-        var album_fragment = any.get("subsonic-response", "albumList2", "album").toString();
+        var album_fragment = any.get("subsonic-response", "albumList2").toString();
 
         return JsonIterator.deserialize(album_fragment, AlbumList2.class);
     }
@@ -172,18 +177,29 @@ public class SubsonicClient implements AutoCloseable {
 
         params.add(new BasicNameValuePair("id", id));
         var coverArtData = executeGetBinary("getCoverArt", params);
-        StringBuilder contentType = new StringBuilder();
 
-        while (coverArtData.headers().hasNext()) {
-            var header = coverArtData.headers().next();
-            if (Objects.equals(header.getName(), "Content-Type")) {
-                contentType.append(header.getValue());
-            }
-        }
+        return new CoverArt(id, coverArtData);
+    }
 
-        var contentTypeSplit = contentType.toString().split("/", 2);
+    public byte[] getArtistImage(String url) throws IOException {
+        return this.httpClient.execute(new HttpGet(url),
+                response -> {
+                    int statusCode = response.getCode();
+                    if (statusCode >= 200 && statusCode < 300) {
+                        return EntityUtils.toByteArray(response.getEntity());
+                    } else {
+                        String errorBody = EntityUtils.toString(response.getEntity());
+                        throw new IOException("Request failed with status " + statusCode + ": " + errorBody);
+                    }
+                }
+        );
+    }
 
-        return new CoverArt(id, contentTypeSplit[1], coverArtData.data());
+    public Indices getArtists() throws IOException {
+        var response = executeGetString("getArtists", null);
+        var any = JsonIterator.deserialize(response);
+        var index_fragment = any.get("subsonic-response", "artists").toString();
+        return JsonIterator.deserialize(index_fragment, Indices.class);
     }
 
     public SubsonicResponse ping() throws IOException {

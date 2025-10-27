@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
+import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import io.github.Nyeksenn.grooveboat.client.SubsonicClient;
 import io.github.jwharm.javagi.gobject.annotations.InstanceInit;
 import io.github.jwharm.javagi.gobject.annotations.RegisteredType;
@@ -24,7 +25,7 @@ import java.lang.foreign.MemorySegment;
 public class MusicChooser extends NavigationPage {
     private static final Logger logger = LoggerFactory.getLogger(MusicChooser.class);
 
-    private SubsonicClient client;
+    private Subsonic subsonic;
 
     @GtkChild(name = "headerbar-menu-button")
     public MenuButton headerbarMenuButton;
@@ -38,24 +39,10 @@ public class MusicChooser extends NavigationPage {
     @GtkChild(name = "music-switcher-bar")
     public ViewSwitcherBar musicSwitcherBar;
 
-//    @GtkChild(name = "sidebar-toogle-button")
-//    public Button sidebarToggle;
-
-    @GtkCallback(name = "ping-button-clicked")
-    public void pingButtonClicked() {
-        logger.info("Button pressed");
-        try {
-            var ping = client.ping();
-            logger.info("Server status is: {}", ping.getStatus());
-        } catch (IOException e) {
-            logger.warn("Couldn't connect to server");
-        }
-    }
-
     public void initClient() {
         var window = (GrooveboatWindow) getRoot();
         var app = (GrooveboatApp) window.getApplication();
-        this.client = app.client;
+        this.subsonic = app.subsonic;
     }
 
     @InstanceInit
