@@ -37,11 +37,6 @@ public class GrooveboatApp extends Application {
         var client = new SubsonicClient(url, username, password);
         this.subsonic = new Subsonic(client);
 
-        executor.submit(() -> {
-            subsonic.refreshArtists();
-            subsonic.refreshAlbums();
-        });
-
         GrooveboatWindow win = new GrooveboatWindow(this);
         win.present();
     }

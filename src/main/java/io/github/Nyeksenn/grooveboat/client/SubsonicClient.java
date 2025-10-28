@@ -1,8 +1,9 @@
 package io.github.Nyeksenn.grooveboat.client;
 
-import com.jsoniter.JsonIterator;
-import io.github.Nyeksenn.grooveboat.models.AlbumList;
-import io.github.Nyeksenn.grooveboat.models.Indices;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.Nyeksenn.grooveboat.models.Album;
+import io.github.Nyeksenn.grooveboat.models.Index;
 import io.github.Nyeksenn.grooveboat.models.SubsonicResponse;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -22,7 +23,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HexFormat;
+import java.util.List;
 
 import static org.gnome.glib.GLib.getHostName;
 
@@ -118,7 +121,6 @@ public class SubsonicClient implements AutoCloseable {
     private String executeGetString(String endpoint, List<NameValuePair> params) throws IOException {
         try {
             URI uri = getUri(endpoint, params);
-            logger.info("Built the following URI: {}", uri.toString());
 
             return this.httpClient.execute(new HttpGet(uri),
                     response -> {
@@ -159,21 +161,11 @@ public class SubsonicClient implements AutoCloseable {
         }
     }
 
-    public AlbumList getAlbumsByArtist(String artistId) throws IOException {
+    public byte[] getCoverArt(String id, int size) {
         var params = new ArrayList<NameValuePair>(2);
-        params.add(new BasicNameValuePair("id", artistId));
-
-        var response = executeGetString("getMusicDirectory", params);
-        var any = JsonIterator.deserialize(response);
-        var album_fragment = any.get("subsonic-response", "directory").toString();
-
-        return JsonIterator.deserialize(album_fragment, AlbumList.class);
-    }
-
-    public byte[] getCoverArt(String id) {
-        var params = new ArrayList<NameValuePair>(1);
-
         params.add(new BasicNameValuePair("id", id));
+        params.add(new BasicNameValuePair("size", String.valueOf(size)));
+
         try {
             return executeGetBinary("getCoverArt", params);
         } catch (IOException e) {
@@ -201,18 +193,44 @@ public class SubsonicClient implements AutoCloseable {
         }
     }
 
-    public Indices getArtists() throws IOException {
+    public List<Album> getAlbumsByArtist(String artistId) throws IOException {
+        var params = new ArrayList<NameValuePair>(2);
+        params.add(new BasicNameValuePair("id", artistId));
+
+        var response = executeGetString("getMusicDirectory", params);
+        var om = new ObjectMapper();
+        var root = om.readTree(response);
+        var album_fragment = root.path("subsonic-response").path("directory").path("child");
+        try {
+            return om.convertValue(album_fragment, new TypeReference<List<Album>>() {
+            });
+        } catch (IllegalArgumentException e) {
+            logger.warn(e.getCause().toString());
+            return new ArrayList<>();
+        }
+    }
+
+    public List<Index> getArtists() throws IOException {
         var response = executeGetString("getArtists", null);
-        var any = JsonIterator.deserialize(response);
-        var index_fragment = any.get("subsonic-response", "artists").toString();
-        return JsonIterator.deserialize(index_fragment, Indices.class);
+        var om = new ObjectMapper();
+        var root = om.readTree(response);
+        var index_fragment = root.path("subsonic-response").path("artists").path("index");
+        try {
+            return om.convertValue(index_fragment, new TypeReference<List<Index>>() {
+            });
+        } catch (IllegalArgumentException e) {
+            logger.warn(e.getCause().toString());
+            return new ArrayList<>();
+        }
     }
 
     public SubsonicResponse ping() throws IOException {
         var response = executeGetString("ping", null);
-        var any = JsonIterator.deserialize(response);
-        var subsonicResponse = any.get("subsonic-response").toString();
-        return JsonIterator.deserialize(subsonicResponse, SubsonicResponse.class);
+
+        var om = new ObjectMapper();
+        var root = om.readTree(response);
+        var subsonicResponse = root.path("subsonic-response");
+        return om.convertValue(subsonicResponse, SubsonicResponse.class);
     }
 
     public void close() throws IOException {

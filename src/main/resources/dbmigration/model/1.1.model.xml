@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<migration xmlns="http://ebean-orm.github.io/xml/ns/dbmigration">
-    <changeSet type="apply">
-        <alterColumn columnName="album_id" tableName="album" type="varchar(100)" currentType="varchar(50)" currentNotnull="true"/>
-        <alterColumn columnName="artist_id" tableName="album" type="varchar(100)" currentType="varchar(50)" currentNotnull="true"/>
-        <alterColumn columnName="artist_id" tableName="artist" type="varchar(100)" currentType="varchar(50)" currentNotnull="true"/>
-    </changeSet>
-</migration>

@@ -30,17 +30,18 @@ public class AlbumModel extends BaseModel {
 
     @NotNull
     @Length(100)
+    @Column(name = "album_artist_id")
     String artistId;
 
     int release_year;
 
     Duration duration;
 
-    @Lob
+    @Column(length = 100000000)
     byte[] coverArt;
 
     @ManyToOne
-    @JoinColumn(name = "id")
+    @JoinColumn(name = "artist_id")
     ArtistModel albumArtist;
 
     public String getAlbumId() {

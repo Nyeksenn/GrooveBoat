@@ -1,10 +1,7 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
-import io.github.Nyeksenn.grooveboat.client.Subsonic;
-import io.github.Nyeksenn.grooveboat.client.SubsonicClient;
 import io.github.jwharm.javagi.gobject.annotations.InstanceInit;
 import io.github.jwharm.javagi.gobject.annotations.RegisteredType;
-import io.github.jwharm.javagi.gtk.annotations.GtkCallback;
 import io.github.jwharm.javagi.gtk.annotations.GtkChild;
 import io.github.jwharm.javagi.gtk.annotations.GtkTemplate;
 import org.gnome.adw.HeaderBar;
@@ -17,15 +14,12 @@ import org.gnome.gtk.MenuButton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.lang.foreign.MemorySegment;
 
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/music-chooser.ui", name = "MusicChooser")
 @RegisteredType(name = "MusicChooser")
 public class MusicChooser extends NavigationPage {
     private static final Logger logger = LoggerFactory.getLogger(MusicChooser.class);
-
-    private Subsonic subsonic;
 
     @GtkChild(name = "headerbar-menu-button")
     public MenuButton headerbarMenuButton;
@@ -39,19 +33,11 @@ public class MusicChooser extends NavigationPage {
     @GtkChild(name = "music-switcher-bar")
     public ViewSwitcherBar musicSwitcherBar;
 
-    public void initClient() {
-        var window = (GrooveboatWindow) getRoot();
-        var app = (GrooveboatApp) window.getApplication();
-        this.subsonic = app.subsonic;
-    }
-
     @InstanceInit
     public void init() {
         var builder = GtkBuilder.fromResource("/io/github/Nyeksenn/grooveboat/headerbar-menu.ui");
         var menu = (MenuModel) builder.getObject("headerbar-menu");
         headerbarMenuButton.setMenuModel(menu);
-
-        this.onRealize(this::initClient);
     }
 
     public MusicChooser() {

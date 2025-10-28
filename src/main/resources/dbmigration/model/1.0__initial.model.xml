@@ -2,15 +2,16 @@
 <migration xmlns="http://ebean-orm.github.io/xml/ns/dbmigration">
     <changeSet type="apply">
         <createTable name="album" pkName="pk_album">
-            <column name="id" type="bigint" primaryKey="true" references="artist.id" foreignKeyName="fk_album_id" foreignKeyIndex="ix_album_id"/>
-            <column name="album_id" type="varchar(50)" notnull="true"/>
+            <column name="id" type="bigint" primaryKey="true"/>
+            <column name="album_id" type="varchar(100)" notnull="true"/>
             <column name="title" type="varchar(100)" notnull="true"/>
             <column name="song_count" type="integer" notnull="true"/>
             <column name="artist" type="varchar(100)" notnull="true"/>
-            <column name="artist_id" type="varchar(50)" notnull="true"/>
+            <column name="album_artist_id" type="varchar(100)" notnull="true"/>
             <column name="release_year" type="integer" notnull="true"/>
             <column name="duration" type="bigint"/>
-            <column name="cover_art" type="blob"/>
+            <column name="cover_art" type="varbinary(100000000)"/>
+            <column name="artist_id" type="bigint" references="artist.id" foreignKeyName="fk_album_artist_id" foreignKeyIndex="ix_album_artist_id"/>
             <column name="version" type="bigint" notnull="true"/>
             <column name="when_created" type="timestamp" notnull="true"/>
             <column name="when_modified" type="timestamp" notnull="true"/>
@@ -18,9 +19,9 @@
         </createTable>
         <createTable name="artist" pkName="pk_artist">
             <column name="id" type="bigint" primaryKey="true"/>
-            <column name="artist_id" type="varchar(50)" notnull="true"/>
+            <column name="artist_id" type="varchar(100)" notnull="true"/>
             <column name="name" type="varchar(200)" notnull="true"/>
-            <column name="image" type="blob"/>
+            <column name="image" type="varbinary(100000000)"/>
             <column name="version" type="bigint" notnull="true"/>
             <column name="when_created" type="timestamp" notnull="true"/>
             <column name="when_modified" type="timestamp" notnull="true"/>

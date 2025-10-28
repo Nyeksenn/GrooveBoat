@@ -8,9 +8,9 @@ import io.github.Nyeksenn.grooveboat.ui.MusicChooser;
 import io.github.jwharm.javagi.base.GErrorException;
 import io.github.jwharm.javagi.gtk.types.TemplateTypes;
 import org.gnome.gio.Resource;
+import org.gnome.glib.GLib;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.gnome.glib.GLib;
 
 import java.nio.file.Paths;
 import java.util.Properties;
@@ -30,11 +30,11 @@ public class Main {
         var dbPath = Paths.get(dataDir, "grooveboat", "cache");
         var dbBaseUrl = "jdbc:h2:file:%s";
         var dbUrl = String.format(dbBaseUrl, dbPath);
-        properties.put("datasource.db.databaseUrl",dbUrl);
+        properties.put("datasource.db.databaseUrl", dbUrl);
 
         cfg.loadFromProperties(properties);
         cfg.setDefaultServer(true);
-        var server = DatabaseFactory.create(cfg);
+        DatabaseFactory.create(cfg);
 
         var resource = Resource.load(
                 "src/main/resources/grooveboat.gresource");

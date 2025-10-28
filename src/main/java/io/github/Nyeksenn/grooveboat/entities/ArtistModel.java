@@ -3,8 +3,8 @@ package io.github.Nyeksenn.grooveboat.entities;
 import io.ebean.annotation.Index;
 import io.ebean.annotation.Length;
 import io.ebean.annotation.NotNull;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 
 import java.util.Arrays;
@@ -22,7 +22,7 @@ public class ArtistModel extends BaseModel {
     @Length(200)
     String name;
 
-    @Lob
+    @Column(length = 100000000)
     byte[] image;
 
     public String getArtistId() {

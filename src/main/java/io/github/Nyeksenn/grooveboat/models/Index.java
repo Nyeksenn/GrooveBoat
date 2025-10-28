@@ -2,7 +2,5 @@ package io.github.Nyeksenn.grooveboat.models;
 
 import java.util.List;
 
-public class Index {
-    public String name;
-    public List<Artist> artist;
+public record Index(String name, List<Artist> artist) {
 }

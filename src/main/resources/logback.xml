@@ -31,7 +31,7 @@
     <!--    <appender-ref ref="FILE"/>-->
   </root>
 
-  <logger name="io.ebean.DDL" level="TRACE"/>
-  <logger name="io.ebean.SQL" level="TRACE"/>
-  <logger name="io.ebean.TXN" level="TRACE"/>
+  <logger name="io.ebean.DDL" level="WARN"/>
+  <logger name="io.ebean.SQL" level="WARN"/>
+  <logger name="io.ebean.TXN" level="WARN"/>
 </configuration>

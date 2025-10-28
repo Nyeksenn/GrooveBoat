@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <template class="AlbumCard" parent="GtkBox">
+      <property name="orientation">1</property>
     <child>
-      <object class="GtkPicture" name="album-picture">
-        <property name="halign">3</property>
-        <property name="valign">3</property>
-        <property name="can-shrink">true</property>
-        <property name="content-fit">3</property>
+      <object class="GtkImage" id="album-picture">
+          <property name="pixel-size">200</property>
       </object>
     </child>
     <child>
-      <object class="GtkLabel" name="album-name">
+      <object class="GtkLabel" id="album-name">
         <property name="wrap">true</property>
       </object>
     </child>
