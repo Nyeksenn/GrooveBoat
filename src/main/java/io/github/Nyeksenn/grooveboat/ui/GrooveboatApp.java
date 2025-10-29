@@ -78,6 +78,16 @@ public class GrooveboatApp extends Application {
         setAccelsForAction("app.quit", quitAccels);
     }
 
+    @Override
+    protected void shutdown() {
+        try {
+            subsonic.close();
+        } catch (Exception e) {
+            logger.warn("Unable to cleanup client");
+        }
+        executor.shutdown();
+    }
+
     public GrooveboatApp() {
         setApplicationId("org.gtk.grooveboat");
         setFlags(ApplicationFlags.HANDLES_OPEN);

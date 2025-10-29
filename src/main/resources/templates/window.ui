@@ -28,17 +28,7 @@
                   </object>
                 </child>
                 <property name="content">
-                  <object class="AdwStatusPage">
-                    <property name="title" translatable="yes">Sidebar</property>
-                    <child>
-                      <object class="GtkLinkButton">
-                        <property name="label" translatable="yes">API Reference</property>
-                        <property name="uri">
-                          https://gnome.pages.gitlab.gnome.org/libadwaita/doc/1.6/class.NavigationSplitView.html
-                        </property>
-                      </object>
-                    </child>
-                  </object>
+                  <object class="MusicPlayer" id="music-player"/>
                 </property>
               </object>
             </property>

@@ -5,6 +5,7 @@ import io.ebean.config.DatabaseConfig;
 import io.github.Nyeksenn.grooveboat.ui.AlbumListView;
 import io.github.Nyeksenn.grooveboat.ui.GrooveboatApp;
 import io.github.Nyeksenn.grooveboat.ui.MusicChooser;
+import io.github.Nyeksenn.grooveboat.ui.MusicPlayer;
 import io.github.jwharm.javagi.base.GErrorException;
 import io.github.jwharm.javagi.gtk.types.TemplateTypes;
 import org.gnome.gio.Resource;
@@ -41,6 +42,7 @@ public class Main {
         resource.resourcesRegister();
         TemplateTypes.register(MusicChooser.class);
         TemplateTypes.register(AlbumListView.class);
+        TemplateTypes.register(MusicPlayer.class);
 
         new GrooveboatApp().run(args);
     }

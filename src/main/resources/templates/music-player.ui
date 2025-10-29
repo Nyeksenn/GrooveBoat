@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="MusicPlayer" parent="GtkBox">
+    <property name="orientation">1</property>
+    <property name="margin-start">10</property>
+    <property name="margin-end">10</property>
+    <property name="margin-top">10</property>
+    <property name="margin-bottom">10</property>
+
+    <child>
+      <object class="GtkMediaControls" id="media-controls"/>
+    </child>
+  </template>
+</interface>
