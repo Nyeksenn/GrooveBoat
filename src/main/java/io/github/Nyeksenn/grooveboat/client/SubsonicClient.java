@@ -2,9 +2,10 @@ package io.github.Nyeksenn.grooveboat.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.Nyeksenn.grooveboat.models.Album;
-import io.github.Nyeksenn.grooveboat.models.Index;
-import io.github.Nyeksenn.grooveboat.models.SubsonicResponse;
+import io.github.Nyeksenn.grooveboat.deserializer.Album;
+import io.github.Nyeksenn.grooveboat.deserializer.Artist;
+import io.github.Nyeksenn.grooveboat.deserializer.Index;
+import io.github.Nyeksenn.grooveboat.deserializer.SubsonicResponse;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -210,18 +211,76 @@ public class SubsonicClient implements AutoCloseable {
         }
     }
 
-    public List<Index> getArtists() throws IOException {
+    public List<Album> getAlbumList2() throws IOException {
+        var moreToGo = true;
+        List<Album> albums = new ArrayList<>(200);
+        var offset = 0;
+        var params = new ArrayList<NameValuePair>(2);
+        params.add(new BasicNameValuePair("size", String.valueOf(500)));
+        params.add(new BasicNameValuePair("offset", String.valueOf(offset)));
+        params.add(new BasicNameValuePair("type", "alphabeticalByArtist"));
+
+        while (moreToGo) {
+            var response = executeGetString("getAlbumList2", params);
+            var om = new ObjectMapper();
+            var root = om.readTree(response);
+            var album_fragment = root.path("subsonic-response").path("albumList2").path("album");
+
+            if (album_fragment.isMissingNode()) {
+                moreToGo = false;
+            } else {
+                try {
+                    var x = om.convertValue(album_fragment, new TypeReference<List<Album>>() {
+                    });
+                    albums.addAll(x);
+                } catch (IllegalArgumentException e) {
+                    logger.warn(e.getCause().toString());
+                    return new ArrayList<>();
+                }
+            }
+
+            params.remove(1);
+            offset += 500;
+            params.add(new BasicNameValuePair("offset", String.valueOf(offset)));
+        }
+
+        return albums;
+    }
+
+    public Artist getArtist(String id) throws IOException {
+        var params = new ArrayList<NameValuePair>(1);
+        params.add(new BasicNameValuePair("id", id));
+
+        var response = executeGetString("getArtist", params);
+
+        var om = new ObjectMapper();
+        var root = om.readTree(response);
+        var subsonicResponse = root.path("subsonic-response").path("artist");
+        return om.convertValue(subsonicResponse, Artist.class);
+    }
+
+    public List<Artist> getArtists() throws IOException {
+        var artistList = new ArrayList<Artist>(50);
+
         var response = executeGetString("getArtists", null);
         var om = new ObjectMapper();
         var root = om.readTree(response);
         var index_fragment = root.path("subsonic-response").path("artists").path("index");
+
+        List<Index> indices = new ArrayList<Index>(26);
         try {
-            return om.convertValue(index_fragment, new TypeReference<List<Index>>() {
+            indices = om.convertValue(index_fragment, new TypeReference<List<Index>>() {
             });
         } catch (IllegalArgumentException e) {
             logger.warn(e.getCause().toString());
             return new ArrayList<>();
         }
+
+        for (var index : indices) {
+            artistList.addAll(index.artist());
+        }
+
+        return artistList;
     }
 
     public SubsonicResponse ping() throws IOException {

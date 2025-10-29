@@ -4,17 +4,20 @@ create table album (
   album_id                      varchar(100) not null,
   title                         varchar(100) not null,
   song_count                    integer not null,
-  artist                        varchar(100) not null,
-  album_artist_id               varchar(100) not null,
   release_year                  integer not null,
   duration                      bigint,
   cover_art                     varbinary(100000000),
-  artist_id                     bigint,
   version                       bigint not null,
   when_created                  timestamp not null,
   when_modified                 timestamp not null,
   constraint uq_album_album_id unique (album_id),
   constraint pk_album primary key (id)
+);
+
+create table album_artists (
+  album_id                      bigint not null,
+  artist_id                     bigint not null,
+  constraint pk_album_artists primary key (album_id,artist_id)
 );
 
 create table artist (
@@ -30,6 +33,9 @@ create table artist (
 );
 
 -- foreign keys and indices
-create index ix_album_artist_id on album (artist_id);
-alter table album add constraint fk_album_artist_id foreign key (artist_id) references artist (id) on delete restrict on update restrict;
+create index ix_album_artists_album on album_artists (album_id);
+alter table album_artists add constraint fk_album_artists_album foreign key (album_id) references album (id) on delete restrict on update restrict;
+
+create index ix_album_artists_artist on album_artists (artist_id);
+alter table album_artists add constraint fk_album_artists_artist foreign key (artist_id) references artist (id) on delete restrict on update restrict;
 

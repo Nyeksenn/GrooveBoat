@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -24,15 +25,6 @@ public class AlbumModel extends BaseModel {
     @NotNull
     int songCount;
 
-    @NotNull
-    @Length(100)
-    String artist;
-
-    @NotNull
-    @Length(100)
-    @Column(name = "album_artist_id")
-    String artistId;
-
     int release_year;
 
     Duration duration;
@@ -40,9 +32,9 @@ public class AlbumModel extends BaseModel {
     @Column(length = 100000000)
     byte[] coverArt;
 
-    @ManyToOne
-    @JoinColumn(name = "artist_id")
-    ArtistModel albumArtist;
+    @ManyToMany
+    @JoinTable(name = "album_artists")
+    List<ArtistModel> albumArtists;
 
     public String getAlbumId() {
         return albumId;
@@ -66,22 +58,6 @@ public class AlbumModel extends BaseModel {
 
     public void setSongCount(int songCount) {
         this.songCount = songCount;
-    }
-
-    public String getArtist() {
-        return artist;
-    }
-
-    public void setArtist(String artist) {
-        this.artist = artist;
-    }
-
-    public String getArtistId() {
-        return artistId;
-    }
-
-    public void setArtistId(String artistId) {
-        this.artistId = artistId;
     }
 
     public int getRelease_year() {
@@ -108,35 +84,33 @@ public class AlbumModel extends BaseModel {
         this.coverArt = coverArt;
     }
 
-    public ArtistModel getAlbumArtist() {
-        return albumArtist;
+    public List<ArtistModel> getAlbumArtists() {
+        return albumArtists;
     }
 
-    public void setAlbumArtist(ArtistModel albumArtist) {
-        this.albumArtist = albumArtist;
+    public void setAlbumArtists(List<ArtistModel> albumArtists) {
+        this.albumArtists = albumArtists;
     }
 
-    public AlbumModel(String albumId, String title, int songCount, String artist, String artistId, int release_year, Duration duration, byte[] coverArt, ArtistModel albumArtist) {
+    public AlbumModel(String albumId, String title, int songCount, int release_year, Duration duration, byte[] coverArt, List<ArtistModel> albumArtists) {
         this.albumId = albumId;
         this.title = title;
         this.songCount = songCount;
-        this.artist = artist;
-        this.artistId = artistId;
         this.release_year = release_year;
         this.duration = duration;
         this.coverArt = coverArt;
-        this.albumArtist = albumArtist;
+        this.albumArtists = albumArtists;
     }
 
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         AlbumModel that = (AlbumModel) o;
-        return songCount == that.songCount && release_year == that.release_year && Objects.equals(albumId, that.albumId) && Objects.equals(title, that.title) && Objects.equals(artist, that.artist) && Objects.equals(artistId, that.artistId) && Objects.equals(duration, that.duration) && Arrays.equals(coverArt, that.coverArt) && Objects.equals(albumArtist, that.albumArtist);
+        return getSongCount() == that.getSongCount() && getRelease_year() == that.getRelease_year() && Objects.equals(getAlbumId(), that.getAlbumId()) && Objects.equals(getTitle(), that.getTitle()) && Objects.equals(getDuration(), that.getDuration()) && Arrays.equals(getCoverArt(), that.getCoverArt()) && Objects.equals(getAlbumArtists(), that.getAlbumArtists());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(albumId, title, songCount, artist, artistId, release_year, duration, Arrays.hashCode(coverArt), albumArtist);
+        return Objects.hash(getAlbumId(), getTitle(), getSongCount(), getRelease_year(), getDuration(), Arrays.hashCode(getCoverArt()), getAlbumArtists());
     }
 }

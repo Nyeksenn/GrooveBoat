@@ -67,7 +67,7 @@ public class AlbumListView extends Box {
                     } catch (GErrorException e) {
                         logger.warn("Couldn't load texture");
                     }
-                    var albumListItem = new AlbumListItem(texture, album.getTitle(), album.getArtist(), album.getAlbumId());
+                    var albumListItem = new AlbumListItem(texture, album.getTitle(), album.getAlbumArtists().getFirst().getName(), album.getAlbumId());
                     GLib.idleAddOnce(() -> {
                         this.store.append(albumListItem);
                     });

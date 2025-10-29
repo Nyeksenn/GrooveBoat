@@ -1,4 +1,4 @@
-package io.github.Nyeksenn.grooveboat.models;
+package io.github.Nyeksenn.grooveboat.deserializer;
 
 import java.util.List;
 
