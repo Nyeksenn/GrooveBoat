@@ -49,6 +49,7 @@ public class AlbumListView extends Box {
         var album = (AlbumListItem) listItem.getItem();
         albumCard.albumPicture.setFromPaintable(album.getPictureData());
         albumCard.albumName.setText(album.getAlbumName());
+        albumCard.albumArtist.setText(album.getAlbumArtist());
     }
 
     public void initClient() {
@@ -67,7 +68,7 @@ public class AlbumListView extends Box {
                     } catch (GErrorException e) {
                         logger.warn("Couldn't load texture");
                     }
-                    var albumListItem = new AlbumListItem(texture, album.getTitle(), album.getAlbumArtists().getFirst().getName(), album.getAlbumId());
+                    var albumListItem = new AlbumListItem(texture, album.getTitle(), album.getDisplayArtist(), album.getAlbumId());
                     GLib.idleAddOnce(() -> {
                         this.store.append(albumListItem);
                     });

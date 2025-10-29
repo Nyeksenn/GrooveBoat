@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <template class="AlbumCard" parent="GtkBox">
-      <property name="orientation">1</property>
+    <property name="orientation">1</property>
+    <property name="margin-start">10</property>
+    <property name="margin-end">10</property>
+    <property name="margin-top">10</property>
+    <property name="margin-bottom">10</property>
     <child>
       <object class="GtkImage" id="album-picture">
           <property name="pixel-size">200</property>
@@ -9,6 +13,11 @@
     </child>
     <child>
       <object class="GtkLabel" id="album-name">
+        <property name="wrap">true</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkLabel" id="album-artist">
         <property name="wrap">true</property>
       </object>
     </child>

@@ -6,7 +6,8 @@
     <file compressed="true" alias="headerbar-menu.ui" preprocess="xml-stripblanks">templates/headerbar-menu.ui</file>
     <file compressed="true" alias="prefs.ui" preprocess="xml-stripblanks">templates/prefs.ui</file>
     <file compressed="true" alias="album-list.ui" preprocess="xml-stripblanks">templates/album-list.ui</file>
-      <file compressed="true" alias="album-card.ui" preprocess="xml-stripblanks">templates/album-card.ui</file>
+    <file compressed="true" alias="album-card.ui" preprocess="xml-stripblanks">templates/album-card.ui</file>
+    <file compressed="true" alias="styles.css">css/styles.css</file>
   </gresource>
   <gresource prefix="/io/github/Nyeksenn/grooveboat/icons/scalable/actions/">
     <file alias="interlinked-rectangles-symbolic.svg" preprocess="xml-stripblanks">icons/interlinked-rectangles-symbolic.svg</file>

@@ -14,6 +14,9 @@ public class AlbumCard extends Box {
     @GtkChild(name = "album-name")
     public Label albumName;
 
+    @GtkChild(name = "album-artist")
+    public Label albumArtist;
+
     public AlbumCard() {
     }
 }

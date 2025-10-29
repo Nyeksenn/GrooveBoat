@@ -8,6 +8,8 @@ import org.gnome.gio.ApplicationFlags;
 import org.gnome.gio.Settings;
 import org.gnome.gio.SimpleAction;
 import org.gnome.glib.Variant;
+import org.gnome.gtk.CssProvider;
+import org.gnome.gtk.Gtk;
 import org.gnome.gtk.IconTheme;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,8 +29,17 @@ public class GrooveboatApp extends Application {
 
         this.executor = Executors.newFixedThreadPool(4);
 
-        var theme = IconTheme.getForDisplay(Display.getDefault());
+        var display = Display.getDefault();
+
+        // Setup Icons
+        var theme = IconTheme.getForDisplay(display);
         theme.addResourcePath("/io/github/Nyeksenn/grooveboat/icons/");
+
+        // Setup Styles
+
+        var cssProvider = new CssProvider();
+        cssProvider.loadFromResource("/io/github/Nyeksenn/grooveboat/styles.css");
+        Gtk.styleContextAddProviderForDisplay(display, cssProvider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
 
         // Setup Client on Startup
         var username = settings.getString("username");

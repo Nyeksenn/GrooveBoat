@@ -88,6 +88,20 @@ public class AlbumModel extends BaseModel {
         return albumArtists;
     }
 
+    public String getDisplayArtist() {
+        var sb = new StringBuilder();
+        var artists = getAlbumArtists();
+        var numArtists = artists.size();
+        for (int i = 0; i < numArtists; i++) {
+            sb.append(artists.get(i).getName());
+            if (!(i == (numArtists - 1))) {
+                sb.append("; ");
+            }
+        }
+
+        return sb.toString();
+    }
+
     public void setAlbumArtists(List<ArtistModel> albumArtists) {
         this.albumArtists = albumArtists;
     }
