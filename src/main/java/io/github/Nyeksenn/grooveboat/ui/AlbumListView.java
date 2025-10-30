@@ -52,8 +52,8 @@ public class AlbumListView extends Box {
 
         var album = (AlbumListItem) listItem.getItem();
         albumCard.albumPicture.setFromPaintable(album.getPictureData());
-        albumCard.albumName.setText(album.getAlbumName());
-        albumCard.albumArtist.setText(album.getAlbumArtist());
+        albumCard.albumName.setLabel(album.getAlbumName());
+        albumCard.albumArtist.setLabel(album.getAlbumArtist());
         albumCard.navView = albumNavView;
     }
 
