@@ -1,12 +1,12 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
-import io.github.jwharm.javagi.gobject.annotations.InstanceInit;
-import io.github.jwharm.javagi.gtk.annotations.GtkChild;
-import io.github.jwharm.javagi.gtk.annotations.GtkTemplate;
 import org.gnome.adw.EntryRow;
 import org.gnome.adw.PreferencesDialog;
 import org.gnome.gio.Settings;
 import org.gnome.gio.SettingsBindFlags;
+import org.javagi.gobject.annotations.InstanceInit;
+import org.javagi.gtk.annotations.GtkChild;
+import org.javagi.gtk.annotations.GtkTemplate;
 
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/prefs.ui", name = "GrooveboatPrefs")
 public class GrooveboatPrefs extends PreferencesDialog {

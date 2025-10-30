@@ -1,36 +1,29 @@
 package io.github.Nyeksenn.grooveboat.gobjects;
 
+import io.github.Nyeksenn.grooveboat.audio.AppPipeline;
+import io.github.Nyeksenn.grooveboat.audio.SongStreamer;
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
-import io.github.jwharm.javagi.gobject.annotations.InstanceInit;
-import io.github.jwharm.javagi.gobject.annotations.Property;
 import org.gnome.gtk.MediaStream;
+import org.javagi.gobject.annotations.InstanceInit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayDeque;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class MediaSubsonic extends MediaStream {
     private static final Logger logger = LoggerFactory.getLogger(MediaSubsonic.class);
 
-    private Subsonic subsonic;
-    private String songId;
+    private final Subsonic subsonic;
+    private final String songId;
+    private final long duration;
+    private final AppPipeline pipeline;
+    private ExecutorService executor;
+    private SongStreamer currentStreamer;
 
-
-    @Property(skip = true)
-    public Subsonic getSubsonic() {
-        return subsonic;
-    }
-
-    @Property(skip = true)
-    public void setSubsonic(Subsonic subsonic) {
-        this.subsonic = subsonic;
-    }
-
-    public String getSongId() {
-        return songId;
-    }
-
-    public void setSongId(String songId) {
-        this.songId = songId;
-    }
+    private ArrayDeque<Future<?>> futures;
 
     // These are real methods
 
@@ -51,19 +44,33 @@ public class MediaSubsonic extends MediaStream {
         logger.info("Seek was called with timestamp: {}", timestamp);
     }
 
+    @Override
+    public void streamPrepared(boolean hasAudio, boolean hasVideo, boolean seekable, long duration) {
+        this.currentStreamer = new SongStreamer(this.pipeline.appsrc, this.songId, this.subsonic);
+        var future = executor.submit(this.currentStreamer);
+        futures.add(future);
 
-    public MediaSubsonic() {
+        asParent().streamPrepared(hasAudio, hasVideo, seekable, duration);
+    }
+
+    @Override
+    public void streamUnprepared() {
+        this.currentStreamer.setShouldStop(true);
+        asParent().streamUnprepared();
     }
 
     @InstanceInit
     public void init() {
-        this.streamPrepared(true, false, true, 1000);
+        this.futures = new ArrayDeque<>();
+        this.executor = Executors.newSingleThreadExecutor();
+        this.streamPrepared(true, false, false, this.duration);
         this.updateAudio(false, 100);
-        this.update(50);
     }
 
-    public MediaSubsonic(String songId, Subsonic subsonic) {
+    public MediaSubsonic(String songId, long duration, Subsonic subsonic, AppPipeline pipeline) {
         this.songId = songId;
         this.subsonic = subsonic;
+        this.pipeline = pipeline;
+        this.duration = duration;
     }
 }

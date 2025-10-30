@@ -1,9 +1,10 @@
-package io.github.Nyeksenn.grooveboat;
+package io.github.Nyeksenn.grooveboat.audio;
 
-import io.github.jwharm.javagi.base.Out;
+import org.freedesktop.gstreamer.app.AppSrc;
+import org.freedesktop.gstreamer.app.AppStreamType;
 import org.freedesktop.gstreamer.gst.*;
 import org.gnome.glib.GError;
-import org.gnome.glib.MainLoop;
+import org.javagi.base.Out;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,17 +13,19 @@ import java.util.stream.Stream;
 
 public class AppPipeline {
     private static final Logger logger = LoggerFactory.getLogger(AppPipeline.class);
-    private MainLoop loop;
     private Pipeline pipeline;
     private Bus bus;
     private int busWatchId;
-    public Element appsrc;
+    public AppSrc appsrc;
     public Element audioconvert;
+    public Element decodebin;
+    public Element audioresample;
+    public Element autoaudiosink;
 
     private boolean busCall(Bus bus, Message msg) {
         if (msg.readType().contains(MessageType.EOS)) {
             logger.info("End of Stream");
-            loop.quit();
+            pipeline.setState(State.NULL);
         } else if (msg.readType().contains(MessageType.ERROR)) {
             Out<GError> error = new Out<>();
             Out<String> debug = new Out<>();
@@ -30,7 +33,7 @@ public class AppPipeline {
 
             logger.warn("Error: {}", error.get().readMessage());
 
-            loop.quit();
+            pipeline.setState(State.NULL);
         }
 
         return true;
@@ -46,20 +49,19 @@ public class AppPipeline {
         }
     }
 
-    public void run() {
-        loop.run();
-    }
-
     public AppPipeline() {
-        Gst.init(new Out<>());
-        loop = new MainLoop(null, false);
-
+        Gst.init(null);
         pipeline = new Pipeline("grooveboat-player");
-        appsrc = ElementFactory.make("appsrc", "app-source");
-        var decodebin = ElementFactory.make("decodebin", "decoder");
+        appsrc = new AppSrc();
+        appsrc.setName("appsrc");
+        appsrc.setStreamType(AppStreamType.STREAM);
+        appsrc.setMaxBuffers(100);
+        appsrc.setLive(false);
+        appsrc.setProperty("block", true);
+        decodebin = ElementFactory.make("decodebin", "decoder");
         audioconvert = ElementFactory.make("audioconvert", "converter");
-        var audioresample = ElementFactory.make("audioresample", "resample");
-        var autoaudiosink = ElementFactory.make("autoaudiosink", "sink");
+        audioresample = ElementFactory.make("audioresample", "resample");
+        autoaudiosink = ElementFactory.make("autoaudiosink", "sink");
 
         if (Stream.of(appsrc, decodebin, audioconvert, audioresample, autoaudiosink).anyMatch(Objects::isNull)) {
             logger.warn("Couldn't create a gstreamer elmenet");

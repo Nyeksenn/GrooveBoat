@@ -2,12 +2,6 @@ package io.github.Nyeksenn.grooveboat.ui;
 
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import io.github.Nyeksenn.grooveboat.gobjects.AlbumListItem;
-import io.github.jwharm.javagi.base.GErrorException;
-import io.github.jwharm.javagi.gobject.annotations.InstanceInit;
-import io.github.jwharm.javagi.gobject.annotations.RegisteredType;
-import io.github.jwharm.javagi.gtk.annotations.GtkCallback;
-import io.github.jwharm.javagi.gtk.annotations.GtkChild;
-import io.github.jwharm.javagi.gtk.annotations.GtkTemplate;
 import org.gnome.gdk.MemoryTexture;
 import org.gnome.gdk.Texture;
 import org.gnome.gio.ListStore;
@@ -17,6 +11,12 @@ import org.gnome.gtk.Box;
 import org.gnome.gtk.GridView;
 import org.gnome.gtk.ListItem;
 import org.gnome.gtk.NoSelection;
+import org.javagi.base.GErrorException;
+import org.javagi.gobject.annotations.InstanceInit;
+import org.javagi.gobject.annotations.RegisteredType;
+import org.javagi.gtk.annotations.GtkCallback;
+import org.javagi.gtk.annotations.GtkChild;
+import org.javagi.gtk.annotations.GtkTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -6,10 +6,10 @@ import io.github.Nyeksenn.grooveboat.ui.AlbumListView;
 import io.github.Nyeksenn.grooveboat.ui.GrooveboatApp;
 import io.github.Nyeksenn.grooveboat.ui.MusicChooser;
 import io.github.Nyeksenn.grooveboat.ui.MusicPlayer;
-import io.github.jwharm.javagi.base.GErrorException;
-import io.github.jwharm.javagi.gtk.types.TemplateTypes;
 import org.gnome.gio.Resource;
 import org.gnome.glib.GLib;
+import org.javagi.base.GErrorException;
+import org.javagi.gtk.types.TemplateTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,13 +37,18 @@ public class Main {
         cfg.setDefaultServer(true);
         DatabaseFactory.create(cfg);
 
-        var resource = Resource.load(
-                "src/main/resources/grooveboat.gresource");
-        resource.resourcesRegister();
-        TemplateTypes.register(MusicChooser.class);
-        TemplateTypes.register(AlbumListView.class);
-        TemplateTypes.register(MusicPlayer.class);
+        try {
+            var resource = Resource.load(
+                    "src/main/resources/grooveboat.gresource");
+            resource.resourcesRegister();
+            TemplateTypes.register(MusicChooser.class);
+            TemplateTypes.register(AlbumListView.class);
+            TemplateTypes.register(MusicPlayer.class);
 
-        new GrooveboatApp().run(args);
+            new GrooveboatApp().run(args);
+        } catch (GErrorException e) {
+            logger.error("Couldn't load resources. Exiting");
+            return;
+        }
     }
 }

@@ -27,7 +27,7 @@ public class GrooveboatApp extends Application {
     public void activate() {
         Settings settings = new Settings("io.github.Nyeksenn.groovebox");
 
-        this.executor = Executors.newFixedThreadPool(4);
+        this.executor = Executors.newFixedThreadPool(5);
 
         var display = Display.getDefault();
 

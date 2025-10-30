@@ -1,9 +1,5 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
-import io.github.jwharm.javagi.gobject.annotations.InstanceInit;
-import io.github.jwharm.javagi.gobject.annotations.RegisteredType;
-import io.github.jwharm.javagi.gtk.annotations.GtkChild;
-import io.github.jwharm.javagi.gtk.annotations.GtkTemplate;
 import org.gnome.adw.HeaderBar;
 import org.gnome.adw.NavigationPage;
 import org.gnome.adw.ViewSwitcher;
@@ -11,6 +7,10 @@ import org.gnome.adw.ViewSwitcherBar;
 import org.gnome.gio.MenuModel;
 import org.gnome.gtk.GtkBuilder;
 import org.gnome.gtk.MenuButton;
+import org.javagi.gobject.annotations.InstanceInit;
+import org.javagi.gobject.annotations.RegisteredType;
+import org.javagi.gtk.annotations.GtkChild;
+import org.javagi.gtk.annotations.GtkTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

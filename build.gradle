@@ -8,9 +8,12 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.github.jwharm.javagi:gtk:0.12.2'
-    implementation 'io.github.jwharm.javagi:adw:0.12.2'
-    implementation 'io.github.jwharm.javagi:gst:0.12.2'
+    implementation 'io.github.jwharm.cairobindings:cairo:1.18.4.2'
+    implementation files('libs/gstreamer-0.13.0-RC1.jar')
+    implementation files('libs/adw-0.13.0-RC1.jar')
+    implementation files('libs/gtk-0.13.0-RC1.jar')
+    implementation files('libs/glib-0.13.0-RC1.jar')
+    implementation files('libs/pango-0.13.0-RC1.jar')
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.20.0'
     implementation 'org.apache.httpcomponents.client5:httpclient5:5.5.1'
     implementation 'io.ebean:ebean:17.1.1'
