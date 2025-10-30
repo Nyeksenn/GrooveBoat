@@ -8,6 +8,7 @@
     <file compressed="true" alias="album-list.ui" preprocess="xml-stripblanks">templates/album-list.ui</file>
     <file compressed="true" alias="album-card.ui" preprocess="xml-stripblanks">templates/album-card.ui</file>
     <file compressed="true" alias="music-player.ui" preprocess="xml-stripblanks">templates/music-player.ui</file>
+    <file compressed="true" alias="song-list.ui" preprocess="xml-stripblanks">templates/song-list.ui</file>
 
     <file compressed="true" alias="styles.css">css/styles.css</file>
   </gresource>

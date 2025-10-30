@@ -2,6 +2,7 @@ package io.github.Nyeksenn.grooveboat.ui;
 
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import io.github.Nyeksenn.grooveboat.gobjects.AlbumListItem;
+import org.gnome.adw.NavigationView;
 import org.gnome.gdk.MemoryTexture;
 import org.gnome.gdk.Texture;
 import org.gnome.gio.ListStore;
@@ -34,6 +35,9 @@ public class AlbumListView extends Box {
     @GtkChild(name = "album-grid-view")
     public GridView gridView;
 
+    @GtkChild(name = "album-nav-view")
+    public NavigationView albumNavView;
+
     @GtkCallback(name = "album-grid-setup")
     public void albumGridSetup(GObject object) {
         var listItem = (ListItem) object;
@@ -50,12 +54,14 @@ public class AlbumListView extends Box {
         albumCard.albumPicture.setFromPaintable(album.getPictureData());
         albumCard.albumName.setText(album.getAlbumName());
         albumCard.albumArtist.setText(album.getAlbumArtist());
+        albumCard.navView = albumNavView;
     }
 
     public void initClient() {
         if (this.subsonic == null && this.executor == null) {
             var window = (GrooveboatWindow) getRoot();
             var app = (GrooveboatApp) window.getApplication();
+
             this.subsonic = app.subsonic;
             this.executor = app.executor;
 

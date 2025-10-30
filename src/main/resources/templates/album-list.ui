@@ -21,23 +21,32 @@
           <object class="GtkStackPage" id="stackpage-albums">
             <property name="name">albums-found</property>
             <property name="child">
-              <object class="GtkScrolledWindow">
-                <property name="hscrollbar-policy">GTK_POLICY_NEVER</property>
+              <object class="AdwNavigationView" id="album-nav-view">
                 <child>
-                  <object class="AdwClampScrollable">
-                    <property name="maximum-size">1600</property>
+                  <object class="AdwNavigationPage">
+                    <property name="title" translatable="yes">Page 1</property>
                     <property name="child">
-                      <object class="GtkGridView" id="album-grid-view">
-                        <property name="orientation">1</property>
-                        <property name="factory">
-                          <object class="GtkSignalListItemFactory">
-                            <signal name="setup" handler="album-grid-setup"/>
-                            <signal name="bind" handler="album-grid-bind"/>
+                      <object class="GtkScrolledWindow">
+                        <property name="hscrollbar-policy">GTK_POLICY_NEVER</property>
+                        <child>
+                          <object class="AdwClampScrollable">
+                            <property name="maximum-size">1600</property>
+                            <property name="child">
+                              <object class="GtkGridView" id="album-grid-view">
+                                <property name="orientation">1</property>
+                                <property name="factory">
+                                  <object class="GtkSignalListItemFactory">
+                                    <signal name="setup" handler="album-grid-setup"/>
+                                    <signal name="bind" handler="album-grid-bind"/>
+                                  </object>
+                                </property>
+                                <style>
+                                  <class name="transparent-background"/>
+                                </style>
+                              </object>
+                            </property>
                           </object>
-                        </property>
-                        <style>
-                          <class name="transparent-background"/>
-                        </style>
+                        </child>
                       </object>
                     </property>
                   </object>

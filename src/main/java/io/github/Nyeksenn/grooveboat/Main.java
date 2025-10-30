@@ -2,10 +2,7 @@ package io.github.Nyeksenn.grooveboat;
 
 import io.ebean.DatabaseFactory;
 import io.ebean.config.DatabaseConfig;
-import io.github.Nyeksenn.grooveboat.ui.AlbumListView;
-import io.github.Nyeksenn.grooveboat.ui.GrooveboatApp;
-import io.github.Nyeksenn.grooveboat.ui.MusicChooser;
-import io.github.Nyeksenn.grooveboat.ui.MusicPlayer;
+import io.github.Nyeksenn.grooveboat.ui.*;
 import org.gnome.gio.Resource;
 import org.gnome.glib.GLib;
 import org.javagi.base.GErrorException;
@@ -44,7 +41,7 @@ public class Main {
             TemplateTypes.register(MusicChooser.class);
             TemplateTypes.register(AlbumListView.class);
             TemplateTypes.register(MusicPlayer.class);
-
+            TemplateTypes.register(SongListPage.class);
             new GrooveboatApp().run(args);
         } catch (GErrorException e) {
             logger.error("Couldn't load resources. Exiting");

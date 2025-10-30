@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="SongListPage" parent="AdwNavigationPage">
+    <property name="title" translatable="yes">Page 2</property>
+    <property name="tag">album-song-list</property>
+    <property name="child">
+      <object class="GtkBox">
+        <property name="valign">start</property>
+        <child>
+          <object class="GtkButton">
+            <property name="valign">start</property>
+            <property name="has-frame">false</property>
+            <property name="child">
+              <object class="AdwButtonContent">
+                <property name="icon-name">go-previous-symbolic</property>
+              </object>
+            </property>
+            <property name="action-name">navigation.pop</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel" id="album-page-label">
+            <property name="hexpand">true</property>
+          </object>
+        </child>
+      </object>
+    </property>
+  </template>
+</interface>

@@ -21,5 +21,10 @@
         <property name="wrap">true</property>
       </object>
     </child>
+    <child>
+      <object class="GtkGestureClick" id="album-click">
+        <signal name="pressed" handler="album-clicked"/>
+      </object>
+    </child>
   </template>
 </interface>

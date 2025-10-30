@@ -62,9 +62,8 @@ public class MusicPlayer extends Box {
     }
 
     public void destroy() {
-        logger.warn("Destroy called");
+        logger.info("Closing Music Player");
         this.subsonicStream.close();
         this.mediaControls.setMediaStream(null);
-        this.executor.shutdown();
     }
 }
