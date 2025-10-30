@@ -10,6 +10,7 @@ import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
@@ -290,6 +291,19 @@ public class SubsonicClient implements AutoCloseable {
         var root = om.readTree(response);
         var subsonicResponse = root.path("subsonic-response");
         return om.convertValue(subsonicResponse, SubsonicResponse.class);
+    }
+
+    public ClassicHttpResponse stream(String songId) throws IOException {
+        var params = new ArrayList<NameValuePair>(1);
+        params.add(new BasicNameValuePair("id", songId));
+
+        try {
+            URI uri = getUri("stream", params);
+
+            return this.httpClient.executeOpen(null, new HttpGet(uri), null);
+        } catch (URISyntaxException e) {
+            throw new IOException("Invalid URI: " + e.getMessage(), e);
+        }
     }
 
     public void close() throws IOException {

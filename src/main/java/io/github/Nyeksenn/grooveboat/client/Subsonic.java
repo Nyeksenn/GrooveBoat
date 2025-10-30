@@ -7,11 +7,11 @@ import io.github.Nyeksenn.grooveboat.entities.AlbumModel;
 import io.github.Nyeksenn.grooveboat.entities.ArtistModel;
 import io.github.Nyeksenn.grooveboat.entities.query.QAlbumModel;
 import io.github.Nyeksenn.grooveboat.entities.query.QArtistModel;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -154,9 +154,13 @@ public class Subsonic implements AutoCloseable {
         return new QAlbumModel().findList();
     }
 
-    public InputStream getSongStream(String songId) {
-
-        return null;
+    public ClassicHttpResponse getSongStream(String songId) {
+        try {
+            return this.client.stream(songId);
+        } catch (IOException e) {
+            logger.warn("Couldn't get stream for song {}", songId);
+            return null;
+        }
     }
 
     public Subsonic(SubsonicClient client) {

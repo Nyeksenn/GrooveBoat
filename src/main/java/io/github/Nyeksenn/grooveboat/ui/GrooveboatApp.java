@@ -80,6 +80,7 @@ public class GrooveboatApp extends Application {
 
     @Override
     protected void shutdown() {
+        super.shutdown();
         try {
             subsonic.close();
         } catch (Exception e) {

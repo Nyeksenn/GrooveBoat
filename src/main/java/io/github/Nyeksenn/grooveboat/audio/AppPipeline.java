@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 
 public class AppPipeline {
     private static final Logger logger = LoggerFactory.getLogger(AppPipeline.class);
-    private Pipeline pipeline;
+    public Pipeline pipeline;
     private Bus bus;
     private int busWatchId;
     public AppSrc appsrc;
@@ -57,7 +57,7 @@ public class AppPipeline {
         appsrc.setStreamType(AppStreamType.STREAM);
         appsrc.setMaxBuffers(100);
         appsrc.setLive(false);
-        appsrc.setProperty("block", true);
+        appsrc.setProperty("block", false);
         decodebin = ElementFactory.make("decodebin", "decoder");
         audioconvert = ElementFactory.make("audioconvert", "converter");
         audioresample = ElementFactory.make("audioresample", "resample");

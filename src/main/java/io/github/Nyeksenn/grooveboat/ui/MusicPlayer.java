@@ -25,6 +25,8 @@ public class MusicPlayer extends Box {
 
     private Subsonic subsonic;
 
+    private MediaSubsonic subsonicStream;
+
     private ExecutorService executor;
 
     private AppPipeline pipeline;
@@ -39,17 +41,17 @@ public class MusicPlayer extends Box {
             this.pipeline = new AppPipeline();
 
             this.subsonic = app.subsonic;
-            var subsonicStream = new MediaSubsonic("5803cc5962db50805941225a2920dd1f", subsonic, pipeline);
+            subsonicStream = new MediaSubsonic("5803cc5962db50805941225a2920dd1f", 194, subsonic, pipeline, executor);
             this.mediaControls.setMediaStream(subsonicStream);
 
-            pipeline.appsrc.setMaxBuffers(20);
-            logger.warn("Max buffers: {}", this.pipeline.appsrc.getMaxBuffers());
+            subsonicStream.prepare();
         }
     }
 
     @InstanceInit
     public void init() {
         this.onRealize(this::initClient);
+        this.onUnrealize(this::destroy);
     }
 
     public MusicPlayer() {
@@ -57,5 +59,12 @@ public class MusicPlayer extends Box {
 
     public MusicPlayer(MemorySegment address) {
         super(address);
+    }
+
+    public void destroy() {
+        logger.warn("Destroy called");
+        this.subsonicStream.close();
+        this.mediaControls.setMediaStream(null);
+        this.executor.shutdown();
     }
 }
