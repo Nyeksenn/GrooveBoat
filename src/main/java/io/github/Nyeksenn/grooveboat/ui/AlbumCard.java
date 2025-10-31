@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/album-card.ui", name = "AlbumCard")
 public class AlbumCard extends Box {
     private static final Logger logger = LoggerFactory.getLogger(AlbumCard.class);
+    private String albumId;
 
     private GrooveboatWindow win;
 
@@ -29,7 +30,11 @@ public class AlbumCard extends Box {
 
     @GtkCallback(name = "album-clicked")
     public void albumClicked(int n_press, double x, double y) {
-        navView.push(new SongListPage(albumName.getText()));
+        navView.push(new SongListPage(albumName.getLabel(), albumId));
+    }
+
+    public void setAlbumId(String albumId) {
+        this.albumId = albumId;
     }
 
     public AlbumCard() {

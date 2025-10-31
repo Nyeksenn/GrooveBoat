@@ -2,10 +2,7 @@ package io.github.Nyeksenn.grooveboat.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.Nyeksenn.grooveboat.deserializer.Album;
-import io.github.Nyeksenn.grooveboat.deserializer.Artist;
-import io.github.Nyeksenn.grooveboat.deserializer.Index;
-import io.github.Nyeksenn.grooveboat.deserializer.SubsonicResponse;
+import io.github.Nyeksenn.grooveboat.deserializer.*;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -268,7 +265,7 @@ public class SubsonicClient implements AutoCloseable {
         var root = om.readTree(response);
         var index_fragment = root.path("subsonic-response").path("artists").path("index");
 
-        List<Index> indices = new ArrayList<Index>(26);
+        List<Index> indices;
         try {
             indices = om.convertValue(index_fragment, new TypeReference<List<Index>>() {
             });
@@ -282,6 +279,25 @@ public class SubsonicClient implements AutoCloseable {
         }
 
         return artistList;
+    }
+
+    public List<Song> getSongsByAlbum(String albumId) throws IOException {
+        var songList = new ArrayList<Song>(20);
+        var params = new ArrayList<NameValuePair>(1);
+        params.add(new BasicNameValuePair("id", albumId));
+
+        var response = executeGetString("getMusicDirectory", params);
+
+        var om = new ObjectMapper();
+        var root = om.readTree(response);
+        var child_fragment = root.path("subsonic-response").path("directory").path("child");
+        try {
+            return om.convertValue(child_fragment, new TypeReference<List<Song>>() {
+            });
+        } catch (IllegalArgumentException e) {
+            logger.warn(e.getCause().toString());
+            return new ArrayList<>();
+        }
     }
 
     public SubsonicResponse ping() throws IOException {

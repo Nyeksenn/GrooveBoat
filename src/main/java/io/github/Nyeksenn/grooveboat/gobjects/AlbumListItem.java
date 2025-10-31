@@ -7,7 +7,7 @@ public class AlbumListItem extends GObject {
     private final Texture pictureData;
     private final String albumName;
     private final String albumArtist;
-    private final String id;
+    private final String albumId;
 
     public Texture getPictureData() {
         return pictureData;
@@ -21,14 +21,14 @@ public class AlbumListItem extends GObject {
         return albumArtist;
     }
 
-    public String getId() {
-        return id;
+    public String getAlbumId() {
+        return albumId;
     }
 
     public AlbumListItem(Texture pictureData, String albumName, String albumArtist, String id) {
         this.pictureData = pictureData;
         this.albumName = albumName;
         this.albumArtist = albumArtist;
-        this.id = id;
+        this.albumId = id;
     }
 }

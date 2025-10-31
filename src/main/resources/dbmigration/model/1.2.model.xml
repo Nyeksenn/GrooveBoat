@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<migration xmlns="http://ebean-orm.github.io/xml/ns/dbmigration">
+    <changeSet type="apply">
+        <addColumn tableName="song">
+            <column name="album_id" type="bigint" references="album.id" foreignKeyName="fk_song_album_id" foreignKeyIndex="ix_song_album_id"/>
+        </addColumn>
+    </changeSet>
+</migration>

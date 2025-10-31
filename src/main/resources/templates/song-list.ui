@@ -5,22 +5,52 @@
     <property name="tag">album-song-list</property>
     <property name="child">
       <object class="GtkBox">
-        <property name="valign">start</property>
+        <property name="orientation">vertical</property>
         <child>
-          <object class="GtkButton">
+          <object class="GtkBox">
             <property name="valign">start</property>
-            <property name="has-frame">false</property>
-            <property name="child">
-              <object class="AdwButtonContent">
-                <property name="icon-name">go-previous-symbolic</property>
+            <child>
+              <object class="GtkButton">
+                <property name="valign">start</property>
+                <property name="has-frame">false</property>
+                <property name="child">
+                  <object class="AdwButtonContent">
+                    <property name="icon-name">go-previous-symbolic</property>
+                  </object>
+                </property>
+                <property name="action-name">navigation.pop</property>
               </object>
-            </property>
-            <property name="action-name">navigation.pop</property>
+            </child>
+            <child>
+              <object class="GtkLabel" id="album-page-label">
+                <property name="hexpand">true</property>
+              </object>
+            </child>
           </object>
         </child>
         <child>
-          <object class="GtkLabel" id="album-page-label">
-            <property name="hexpand">true</property>
+          <object class="GtkScrolledWindow">
+            <property name="hscrollbar-policy">GTK_POLICY_NEVER</property>
+            <child>
+              <object class="AdwClampScrollable">
+                <property name="maximum-size">400</property>
+                <property name="tightening-threshold">300</property>
+                <property name="child">
+                  <object class="GtkListView" id="song-list-view">
+                    <property name="orientation">1</property>
+                    <property name="factory">
+                      <object class="GtkSignalListItemFactory">
+                        <signal name="setup" handler="song-list-setup"/>
+                        <signal name="bind" handler="song-list-bind"/>
+                      </object>
+                    </property>
+                    <style>
+                      <class name="transparent-background"/>
+                    </style>
+                  </object>
+                </property>
+              </object>
+            </child>
           </object>
         </child>
       </object>

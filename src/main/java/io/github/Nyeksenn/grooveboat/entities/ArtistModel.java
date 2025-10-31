@@ -30,6 +30,9 @@ public class ArtistModel extends BaseModel {
     @ManyToMany(mappedBy = "albumArtists")
     Set<AlbumModel> albums;
 
+    @ManyToMany(mappedBy = "songArtists")
+    Set<SongModel> songs;
+
     public String getArtistId() {
         return artistId;
     }
@@ -58,6 +61,9 @@ public class ArtistModel extends BaseModel {
         return albums;
     }
 
+    public Set<SongModel> getSongs() {
+        return songs;
+    }
 
     public ArtistModel(String artistId, String name, byte[] image) {
         this.artistId = artistId;

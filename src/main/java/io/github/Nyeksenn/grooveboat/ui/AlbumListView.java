@@ -46,11 +46,12 @@ public class AlbumListView extends Box {
     public void albumGridBind(GObject object) {
         var listItem = (ListItem) object;
         var albumCard = (AlbumCard) listItem.getChild();
-
         var album = (AlbumListItem) listItem.getItem();
+
         albumCard.albumPicture.setFromPaintable(album.getPictureData());
         albumCard.albumName.setLabel(album.getAlbumName());
         albumCard.albumArtist.setLabel(album.getAlbumArtist());
+        albumCard.setAlbumId(album.getAlbumId());
         albumCard.navView = albumNavView;
     }
 

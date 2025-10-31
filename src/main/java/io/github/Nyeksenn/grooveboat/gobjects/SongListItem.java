@@ -3,11 +3,13 @@ package io.github.Nyeksenn.grooveboat.gobjects;
 import org.gnome.gdk.Texture;
 import org.gnome.gobject.GObject;
 
+import java.time.Duration;
+
 public class SongListItem extends GObject {
     private final String songName;
     private final String artistName;
     private final String albumTitle;
-    private final long duration;
+    private final Duration duration;
     private final Texture coverArt;
 
     public String getSongName() {
@@ -22,7 +24,7 @@ public class SongListItem extends GObject {
         return albumTitle;
     }
 
-    public long getDuration() {
+    public Duration getDuration() {
         return duration;
     }
 
@@ -30,7 +32,7 @@ public class SongListItem extends GObject {
         return coverArt;
     }
 
-    public SongListItem(String songName, String artistName, String albumTitle, long duration, Texture coverArt) {
+    public SongListItem(String songName, String artistName, String albumTitle, Duration duration, Texture coverArt) {
         this.songName = songName;
         this.artistName = artistName;
         this.albumTitle = albumTitle;

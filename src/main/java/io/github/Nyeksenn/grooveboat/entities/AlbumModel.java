@@ -36,6 +36,9 @@ public class AlbumModel extends BaseModel {
     @JoinTable(name = "album_artists")
     List<ArtistModel> albumArtists;
 
+    @OneToMany(mappedBy = "album")
+    List<SongModel> songs;
+
     public String getAlbumId() {
         return albumId;
     }
@@ -86,6 +89,10 @@ public class AlbumModel extends BaseModel {
 
     public List<ArtistModel> getAlbumArtists() {
         return albumArtists;
+    }
+
+    public List<SongModel> getSongs() {
+        return songs;
     }
 
     public String getDisplayArtist() {
