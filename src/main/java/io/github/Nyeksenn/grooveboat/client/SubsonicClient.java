@@ -1,7 +1,5 @@
 package io.github.Nyeksenn.grooveboat.client;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.Nyeksenn.grooveboat.deserializer.*;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -14,6 +12,13 @@ import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.apache.hc.core5.net.URIBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectReader;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.module.blackbird.BlackbirdModule;
 
 import java.io.IOException;
 import java.net.URI;
@@ -30,6 +35,20 @@ import static org.gnome.glib.GLib.getHostName;
 
 public class SubsonicClient implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(SubsonicClient.class);
+    private static final JsonMapper om = JsonMapper.builder()
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+            .disable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+            .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
+            .addModule(new BlackbirdModule())
+            .build();
+    private static final ObjectReader albumReader = om.readerFor(new TypeReference<List<Album>>() {
+    });
+    private static final ObjectReader indexReader = om.readerFor(new TypeReference<List<Index>>() {
+    });
+    private static final ObjectReader songReader = om.readerFor(new TypeReference<List<Song>>() {
+    });
+
     private final CloseableHttpClient httpClient;
     private String baseUrl;
     private String username;
@@ -197,13 +216,11 @@ public class SubsonicClient implements AutoCloseable {
         params.add(new BasicNameValuePair("id", artistId));
 
         var response = executeGetString("getMusicDirectory", params);
-        var om = new ObjectMapper();
         var root = om.readTree(response);
         var album_fragment = root.path("subsonic-response").path("directory").path("child");
         try {
-            return om.convertValue(album_fragment, new TypeReference<List<Album>>() {
-            });
-        } catch (IllegalArgumentException e) {
+            return albumReader.readValue(album_fragment);
+        } catch (IllegalArgumentException | JacksonException e) {
             logger.warn(e.getCause().toString());
             return new ArrayList<>();
         }
@@ -220,7 +237,6 @@ public class SubsonicClient implements AutoCloseable {
 
         while (moreToGo) {
             var response = executeGetString("getAlbumList2", params);
-            var om = new ObjectMapper();
             var root = om.readTree(response);
             var album_fragment = root.path("subsonic-response").path("albumList2").path("album");
 
@@ -228,11 +244,10 @@ public class SubsonicClient implements AutoCloseable {
                 moreToGo = false;
             } else {
                 try {
-                    var x = om.convertValue(album_fragment, new TypeReference<List<Album>>() {
-                    });
-                    albums.addAll(x);
-                } catch (IllegalArgumentException e) {
-                    logger.warn(e.getCause().toString());
+                    List<Album> partialAlbumList = albumReader.readValue(album_fragment);
+                    albums.addAll(partialAlbumList);
+                } catch (IllegalArgumentException | JacksonException e) {
+                    logger.warn(e.getMessage());
                     return new ArrayList<>();
                 }
             }
@@ -251,25 +266,27 @@ public class SubsonicClient implements AutoCloseable {
 
         var response = executeGetString("getArtist", params);
 
-        var om = new ObjectMapper();
         var root = om.readTree(response);
         var subsonicResponse = root.path("subsonic-response").path("artist");
-        return om.convertValue(subsonicResponse, Artist.class);
+        try {
+            return om.treeToValue(subsonicResponse, Artist.class);
+        } catch (JacksonException e) {
+            logger.warn(e.getCause().toString());
+            return null;
+        }
     }
 
     public List<Artist> getArtists() throws IOException {
         var artistList = new ArrayList<Artist>(50);
 
         var response = executeGetString("getArtists", null);
-        var om = new ObjectMapper();
         var root = om.readTree(response);
         var index_fragment = root.path("subsonic-response").path("artists").path("index");
 
         List<Index> indices;
         try {
-            indices = om.convertValue(index_fragment, new TypeReference<List<Index>>() {
-            });
-        } catch (IllegalArgumentException e) {
+            indices = indexReader.readValue(index_fragment);
+        } catch (IllegalArgumentException | JacksonException e) {
             logger.warn(e.getCause().toString());
             return new ArrayList<>();
         }
@@ -288,13 +305,11 @@ public class SubsonicClient implements AutoCloseable {
 
         var response = executeGetString("getMusicDirectory", params);
 
-        var om = new ObjectMapper();
         var root = om.readTree(response);
         var child_fragment = root.path("subsonic-response").path("directory").path("child");
         try {
-            return om.convertValue(child_fragment, new TypeReference<List<Song>>() {
-            });
-        } catch (IllegalArgumentException e) {
+            return songReader.readValue(child_fragment);
+        } catch (IllegalArgumentException | JacksonException e) {
             logger.warn(e.getCause().toString());
             return new ArrayList<>();
         }
@@ -303,10 +318,14 @@ public class SubsonicClient implements AutoCloseable {
     public SubsonicResponse ping() throws IOException {
         var response = executeGetString("ping", null);
 
-        var om = new ObjectMapper();
         var root = om.readTree(response);
         var subsonicResponse = root.path("subsonic-response");
-        return om.convertValue(subsonicResponse, SubsonicResponse.class);
+        try {
+            return om.treeToValue(subsonicResponse, SubsonicResponse.class);
+        } catch (JacksonException e) {
+            logger.warn(e.getCause().toString());
+            return null;
+        }
     }
 
     public ClassicHttpResponse stream(String songId) throws IOException {

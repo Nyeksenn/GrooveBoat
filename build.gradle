@@ -14,7 +14,8 @@ dependencies {
     implementation files('libs/gtk-0.13.0-RC1.jar')
     implementation files('libs/glib-0.13.0-RC1.jar')
     implementation files('libs/pango-0.13.0-RC1.jar')
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.20.0'
+    implementation 'tools.jackson.core:jackson-databind:3.0.1'
+    implementation 'tools.jackson.module:jackson-module-blackbird:3.0.1'
     implementation 'org.apache.httpcomponents.client5:httpclient5:5.5.1'
     implementation 'io.ebean:ebean:17.1.1'
     implementation 'io.ebean:ebean-ddl-generator:17.1.1'

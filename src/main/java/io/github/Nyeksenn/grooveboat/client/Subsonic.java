@@ -121,9 +121,9 @@ public class Subsonic implements AutoCloseable {
         } catch (IOException e) {
             logger.warn("Couldn't fetch albums");
         } catch (CompletionException e) {
-            logger.error("Album fetch task failed: {}", e.getCause().toString());
+            logger.error("Album fetch task failed: {}", e.getMessage());
         } catch (Exception e) {
-            logger.warn(e.getCause().toString());
+            logger.warn(e.getMessage());
         }
     }
 
