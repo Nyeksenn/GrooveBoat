@@ -3,8 +3,6 @@ package io.github.Nyeksenn.grooveboat.ui;
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import io.github.Nyeksenn.grooveboat.gobjects.AlbumListItem;
 import org.gnome.adw.NavigationView;
-import org.gnome.gdk.MemoryTexture;
-import org.gnome.gdk.Texture;
 import org.gnome.gio.ListStore;
 import org.gnome.glib.GLib;
 import org.gnome.gobject.GObject;
@@ -12,7 +10,6 @@ import org.gnome.gtk.Box;
 import org.gnome.gtk.GridView;
 import org.gnome.gtk.ListItem;
 import org.gnome.gtk.NoSelection;
-import org.javagi.base.GErrorException;
 import org.javagi.gobject.annotations.InstanceInit;
 import org.javagi.gobject.annotations.RegisteredType;
 import org.javagi.gtk.annotations.GtkCallback;
@@ -57,10 +54,11 @@ public class AlbumListView extends Box {
         albumCard.navView = albumNavView;
     }
 
-    public void initClient() {
+    public void loadItems() {
         if (this.subsonic == null && this.executor == null) {
             var window = (GrooveboatWindow) getRoot();
             var app = (GrooveboatApp) window.getApplication();
+            var textureMap = AlbumTextureMap.getInstance();
 
             this.subsonic = app.subsonic;
             this.executor = app.executor;
@@ -68,16 +66,15 @@ public class AlbumListView extends Box {
             this.executor.submit(() -> {
                 var albums = subsonic.getAlbums();
                 for (var album : albums) {
-                    Texture texture = null;
                     try {
-                        texture = MemoryTexture.fromBytes(album.getCoverArt());
-                    } catch (GErrorException e) {
-                        logger.warn("Couldn't load texture");
+                        var texture = textureMap.get(album.getAlbumId());
+                        var albumListItem = new AlbumListItem(texture, album.getTitle(), album.getDisplayArtist(), album.getAlbumId());
+                        GLib.idleAddOnce(() -> {
+                            this.store.append(albumListItem);
+                        });
+                    } catch (NullPointerException e) {
+                        logger.warn("Didn't find texture for album {}", album.getTitle());
                     }
-                    var albumListItem = new AlbumListItem(texture, album.getTitle(), album.getDisplayArtist(), album.getAlbumId());
-                    GLib.idleAddOnce(() -> {
-                        this.store.append(albumListItem);
-                    });
                 }
             });
         }
@@ -85,7 +82,7 @@ public class AlbumListView extends Box {
 
     @InstanceInit
     public void init() {
-        this.onRealize(this::initClient);
+        this.onRealize(this::loadItems);
         this.store = new ListStore<>();
         NoSelection<ListStore<AlbumListItem>> model = new NoSelection<>(this.store);
         gridView.setModel(model);
