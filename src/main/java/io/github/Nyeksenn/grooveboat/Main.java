@@ -42,6 +42,7 @@ public class Main {
             TemplateTypes.register(AlbumListView.class);
             TemplateTypes.register(MusicPlayer.class);
             TemplateTypes.register(SongListPage.class);
+            TemplateTypes.register(SongCard.class);
             new GrooveboatApp().run(args);
         } catch (GErrorException e) {
             logger.error("Couldn't load resources. Exiting");

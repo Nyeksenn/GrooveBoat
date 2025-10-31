@@ -58,7 +58,7 @@ public class AlbumListView extends Box {
         if (this.subsonic == null && this.executor == null) {
             var window = (GrooveboatWindow) getRoot();
             var app = (GrooveboatApp) window.getApplication();
-            var textureMap = AlbumTextureMap.getInstance();
+            var albumTextureLoader = AlbumTextureLoader.getInstance();
 
             this.subsonic = app.subsonic;
             this.executor = app.executor;
@@ -67,7 +67,7 @@ public class AlbumListView extends Box {
                 var albums = subsonic.getAlbums();
                 for (var album : albums) {
                     try {
-                        var texture = textureMap.get(album.getAlbumId());
+                        var texture = albumTextureLoader.load(album.getAlbumId());
                         var albumListItem = new AlbumListItem(texture, album.getTitle(), album.getDisplayArtist(), album.getAlbumId());
                         GLib.idleAddOnce(() -> {
                             this.store.append(albumListItem);

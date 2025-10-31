@@ -12,22 +12,22 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class AlbumTextureMap {
-    private static final Logger logger = LoggerFactory.getLogger(AlbumTextureMap.class);
+public class AlbumTextureLoader {
+    private static final Logger logger = LoggerFactory.getLogger(AlbumTextureLoader.class);
     private final Map<String, Texture> map;
     private final Database db;
 
-    private AlbumTextureMap() {
+    private AlbumTextureLoader() {
         this.map = new ConcurrentHashMap<>();
         this.db = DB.getDefault();
     }
 
     // Holder class - loaded on first access to getInstance()
     private static class Holder {
-        private static final AlbumTextureMap INSTANCE = new AlbumTextureMap();
+        private static final AlbumTextureLoader INSTANCE = new AlbumTextureLoader();
     }
 
-    public static AlbumTextureMap getInstance() {
+    public static AlbumTextureLoader getInstance() {
         return Holder.INSTANCE;
     }
 
@@ -46,7 +46,7 @@ public class AlbumTextureMap {
         }
     }
 
-    public Texture get(String key) {
+    public Texture load(String key) {
         return map.computeIfAbsent(key, this::fetchTexture);
     }
 
