@@ -24,7 +24,7 @@ public class SongModel extends BaseModel {
     @NotNull
     int track;
 
-    int year;
+    int releaseYear;
 
     @NotNull
     Duration duration;
@@ -68,12 +68,12 @@ public class SongModel extends BaseModel {
         this.track = track;
     }
 
-    public int getYear() {
-        return year;
+    public int getReleaseYear() {
+        return releaseYear;
     }
 
-    public void setYear(int year) {
-        this.year = year;
+    public void setReleaseYear(int releaseYear) {
+        this.releaseYear = releaseYear;
     }
 
     public Duration getDuration() {
@@ -141,7 +141,7 @@ public class SongModel extends BaseModel {
         this.songId = songId;
         this.title = title;
         this.track = track;
-        this.year = year;
+        this.releaseYear = year;
         this.duration = duration;
         this.bitRate = bitRate;
         this.contentType = contentType;
@@ -154,11 +154,11 @@ public class SongModel extends BaseModel {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         SongModel songModel = (SongModel) o;
-        return getTrack() == songModel.getTrack() && getYear() == songModel.getYear() && getBitRate() == songModel.getBitRate() && getDiscNumber() == songModel.getDiscNumber() && Objects.equals(getSongId(), songModel.getSongId()) && Objects.equals(getTitle(), songModel.getTitle()) && Objects.equals(getDuration(), songModel.getDuration()) && Objects.equals(getContentType(), songModel.getContentType()) && Objects.equals(getSongArtists(), songModel.getSongArtists()) && Objects.equals(getAlbum(), songModel.getAlbum());
+        return getTrack() == songModel.getTrack() && getReleaseYear() == songModel.getReleaseYear() && getBitRate() == songModel.getBitRate() && getDiscNumber() == songModel.getDiscNumber() && Objects.equals(getSongId(), songModel.getSongId()) && Objects.equals(getTitle(), songModel.getTitle()) && Objects.equals(getDuration(), songModel.getDuration()) && Objects.equals(getContentType(), songModel.getContentType()) && Objects.equals(getSongArtists(), songModel.getSongArtists()) && Objects.equals(getAlbum(), songModel.getAlbum());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getSongId(), getTitle(), getTrack(), getYear(), getDuration(), getBitRate(), getContentType(), getDiscNumber(), getSongArtists(), getAlbum());
+        return Objects.hash(getSongId(), getTitle(), getTrack(), getReleaseYear(), getDuration(), getBitRate(), getContentType(), getDiscNumber(), getSongArtists(), getAlbum());
     }
 }

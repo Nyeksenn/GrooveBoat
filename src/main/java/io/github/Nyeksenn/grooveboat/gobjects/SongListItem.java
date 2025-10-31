@@ -32,6 +32,11 @@ public class SongListItem extends GObject {
         return coverArt;
     }
 
+    public String getDurationString() {
+        long seconds = duration.getSeconds();
+        return String.format("%02d:%02d", seconds / 60, seconds % 60);
+    }
+
     public SongListItem(String songName, String artistName, String albumTitle, Duration duration, Texture coverArt) {
         this.songName = songName;
         this.artistName = artistName;

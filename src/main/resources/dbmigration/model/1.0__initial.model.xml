@@ -30,5 +30,27 @@
             <column name="when_modified" type="timestamp" notnull="true"/>
             <uniqueConstraint name="uq_artist_artist_id" columnNames="artist_id" oneToOne="false" nullableColumns=""/>
         </createTable>
+        <createTable name="song" pkName="pk_song">
+            <column name="id" type="bigint" primaryKey="true"/>
+            <column name="song_id" type="varchar(100)" notnull="true"/>
+            <column name="title" type="varchar(200)" notnull="true"/>
+            <column name="track" type="integer" notnull="true"/>
+            <column name="release_year" type="integer" notnull="true"/>
+            <column name="duration" type="bigint" notnull="true"/>
+            <column name="bit_rate" type="integer" notnull="true"/>
+            <column name="content_type" type="varchar(50)"/>
+            <column name="disc_number" type="integer" notnull="true"/>
+            <column name="album_id" type="bigint" references="album.id" foreignKeyName="fk_song_album_id" foreignKeyIndex="ix_song_album_id"/>
+            <column name="version" type="bigint" notnull="true"/>
+            <column name="when_created" type="timestamp" notnull="true"/>
+            <column name="when_modified" type="timestamp" notnull="true"/>
+            <uniqueConstraint name="uq_song_song_id" columnNames="song_id" oneToOne="false" nullableColumns=""/>
+        </createTable>
+        <createTable name="song_artists" pkName="pk_song_artists">
+            <column name="song_id" type="bigint" notnull="true" primaryKey="true"/>
+            <column name="artist_id" type="bigint" notnull="true" primaryKey="true"/>
+            <foreignKey name="fk_song_artists_song" columnNames="song_id" refColumnNames="id" refTableName="song" indexName="ix_song_artists_song"/>
+            <foreignKey name="fk_song_artists_artist" columnNames="artist_id" refColumnNames="id" refTableName="artist" indexName="ix_song_artists_artist"/>
+        </createTable>
     </changeSet>
 </migration>

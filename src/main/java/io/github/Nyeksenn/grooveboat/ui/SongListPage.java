@@ -50,7 +50,7 @@ public class SongListPage extends NavigationPage {
 
         songCard.songName.setLabel(song.getSongName());
         songCard.songArtist.setLabel(song.getArtistName());
-        songCard.songDuration.setLabel(String.valueOf(song.getDuration()));
+        songCard.songDuration.setLabel(song.getDurationString());
         songCard.songPicture.setFromPaintable(song.getCoverArt());
     }
 

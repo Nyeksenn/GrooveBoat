@@ -2,27 +2,35 @@
 <interface>
   <template class="SongCard" parent="GtkBox">
     <property name="orientation">horizontal</property>
-    <property name="halign">start</property>
+    <property name="halign">fill</property>
     <property name="margin-start">10</property>
     <property name="margin-end">10</property>
     <property name="margin-top">10</property>
     <property name="margin-bottom">10</property>
     <child>
       <object class="GtkImage" id="song-picture">
-        <property name="pixel-size">200</property>
+        <property name="pixel-size">50</property>
       </object>
     </child>
     <child>
       <object class="GtkBox">
         <property name="orientation">vertical</property>
+        <property name="vexpand">true</property>
+        <property name="valign">center</property>
+        <property name="margin-start">10</property>
+        <property name="margin-end">10</property>
         <child>
           <object class="GtkLabel" id="song-name">
             <property name="wrap">true</property>
+            <property name="halign">start</property>
+            <property name="hexpand">true</property>
           </object>
         </child>
         <child>
           <object class="GtkLabel" id="song-artist">
             <property name="wrap">true</property>
+            <property name="halign">start</property>
+            <property name="hexpand">true</property>
           </object>
         </child>
       </object>
@@ -30,6 +38,8 @@
     <child>
       <object class="GtkLabel" id="song-duration">
         <property name="wrap">true</property>
+        <property name="halign">end</property>
+        <property name="hexpand">true</property>
       </object>
     </child>
     <child>
