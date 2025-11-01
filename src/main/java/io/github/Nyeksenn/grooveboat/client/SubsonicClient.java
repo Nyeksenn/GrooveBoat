@@ -6,10 +6,7 @@ import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.core5.http.ClassicHttpResponse;
-import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
-import org.apache.hc.core5.http.message.BasicNameValuePair;
-import org.apache.hc.core5.net.URIBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.core.JacksonException;
@@ -23,13 +20,12 @@ import tools.jackson.module.blackbird.BlackbirdModule;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.HexFormat;
-import java.util.List;
+import java.util.*;
 
 import static org.gnome.glib.GLib.getHostName;
 
@@ -50,34 +46,51 @@ public class SubsonicClient implements AutoCloseable {
     });
 
     private final CloseableHttpClient httpClient;
-    private String baseUrl;
+
+    private final HashMap<String, String> baseQueryParams;
+
+    private URI baseUrl;
     private String username;
     private String password;
-    private final String clientId = "GrooveBoat-" + getHostName();
-    private final String apiVersion = "1.16.1";
     private final SecureRandom rng;
 
     public void setBaseUrl(String baseUrl) {
-        this.baseUrl = baseUrl;
+        try {
+            this.baseUrl = new URI(baseUrl);
+        } catch (URISyntaxException e) {
+            logger.warn("Unable to set base url. Base url {} invalid", baseUrl);
+        }
     }
 
     public void setUsername(String username) {
         this.username = username;
+        this.baseQueryParams.replace("u", username);
     }
 
     public void setPassword(String password) {
         this.password = password;
     }
 
-    public String getBaseUrl() {
+    public URI getBaseUrl() {
         return baseUrl;
     }
 
     public SubsonicClient(String baseUrl, String username, String password) {
-        this.baseUrl = baseUrl;
         this.username = username;
         this.password = password;
         this.rng = new SecureRandom();
+
+        this.baseQueryParams = new HashMap<>();
+        baseQueryParams.put("u", this.username);
+        baseQueryParams.put("f", "json");
+        baseQueryParams.put("v", "1.16.1");
+        baseQueryParams.put("c", "GrooveBoat-" + getHostName());
+        try {
+            this.baseUrl = new URI(baseUrl);
+        } catch (URISyntaxException e) {
+            logger.warn("Invalid base url");
+            this.baseUrl = null;
+        }
 
         // Configure connection pooling for performance
         PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
@@ -101,7 +114,22 @@ public class SubsonicClient implements AutoCloseable {
                 .toString();
     }
 
-    private URI getUri(String endpoint, List<NameValuePair> params) throws URISyntaxException {
+    private String getQueryString(Map<String, String> params) {
+        var querySB = new StringBuilder();
+        params.forEach((key, value) -> querySB
+                .append(key).append('&').append(URLEncoder.encode(value, StandardCharsets.UTF_8)).append('&'));
+        querySB.deleteCharAt(querySB.length() - 1);
+
+        return querySB.toString();
+    }
+
+    private URI getUri(String endpoint, Map<String, String> params) throws URISyntaxException {
+        if (params == null) {
+            params = new HashMap<>();
+        }
+
+        params.putAll(baseQueryParams);
+
         try {
             var md = MessageDigest.getInstance("MD5");
             var salt = generateSalt();
@@ -111,32 +139,24 @@ public class SubsonicClient implements AutoCloseable {
             var hf = HexFormat.of();
             var token = hf.formatHex(digest);
 
-            return new URIBuilder(baseUrl)
-                    .setPathSegments("rest", endpoint)
-                    .addParameter("u", username)
-                    .addParameter("t", token)
-                    .addParameter("s", salt)
-                    .addParameter("f", "json")
-                    .addParameter("c", clientId)
-                    .addParameter("v", apiVersion)
-                    .addParameters(params)
-                    .build();
+            params.put("t", token);
+            params.put("s", salt);
         } catch (NoSuchAlgorithmException e) {
-            logger.warn("Can't create MD5 hash. Using plain password.");
-            return new URIBuilder()
-                    .setHost(baseUrl)
-                    .setPathSegments("rest", endpoint)
-                    .addParameter("u", username)
-                    .addParameter("p", password)
-                    .addParameter("f", "json")
-                    .addParameter("c", clientId)
-                    .addParameter("v", apiVersion)
-                    .addParameters(params)
-                    .build();
+            params.put("p", password);
         }
+
+        var queryString = getQueryString(params);
+
+        return new URI(
+                baseUrl.getScheme(),
+                baseUrl.getHost(),
+                endpoint,
+                queryString,
+                null
+        );
     }
 
-    private String executeGetString(String endpoint, List<NameValuePair> params) throws IOException {
+    private String executeGetString(String endpoint, Map<String, String> params) throws IOException {
         try {
             URI uri = getUri(endpoint, params);
 
@@ -158,7 +178,7 @@ public class SubsonicClient implements AutoCloseable {
         }
     }
 
-    private byte[] executeGetBinary(String endpoint, List<NameValuePair> params) throws IOException {
+    private byte[] executeGetBinary(String endpoint, Map<String, String> params) throws IOException {
         try {
             URI uri = getUri(endpoint, params);
 
@@ -180,12 +200,13 @@ public class SubsonicClient implements AutoCloseable {
     }
 
     public byte[] getCoverArt(String id, int size) {
-        var params = new ArrayList<NameValuePair>(2);
-        params.add(new BasicNameValuePair("id", id));
-        params.add(new BasicNameValuePair("size", String.valueOf(size)));
+        var params = new HashMap<>(Map.of(
+                "id", id,
+                "size", String.valueOf(size)
+        ));
 
         try {
-            return executeGetBinary("getCoverArt", params);
+            return executeGetBinary("/rest/getCoverArt", params);
         } catch (IOException e) {
             logger.info("Couldn't fetch album art");
             return null;
@@ -212,10 +233,11 @@ public class SubsonicClient implements AutoCloseable {
     }
 
     public List<Album> getAlbumsByArtist(String artistId) throws IOException {
-        var params = new ArrayList<NameValuePair>(2);
-        params.add(new BasicNameValuePair("id", artistId));
+        var params = new HashMap<>(Map.of(
+           "id", artistId
+        ));
 
-        var response = executeGetString("getMusicDirectory", params);
+        var response = executeGetString("/rest/getMusicDirectory", params);
         var root = om.readTree(response);
         var album_fragment = root.path("subsonic-response").path("directory").path("child");
         try {
@@ -230,13 +252,14 @@ public class SubsonicClient implements AutoCloseable {
         var moreToGo = true;
         List<Album> albums = new ArrayList<>(200);
         var offset = 0;
-        var params = new ArrayList<NameValuePair>(2);
-        params.add(new BasicNameValuePair("size", String.valueOf(500)));
-        params.add(new BasicNameValuePair("offset", String.valueOf(offset)));
-        params.add(new BasicNameValuePair("type", "alphabeticalByArtist"));
+        var params = new HashMap<>(Map.of(
+           "size", String.valueOf(500),
+           "offset", String.valueOf(offset),
+           "type", "alphabeticalByArtist"
+        ));
 
         while (moreToGo) {
-            var response = executeGetString("getAlbumList2", params);
+            var response = executeGetString("/rest/getAlbumList2", params);
             var root = om.readTree(response);
             var album_fragment = root.path("subsonic-response").path("albumList2").path("album");
 
@@ -252,19 +275,19 @@ public class SubsonicClient implements AutoCloseable {
                 }
             }
 
-            params.remove(1);
             offset += 500;
-            params.add(new BasicNameValuePair("offset", String.valueOf(offset)));
+            params.replace("offset", String.valueOf(offset));
         }
 
         return albums;
     }
 
     public Artist getArtist(String id) throws IOException {
-        var params = new ArrayList<NameValuePair>(1);
-        params.add(new BasicNameValuePair("id", id));
+        var params = new HashMap<>(Map.of(
+           "id", id
+        ));
 
-        var response = executeGetString("getArtist", params);
+        var response = executeGetString("/rest/getArtist", params);
 
         var root = om.readTree(response);
         var subsonicResponse = root.path("subsonic-response").path("artist");
@@ -279,7 +302,7 @@ public class SubsonicClient implements AutoCloseable {
     public List<Artist> getArtists() throws IOException {
         var artistList = new ArrayList<Artist>(50);
 
-        var response = executeGetString("getArtists", null);
+        var response = executeGetString("/rest/getArtists", null);
         var root = om.readTree(response);
         var index_fragment = root.path("subsonic-response").path("artists").path("index");
 
@@ -299,11 +322,11 @@ public class SubsonicClient implements AutoCloseable {
     }
 
     public List<Song> getSongsByAlbum(String albumId) throws IOException {
-        var songList = new ArrayList<Song>(20);
-        var params = new ArrayList<NameValuePair>(1);
-        params.add(new BasicNameValuePair("id", albumId));
+        var params = new HashMap<>(Map.of(
+           "id", albumId
+        ));
 
-        var response = executeGetString("getMusicDirectory", params);
+        var response = executeGetString("/rest/getMusicDirectory", params);
 
         var root = om.readTree(response);
         var child_fragment = root.path("subsonic-response").path("directory").path("child");
@@ -316,7 +339,7 @@ public class SubsonicClient implements AutoCloseable {
     }
 
     public SubsonicResponse ping() throws IOException {
-        var response = executeGetString("ping", null);
+        var response = executeGetString("/rest/ping", null);
 
         var root = om.readTree(response);
         var subsonicResponse = root.path("subsonic-response");
@@ -329,8 +352,9 @@ public class SubsonicClient implements AutoCloseable {
     }
 
     public ClassicHttpResponse stream(String songId) throws IOException {
-        var params = new ArrayList<NameValuePair>(1);
-        params.add(new BasicNameValuePair("id", songId));
+        var params = new HashMap<>(Map.of(
+                "id", songId
+        ));
 
         try {
             URI uri = getUri("stream", params);
