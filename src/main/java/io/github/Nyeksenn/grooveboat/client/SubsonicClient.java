@@ -90,7 +90,6 @@ public class SubsonicClient implements AutoCloseable {
         this.httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_2)
                 .followRedirects(HttpClient.Redirect.NORMAL)
-                .executor(Executors.newVirtualThreadPerTaskExecutor())
                 .build();
     }
 
@@ -320,7 +319,7 @@ public class SubsonicClient implements AutoCloseable {
             logger.warn(e.getCause().toString());
             return new ArrayList<>();
         } catch (InterruptedException e) {
-            logger.warn("Interrupted while gettings songs by album");
+            logger.warn("Interrupted while getting songs by album");
             return new ArrayList<>();
         }
     }

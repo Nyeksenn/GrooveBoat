@@ -2,6 +2,7 @@ package io.github.Nyeksenn.grooveboat.client;
 
 import io.ebean.DB;
 import io.ebean.Database;
+import io.ebean.DuplicateKeyException;
 import io.github.Nyeksenn.grooveboat.deserializer.ShortArtist;
 import io.github.Nyeksenn.grooveboat.entities.AlbumModel;
 import io.github.Nyeksenn.grooveboat.entities.ArtistModel;
@@ -18,13 +19,15 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletionException;
+import java.util.concurrent.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Subsonic implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(Subsonic.class);
 
     public SubsonicClient client;
     private final Database db;
+    private final ExecutorService exec = Executors.newVirtualThreadPerTaskExecutor();
 
     private List<ArtistModel> refreshArtists() {
         try {
@@ -71,31 +74,51 @@ public class Subsonic implements AutoCloseable {
         try {
             var albums = client.getAlbumList2();
             var numSavedAlbums = new QAlbumModel().findCount();
-            var albumModelList = new ArrayList<AlbumModel>(200);
+            List<CompletableFuture<AlbumModel>> futures = new ArrayList<>(200);
 
             if (numSavedAlbums == albums.size()) {
                 return new QAlbumModel().findList();
             }
 
             for (var album : albums) {
-                List<ArtistModel> albumArtists = resolveArtists(album.artists());
-                var savedAlbumModel = new QAlbumModel().albumId.equalTo(album.id()).findOne();
+                var future = CompletableFuture.supplyAsync(() -> {
+                    var savedAlbumModel = new QAlbumModel().albumId.equalTo(album.id()).findOne();
 
-                var albumCover = client.getCoverArt(album.coverArt(), 500);
-                var newAlbumModel = new AlbumModel(album.id(), album.name(), album.songCount(), album.year(), Duration.ofSeconds(album.duration()), albumCover, albumArtists);
+                    var albumArtists = new ArrayList<ArtistModel>(3);
+                    for (var albumArtist : album.artists()) {
+                        var savedAlbumArtist = new QArtistModel().artistId.equalTo(albumArtist.id()).findOne();
+                        if (savedAlbumArtist == null) {
+                            try {
+                                var newAlbumArtist = new ArtistModel(albumArtist.id(), albumArtist.name());
+                                newAlbumArtist.save();
+                                albumArtists.add(newAlbumArtist);
+                            } catch (DuplicateKeyException e) {
+                                savedAlbumArtist = new QArtistModel().artistId.equalTo(albumArtist.id()).findOne();
+                                albumArtists.add(savedAlbumArtist);
+                            }
+                        } else {
+                            albumArtists.add(savedAlbumArtist);
+                        }
+                    }
+                    var albumCover = client.getCoverArt(album.coverArt(), 500);
 
-                // Insert
-                if (savedAlbumModel == null) {
-                    albumModelList.add(newAlbumModel);
-                } else if (!newAlbumModel.equals(savedAlbumModel)) {
-                    // Update
-                    newAlbumModel.setId(savedAlbumModel.getId());
-                    albumModelList.add(newAlbumModel);
-                } else {
-                    albumModelList.add(savedAlbumModel);
-                }
+                    var newAlbumModel = new AlbumModel(album.id(), album.name(), album.songCount(), album.year(), Duration.ofSeconds(album.duration()), albumCover, albumArtists);
+
+                    // Insert
+                    if (savedAlbumModel == null) {
+                        return newAlbumModel;
+                    } else if (!newAlbumModel.equals(savedAlbumModel)) {
+                        // Update
+                        newAlbumModel.setId(savedAlbumModel.getId());
+                        return newAlbumModel;
+                    } else {
+                        return savedAlbumModel;
+                    }
+                }, exec);
+                futures.add(future);
             }
 
+            var albumModelList = futures.stream().map(CompletableFuture::join).toList();
             db.saveAll(albumModelList);
             return albumModelList;
         } catch (IOException e) {
@@ -132,7 +155,6 @@ public class Subsonic implements AutoCloseable {
     }
 
     public List<AlbumModel> getAlbums() {
-        this.refreshArtists();
         return this.refreshAlbums();
     }
 
@@ -207,6 +229,7 @@ public class Subsonic implements AutoCloseable {
 
     @Override
     public void close() {
+        exec.close();
         client.close();
     }
 }

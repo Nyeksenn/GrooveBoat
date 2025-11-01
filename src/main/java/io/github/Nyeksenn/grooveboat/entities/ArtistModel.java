@@ -65,6 +65,11 @@ public class ArtistModel extends BaseModel {
         return songs;
     }
 
+    public ArtistModel(String artistId, String name) {
+        this.artistId = artistId;
+        this.name = name;
+    }
+
     public ArtistModel(String artistId, String name, byte[] image) {
         this.artistId = artistId;
         this.name = name;
