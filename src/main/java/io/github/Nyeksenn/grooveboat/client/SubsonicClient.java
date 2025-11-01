@@ -1,12 +1,6 @@
 package io.github.Nyeksenn.grooveboat.client;
 
 import io.github.Nyeksenn.grooveboat.deserializer.*;
-import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
-import org.apache.hc.core5.http.ClassicHttpResponse;
-import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.core.JacksonException;
@@ -18,14 +12,19 @@ import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.module.blackbird.BlackbirdModule;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.*;
+import java.util.concurrent.Executors;
 
 import static org.gnome.glib.GLib.getHostName;
 
@@ -45,21 +44,24 @@ public class SubsonicClient implements AutoCloseable {
     private static final ObjectReader songReader = om.readerFor(new TypeReference<List<Song>>() {
     });
 
-    private final CloseableHttpClient httpClient;
+    private final HttpClient httpClient;
 
     private final HashMap<String, String> baseQueryParams;
 
-    private URI baseUrl;
+    private String scheme;
+    private String host;
     private String username;
     private String password;
     private final SecureRandom rng;
 
     public void setBaseUrl(String baseUrl) {
-        try {
-            this.baseUrl = new URI(baseUrl);
-        } catch (URISyntaxException e) {
-            logger.warn("Unable to set base url. Base url {} invalid", baseUrl);
-        }
+        var splitResults = baseUrl.split("://");
+        this.scheme = splitResults[0];
+        this.host = splitResults[1];
+    }
+
+    public String getHost() {
+        return this.host;
     }
 
     public void setUsername(String username) {
@@ -69,10 +71,6 @@ public class SubsonicClient implements AutoCloseable {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public URI getBaseUrl() {
-        return baseUrl;
     }
 
     public SubsonicClient(String baseUrl, String username, String password) {
@@ -85,20 +83,14 @@ public class SubsonicClient implements AutoCloseable {
         baseQueryParams.put("f", "json");
         baseQueryParams.put("v", "1.16.1");
         baseQueryParams.put("c", "GrooveBoat-" + getHostName());
-        try {
-            this.baseUrl = new URI(baseUrl);
-        } catch (URISyntaxException e) {
-            logger.warn("Invalid base url");
-            this.baseUrl = null;
-        }
+        var splitResults = baseUrl.split("://");
+        this.scheme = splitResults[0];
+        this.host = splitResults[1];
 
-        // Configure connection pooling for performance
-        PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
-        connectionManager.setMaxTotal(100); // Maximum total connections
-        connectionManager.setDefaultMaxPerRoute(20); // Max connections per route
-
-        this.httpClient = HttpClients.custom()
-                .setConnectionManager(connectionManager)
+        this.httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_2)
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .executor(Executors.newFixedThreadPool(8))
                 .build();
     }
 
@@ -117,7 +109,7 @@ public class SubsonicClient implements AutoCloseable {
     private String getQueryString(Map<String, String> params) {
         var querySB = new StringBuilder();
         params.forEach((key, value) -> querySB
-                .append(key).append('&').append(URLEncoder.encode(value, StandardCharsets.UTF_8)).append('&'));
+                .append(key).append('=').append(URLEncoder.encode(value, StandardCharsets.UTF_8)).append('&'));
         querySB.deleteCharAt(querySB.length() - 1);
 
         return querySB.toString();
@@ -148,54 +140,69 @@ public class SubsonicClient implements AutoCloseable {
         var queryString = getQueryString(params);
 
         return new URI(
-                baseUrl.getScheme(),
-                baseUrl.getHost(),
+                scheme,
+                host,
                 endpoint,
                 queryString,
                 null
         );
     }
 
-    private String executeGetString(String endpoint, Map<String, String> params) throws IOException {
+    private String executeGetString(String endpoint, Map<String, String> params) throws IOException, InterruptedException {
         try {
             URI uri = getUri(endpoint, params);
 
-            return this.httpClient.execute(new HttpGet(uri),
-                    response -> {
-                        int statusCode = response.getCode();
-
-                        if (statusCode >= 200 && statusCode < 300) {
-                            return EntityUtils.toString(response.getEntity());
-                        } else {
-                            String errorBody = EntityUtils.toString(response.getEntity());
-                            throw new IOException("Request failed with status " + statusCode + ": " + errorBody);
-                        }
-                    }
-            );
-
+            var request = HttpRequest.newBuilder().GET().uri(uri).build();
+            var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            return response.body();
         } catch (URISyntaxException e) {
             throw new IOException("Invalid URI: " + e.getMessage(), e);
         }
     }
 
-    private byte[] executeGetBinary(String endpoint, Map<String, String> params) throws IOException {
+    private byte[] executeGetBinary(Endpoint endpoint, Map<String, String> params) throws IOException, InterruptedException {
         try {
-            URI uri = getUri(endpoint, params);
+            URI uri;
 
-            return this.httpClient.execute(new HttpGet(uri),
-                    response -> {
-                        int statusCode = response.getCode();
-                        if (statusCode >= 200 && statusCode < 300) {
-                            return EntityUtils.toByteArray(response.getEntity());
-                        } else {
-                            String errorBody = EntityUtils.toString(response.getEntity());
-                            throw new IOException("Request failed with status " + statusCode + ": " + errorBody);
-                        }
-                    }
-            );
+            switch (endpoint) {
+                case AbsoluteEndpoint ep -> uri = URI.create(ep.url());
+                case RelativeEndpoint ep -> uri = getUri(ep.url(), params);
+            }
 
+            var request = HttpRequest.newBuilder().GET().uri(uri).build();
+            var response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
+            return response.body();
         } catch (URISyntaxException e) {
             throw new IOException("Invalid URI: " + e.getMessage(), e);
+        }
+    }
+
+    public HttpResponse<InputStream> stream(String songId) throws IOException {
+        var params = new HashMap<>(Map.of(
+                "id", songId
+        ));
+
+        try {
+            URI uri = getUri("/rest/stream", params);
+            var request = HttpRequest.newBuilder().GET().uri(uri).build();
+            return httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+        } catch (URISyntaxException e) {
+            throw new IOException("Invalid URI: " + e.getMessage(), e);
+        } catch (InterruptedException e) {
+            logger.warn("Interrupted while streaming");
+            return null;
+        }
+    }
+
+    public byte[] getArtistImage(String url) {
+        try {
+            return executeGetBinary(new AbsoluteEndpoint(url), null);
+        } catch (IOException e) {
+            logger.warn("Couldn't fetch artist image");
+            return null;
+        } catch (InterruptedException e) {
+            logger.warn("Interrupted while getting artist image");
+            return null;
         }
     }
 
@@ -206,45 +213,10 @@ public class SubsonicClient implements AutoCloseable {
         ));
 
         try {
-            return executeGetBinary("/rest/getCoverArt", params);
-        } catch (IOException e) {
+            return executeGetBinary(new RelativeEndpoint("/rest/getCoverArt"), params);
+        } catch (IOException | InterruptedException e) {
             logger.info("Couldn't fetch album art");
             return null;
-        }
-    }
-
-    public byte[] getArtistImage(String url) {
-        try {
-            return this.httpClient.execute(new HttpGet(url),
-                    response -> {
-                        int statusCode = response.getCode();
-                        if (statusCode >= 200 && statusCode < 300) {
-                            return EntityUtils.toByteArray(response.getEntity());
-                        } else {
-                            String errorBody = EntityUtils.toString(response.getEntity());
-                            throw new IOException("Request failed with status " + statusCode + ": " + errorBody);
-                        }
-                    }
-            );
-        } catch (IOException e) {
-            logger.warn("Couldn't fetch artist image");
-            return null;
-        }
-    }
-
-    public List<Album> getAlbumsByArtist(String artistId) throws IOException {
-        var params = new HashMap<>(Map.of(
-           "id", artistId
-        ));
-
-        var response = executeGetString("/rest/getMusicDirectory", params);
-        var root = om.readTree(response);
-        var album_fragment = root.path("subsonic-response").path("directory").path("child");
-        try {
-            return albumReader.readValue(album_fragment);
-        } catch (IllegalArgumentException | JacksonException e) {
-            logger.warn(e.getCause().toString());
-            return new ArrayList<>();
         }
     }
 
@@ -259,7 +231,12 @@ public class SubsonicClient implements AutoCloseable {
         ));
 
         while (moreToGo) {
-            var response = executeGetString("/rest/getAlbumList2", params);
+            String response = null;
+            try {
+                response = executeGetString("/rest/getAlbumList2", params);
+            } catch (InterruptedException e) {
+                logger.warn("Was interrupted while getting albums");
+            }
             var root = om.readTree(response);
             var album_fragment = root.path("subsonic-response").path("albumList2").path("album");
 
@@ -287,14 +264,18 @@ public class SubsonicClient implements AutoCloseable {
            "id", id
         ));
 
-        var response = executeGetString("/rest/getArtist", params);
-
-        var root = om.readTree(response);
-        var subsonicResponse = root.path("subsonic-response").path("artist");
         try {
+            var response = executeGetString("/rest/getArtist", params);
+
+            var root = om.readTree(response);
+            var subsonicResponse = root.path("subsonic-response").path("artist");
+
             return om.treeToValue(subsonicResponse, Artist.class);
         } catch (JacksonException e) {
-            logger.warn(e.getCause().toString());
+            logger.warn(e.getMessage());
+            return null;
+        } catch (InterruptedException e) {
+            logger.warn("Interrupted while getting artist");
             return null;
         }
     }
@@ -302,15 +283,19 @@ public class SubsonicClient implements AutoCloseable {
     public List<Artist> getArtists() throws IOException {
         var artistList = new ArrayList<Artist>(50);
 
-        var response = executeGetString("/rest/getArtists", null);
-        var root = om.readTree(response);
-        var index_fragment = root.path("subsonic-response").path("artists").path("index");
-
         List<Index> indices;
         try {
+            var response = executeGetString("/rest/getArtists", null);
+            var root = om.readTree(response);
+            var index_fragment = root.path("subsonic-response").path("artists").path("index");
+
+
             indices = indexReader.readValue(index_fragment);
         } catch (IllegalArgumentException | JacksonException e) {
             logger.warn(e.getCause().toString());
+            return new ArrayList<>();
+        } catch (InterruptedException e) {
+            logger.warn("Interrupted while getting artist list");
             return new ArrayList<>();
         }
 
@@ -326,46 +311,38 @@ public class SubsonicClient implements AutoCloseable {
            "id", albumId
         ));
 
-        var response = executeGetString("/rest/getMusicDirectory", params);
-
-        var root = om.readTree(response);
-        var child_fragment = root.path("subsonic-response").path("directory").path("child");
         try {
+            var response = executeGetString("/rest/getMusicDirectory", params);
+
+            var root = om.readTree(response);
+            var child_fragment = root.path("subsonic-response").path("directory").path("child");
             return songReader.readValue(child_fragment);
         } catch (IllegalArgumentException | JacksonException e) {
             logger.warn(e.getCause().toString());
+            return new ArrayList<>();
+        } catch (InterruptedException e) {
+            logger.warn("Interrupted while gettings songs by album");
             return new ArrayList<>();
         }
     }
 
     public SubsonicResponse ping() throws IOException {
-        var response = executeGetString("/rest/ping", null);
-
-        var root = om.readTree(response);
-        var subsonicResponse = root.path("subsonic-response");
         try {
+            var response = executeGetString("/rest/ping", null);
+
+            var root = om.readTree(response);
+            var subsonicResponse = root.path("subsonic-response");
             return om.treeToValue(subsonicResponse, SubsonicResponse.class);
         } catch (JacksonException e) {
             logger.warn(e.getCause().toString());
             return null;
+        } catch (InterruptedException e) {
+            logger.warn("Interrupted while pinging the server");
+            return null;
         }
     }
 
-    public ClassicHttpResponse stream(String songId) throws IOException {
-        var params = new HashMap<>(Map.of(
-                "id", songId
-        ));
-
-        try {
-            URI uri = getUri("stream", params);
-
-            return this.httpClient.executeOpen(null, new HttpGet(uri), null);
-        } catch (URISyntaxException e) {
-            throw new IOException("Invalid URI: " + e.getMessage(), e);
-        }
-    }
-
-    public void close() throws IOException {
+    public void close() {
         if (httpClient != null) {
             httpClient.close();
         }

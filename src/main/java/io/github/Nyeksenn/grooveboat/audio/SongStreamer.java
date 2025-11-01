@@ -28,9 +28,9 @@ public class SongStreamer implements Runnable {
         var response = this.subsonic.getSongStream(songId);
 
         if (response != null) {
-            InputStream stream = null;
+            InputStream stream;
             try {
-                stream = response.getEntity().getContent();
+                stream = response.body();
 
                 while (running) {
                     pauseLock.lock();
@@ -48,6 +48,8 @@ public class SongStreamer implements Runnable {
                     var stopReading = loadBuffers(stream);
                     if (stopReading) return;
                 }
+
+                stream.close();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -60,11 +62,7 @@ public class SongStreamer implements Runnable {
         if (!(state == FlowReturn.OK)) {
             return true;
         }
-        if (len < BUFFER_SIZE) {
-            return true;
-        }
-
-        return false;
+        return len < BUFFER_SIZE;
     }
 
     public void pause() {
