@@ -90,7 +90,7 @@ public class SubsonicClient implements AutoCloseable {
         this.httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_2)
                 .followRedirects(HttpClient.Redirect.NORMAL)
-                .executor(Executors.newFixedThreadPool(8))
+                .executor(Executors.newVirtualThreadPerTaskExecutor())
                 .build();
     }
 
@@ -116,11 +116,11 @@ public class SubsonicClient implements AutoCloseable {
     }
 
     private URI getUri(String endpoint, Map<String, String> params) throws URISyntaxException {
-        if (params == null) {
-            params = new HashMap<>();
+        if (params != null) {
+            params.putAll(baseQueryParams);
+        } else {
+            params = baseQueryParams;
         }
-
-        params.putAll(baseQueryParams);
 
         try {
             var md = MessageDigest.getInstance("MD5");
@@ -288,7 +288,6 @@ public class SubsonicClient implements AutoCloseable {
             var response = executeGetString("/rest/getArtists", null);
             var root = om.readTree(response);
             var index_fragment = root.path("subsonic-response").path("artists").path("index");
-
 
             indices = indexReader.readValue(index_fragment);
         } catch (IllegalArgumentException | JacksonException e) {
