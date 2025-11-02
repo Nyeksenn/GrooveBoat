@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Properties;
 
 public class Main {
@@ -24,14 +25,18 @@ public class Main {
         properties.put("datasource.db.password", "");
         properties.put("datasource.db.databaseDriver", "org.h2.Driver");
 
-        var dataDir = GLib.getUserDataDir();
+        var dataDir = Utils.getUserDataPath();
         var dbPath = Paths.get(dataDir, "grooveboat", "cache");
         var dbBaseUrl = "jdbc:h2:file:%s";
         var dbUrl = String.format(dbBaseUrl, dbPath);
         properties.put("datasource.db.databaseUrl", dbUrl);
 
         cfg.loadFromProperties(properties);
+        cfg.setDdlGenerate(false);
+        cfg.setDdlRun(false);
+        cfg.setDdlCreateOnly(false);
         cfg.setDefaultServer(true);
+        cfg.setPackages(List.of("io.github.Nyeksenn.grooveboat.entities"));
         DatabaseFactory.create(cfg);
 
         try {
@@ -42,7 +47,6 @@ public class Main {
             TemplateTypes.register(AlbumListView.class);
             TemplateTypes.register(MusicPlayer.class);
             TemplateTypes.register(SongListPage.class);
-            TemplateTypes.register(SongCard.class);
             new GrooveboatApp().run(args);
         } catch (GErrorException e) {
             logger.error("Couldn't load resources. Exiting");
