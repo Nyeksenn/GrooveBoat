@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-public class AppPipeline {
+public final class AppPipeline {
     private static final Logger logger = LoggerFactory.getLogger(AppPipeline.class);
     public Pipeline pipeline;
     private Bus bus;

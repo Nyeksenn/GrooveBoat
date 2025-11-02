@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutorService;
 
-public class MediaSubsonic extends MediaStream implements AutoCloseable {
+public final class MediaSubsonic extends MediaStream implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(MediaSubsonic.class);
 
     private final Subsonic subsonic;

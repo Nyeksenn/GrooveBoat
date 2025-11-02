@@ -5,7 +5,7 @@ import org.gnome.gobject.GObject;
 
 import java.time.Duration;
 
-public class SongListItem extends GObject {
+public final class SongListItem extends GObject {
     private final String songName;
     private final String artistName;
     private final String albumTitle;

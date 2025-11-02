@@ -3,7 +3,7 @@ package io.github.Nyeksenn.grooveboat.gobjects;
 import org.gnome.gdk.Texture;
 import org.gnome.gobject.GObject;
 
-public class AlbumListItem extends GObject {
+public final class AlbumListItem extends GObject {
     private final Texture pictureData;
     private final String albumName;
     private final String albumArtist;

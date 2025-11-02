@@ -11,7 +11,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class SongStreamer implements Runnable {
+public final class SongStreamer implements Runnable {
     private final Lock pauseLock = new ReentrantLock();
     private final Condition unpause = pauseLock.newCondition();
     private volatile boolean paused = false;
