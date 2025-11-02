@@ -20,7 +20,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class Subsonic implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(Subsonic.class);
@@ -84,22 +83,7 @@ public class Subsonic implements AutoCloseable {
                 var future = CompletableFuture.supplyAsync(() -> {
                     var savedAlbumModel = new QAlbumModel().albumId.equalTo(album.id()).findOne();
 
-                    var albumArtists = new ArrayList<ArtistModel>(3);
-                    for (var albumArtist : album.artists()) {
-                        var savedAlbumArtist = new QArtistModel().artistId.equalTo(albumArtist.id()).findOne();
-                        if (savedAlbumArtist == null) {
-                            try {
-                                var newAlbumArtist = new ArtistModel(albumArtist.id(), albumArtist.name());
-                                newAlbumArtist.save();
-                                albumArtists.add(newAlbumArtist);
-                            } catch (DuplicateKeyException e) {
-                                savedAlbumArtist = new QArtistModel().artistId.equalTo(albumArtist.id()).findOne();
-                                albumArtists.add(savedAlbumArtist);
-                            }
-                        } else {
-                            albumArtists.add(savedAlbumArtist);
-                        }
-                    }
+                    var albumArtists = resolveArtists(album.artists());
                     var albumCover = client.getCoverArt(album.coverArt(), 500);
 
                     var newAlbumModel = new AlbumModel(album.id(), album.name(), album.songCount(), album.year(), Duration.ofSeconds(album.duration()), albumCover, albumArtists);
@@ -132,27 +116,26 @@ public class Subsonic implements AutoCloseable {
         return null;
     }
 
-    private List<ArtistModel> resolveArtists(List<ShortArtist> artists) {
-        List<ArtistModel> albumArtists = new ArrayList<>(5);
+    private static ArrayList<ArtistModel> resolveArtists(List<ShortArtist> artists) {
+        var artistList = new ArrayList<ArtistModel>(3);
         for (var artist : artists) {
-            try {
-                var albumArtist = client.getArtist(artist.id());
-
-                var savedArtist = new QArtistModel().artistId.equalTo(albumArtist.id()).findOne();
-                if (savedArtist != null) {
-                    albumArtists.add(savedArtist);
-                } else {
-                    var artistImage = client.getArtistImage(albumArtist.artistImageUrl());
-                    var newArtist = new ArtistModel(albumArtist.id(), albumArtist.name(), artistImage);
+            var savedArtist = new QArtistModel().artistId.equalTo(artist.id()).findOne();
+            if (savedArtist == null) {
+                try {
+                    var newArtist = new ArtistModel(artist.id(), artist.name());
                     newArtist.save();
-                    albumArtists.add(newArtist);
+                    artistList.add(newArtist);
+                } catch (DuplicateKeyException e) {
+                    savedArtist = new QArtistModel().artistId.equalTo(artist.id()).findOne();
+                    artistList.add(savedArtist);
                 }
-            } catch (IOException e) {
-                logger.warn("Couldn't get artist {}", artist.id());
+            } else {
+                artistList.add(savedArtist);
             }
         }
-        return albumArtists;
+        return artistList;
     }
+
 
     public List<AlbumModel> getAlbums() {
         return this.refreshAlbums();
@@ -166,41 +149,46 @@ public class Subsonic implements AutoCloseable {
         try {
             var songList = client.getSongsByAlbum(albumId);
             var songsSaved = new QSongModel().album.albumId.equalTo(albumId).findList();
-            var songModelList = new ArrayList<SongModel>(20);
 
             if (songsSaved.size() == songList.size()) {
                 return songsSaved;
             }
 
+            var futures = new ArrayList<CompletableFuture<SongModel>>(30);
+
             var album = new QAlbumModel().albumId.equalTo(albumId).findOne();
             for (var song : songList) {
-                var savedSongModel = new QSongModel().songId.equalTo(song.id()).findOne();
-                var artists = resolveArtists(song.artists());
-                var newSongModel = new SongModel(
-                        song.id(),
-                        song.title(),
-                        song.track(),
-                        song.year(),
-                        Duration.ofSeconds(song.duration()),
-                        song.bitRate(),
-                        song.contentType(),
-                        song.discNumber(),
-                        artists,
-                        album
-                );
+                var future = CompletableFuture.supplyAsync(() -> {
+                    var savedSongModel = new QSongModel().songId.equalTo(song.id()).findOne();
+                    var artists = resolveArtists(song.artists());
+                    var newSongModel = new SongModel(
+                            song.id(),
+                            song.title(),
+                            song.track(),
+                            song.year(),
+                            Duration.ofSeconds(song.duration()),
+                            song.bitRate(),
+                            song.contentType(),
+                            song.discNumber(),
+                            artists,
+                            album
+                    );
 
-                // Insert
-                if (savedSongModel == null) {
-                    songModelList.add(newSongModel);
-                } else if (!newSongModel.equals(savedSongModel)) {
-                    // Update
-                    newSongModel.setId(savedSongModel.getId());
-                    songModelList.add(newSongModel);
-                } else {
-                    songModelList.add(savedSongModel);
-                }
+                    // Insert
+                    if (savedSongModel == null) {
+                        return newSongModel;
+                    } else if (!newSongModel.equals(savedSongModel)) {
+                        // Update
+                        newSongModel.setId(savedSongModel.getId());
+                        return newSongModel;
+                    } else {
+                        return savedSongModel;
+                    }
+                }, exec);
+                futures.add(future);
             }
 
+            var songModelList = futures.stream().map(CompletableFuture::join).toList();
             db.saveAll(songModelList);
             return songModelList;
         } catch (IOException e) {
