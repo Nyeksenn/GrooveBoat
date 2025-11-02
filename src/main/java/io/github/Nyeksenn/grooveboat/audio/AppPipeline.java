@@ -25,7 +25,8 @@ public final class AppPipeline {
     private boolean busCall(Bus bus, Message msg) {
         if (msg.readType().contains(MessageType.EOS)) {
             logger.info("End of Stream");
-            pipeline.setState(State.NULL);
+            pipeline.setStartTime(new ClockTime(0));
+            pipeline.setState(State.PAUSED);
         } else if (msg.readType().contains(MessageType.ERROR)) {
             Out<GError> error = new Out<>();
             Out<String> debug = new Out<>();
@@ -76,5 +77,7 @@ public final class AppPipeline {
         appsrc.link(decodebin);
         audioconvert.linkMany(audioresample, autoaudiosink, null);
         decodebin.onPadAdded(this::onPadAdded);
+
+        pipeline.setState(State.PAUSED);
     }
 }

@@ -6,7 +6,21 @@
     <property name="margin-end">10</property>
     <property name="margin-top">10</property>
     <property name="margin-bottom">10</property>
-
+    <child>
+      <object class="GtkImage" id="player-album-picture">
+        <property name="pixel-size">300</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkLabel" id="player-song-name">
+        <property name="wrap">true</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkLabel" id="player-album-artist">
+        <property name="wrap">true</property>
+      </object>
+    </child>
     <child>
       <object class="GtkMediaControls" id="media-controls"/>
     </child>

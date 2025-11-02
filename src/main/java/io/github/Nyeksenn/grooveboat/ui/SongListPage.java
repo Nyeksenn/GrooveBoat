@@ -52,6 +52,7 @@ public class SongListPage extends NavigationPage {
         songCard.songArtist.setLabel(song.getArtistName());
         songCard.songDuration.setLabel(song.getDurationString());
         songCard.songPicture.setFromPaintable(song.getCoverArt());
+        songCard.setSongId(song.getSongId());
     }
 
     public void loadItems() {
@@ -70,13 +71,12 @@ public class SongListPage extends NavigationPage {
                     for (var song : songs) {
                         var songListItem = new SongListItem(
                                 song.getTitle(),
+                                song.getSongId(),
                                 song.getDisplayArtist(),
                                 song.getAlbum().getTitle(),
                                 song.getDuration(),
                                 texture);
-                        GLib.idleAddOnce(() -> {
-                            this.store.append(songListItem);
-                        });
+                        GLib.idleAddOnce(() -> this.store.append(songListItem));
                     }
                 } catch (NullPointerException e) {
                     logger.warn("Didn't find texture for an album");

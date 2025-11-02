@@ -3,8 +3,13 @@ package io.github.Nyeksenn.grooveboat.gobjects;
 import io.github.Nyeksenn.grooveboat.audio.AppPipeline;
 import io.github.Nyeksenn.grooveboat.audio.SongStreamer;
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
+import org.freedesktop.gstreamer.gst.ClockTime;
+import org.freedesktop.gstreamer.gst.Event;
 import org.freedesktop.gstreamer.gst.State;
+import org.freedesktop.gstreamer.gst.StateChangeReturn;
+import org.gnome.glib.GLib;
 import org.gnome.gtk.MediaStream;
+import org.javagi.base.Out;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,33 +46,37 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
 
     @Override
     protected void updateAudio(boolean muted, double volume) {
-        asParent().setVolume(volume);
-        asParent().setMuted(muted);
+        // TODO: Implement actual volume change
+        asParent().setVolume(1.0);
+        asParent().setMuted(false);
         logger.warn("Update audio was called");
     }
 
-    // These are the convenience overrides
-    @Override
-    public void streamPrepared(boolean hasAudio, boolean hasVideo, boolean seekable, long duration) {
-        this.currentStreamer = new SongStreamer(this.pipeline.appsrc, this.songId, this.subsonic);
-        var future = executor.submit(this.currentStreamer);
-        asParent().streamPrepared(hasAudio, hasVideo, seekable, duration);
-    }
-
-    @Override
-    public void streamUnprepared() {
-        asParent().streamUnprepared();
-    }
-
     public void prepare() {
-        this.streamPrepared(true, false, false, this.duration);
+        while (true) {
+            var state = new Out<State>();
+            var pending = new Out<State>();
+            var stateChangeReturn = this.pipeline.appsrc.getState(state, pending, new ClockTime(1));
+
+            if ((state.get() == State.PAUSED) && stateChangeReturn == StateChangeReturn.SUCCESS) {
+                break;
+            }
+        }
+
+        this.currentStreamer = new SongStreamer(this.pipeline.appsrc, this.songId, this.subsonic);
+        executor.submit(this.currentStreamer);
+
+        updateAudio(false, 1.0);
+        streamPrepared(true, false, false, this.duration);
     }
 
     private void feedData(int i) {
+        logger.info("Need data");
         this.currentStreamer.resume();
     }
 
     private void stopData() {
+        logger.info("Got enough data");
         this.currentStreamer.pause();
     }
     // The rest
@@ -84,10 +93,27 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
         this.pipeline.appsrc.onNeedData(this::feedData);
     }
 
+    // This stops playback and clears pipeline
     @Override
     public void close() {
-        logger.info("Closing MediaSubsonic");
+        logger.info("Destroying Stream");
+
+        this.pipeline.appsrc.endOfStream();
+
+        // Stop sending buffers
         this.currentStreamer.stop();
-        this.pipeline.pipeline.setState(State.NULL);
+
+        var state = new Out<State>();
+        this.pipeline.appsrc.getState(state, null, new ClockTime(1));
+
+        if (state.get() == State.PLAYING) {
+            // Signal EOS if not PLAYING
+            this.pipeline.appsrc.emitEndOfStream();
+        } else {
+            // Flush pipeline
+            this.pipeline.appsrc.sendEvent(Event.flushStart());
+            this.pipeline.appsrc.sendEvent(Event.flushStop(true));
+        }
+        streamUnprepared();
     }
 }

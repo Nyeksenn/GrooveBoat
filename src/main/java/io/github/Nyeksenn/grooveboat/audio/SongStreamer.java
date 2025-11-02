@@ -4,6 +4,8 @@ import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import org.freedesktop.gstreamer.app.AppSrc;
 import org.freedesktop.gstreamer.gst.Buffer;
 import org.freedesktop.gstreamer.gst.FlowReturn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,6 +14,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public final class SongStreamer implements Runnable {
+    private static final Logger logger = LoggerFactory.getLogger(SongStreamer.class);
     private final Lock pauseLock = new ReentrantLock();
     private final Condition unpause = pauseLock.newCondition();
     private volatile boolean paused = false;
@@ -46,10 +49,15 @@ public final class SongStreamer implements Runnable {
                     }
 
                     var stopReading = loadBuffers(stream);
-                    if (stopReading) return;
+                    if (stopReading) {
+                        appsrc.endOfStream();
+                        appsrc.emitEndOfStream();
+                        return;
+                    }
                 }
 
                 stream.close();
+                logger.info("SongStreamer is exiting");
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -94,5 +102,6 @@ public final class SongStreamer implements Runnable {
         this.songId = songId;
         this.subsonic = subsonic;
         this.buffer = new byte[BUFFER_SIZE];
+        logger.info("New streamer is starting");
     }
 }

@@ -6,6 +6,7 @@ import org.gnome.gobject.GObject;
 import java.time.Duration;
 
 public final class SongListItem extends GObject {
+    private final String songId;
     private final String songName;
     private final String artistName;
     private final String albumTitle;
@@ -32,13 +33,18 @@ public final class SongListItem extends GObject {
         return coverArt;
     }
 
+    public String getSongId() {
+        return songId;
+    }
+
     public String getDurationString() {
         long seconds = duration.getSeconds();
         return String.format("%02d:%02d", seconds / 60, seconds % 60);
     }
 
-    public SongListItem(String songName, String artistName, String albumTitle, Duration duration, Texture coverArt) {
+    public SongListItem(String songName, String songId ,String artistName, String albumTitle, Duration duration, Texture coverArt) {
         this.songName = songName;
+        this.songId = songId;
         this.artistName = artistName;
         this.albumTitle = albumTitle;
         this.duration = duration;

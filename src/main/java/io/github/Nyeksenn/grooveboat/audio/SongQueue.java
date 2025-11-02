@@ -1,12 +1,19 @@
 package io.github.Nyeksenn.grooveboat.audio;
 
 import io.github.Nyeksenn.grooveboat.entities.SongModel;
+import org.gnome.gobject.GObject;
+import org.javagi.gobject.annotations.Signal;
 
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.List;
 
-public final class SongQueue {
+public final class SongQueue extends GObject {
+    @Signal(name = "queue-changed")
+    public interface QueueChanged {
+        void run();
+    }
+
     private final Deque<SongModel> queue = new ConcurrentLinkedDeque<>();
 
     private SongQueue() {
@@ -21,16 +28,13 @@ public final class SongQueue {
         return Holder.INSTANCE;
     }
 
+    public SongModel peekSong() {
+        return queue.peek();
+    }
+
     public void addSong(SongModel song) {
         queue.add(song);
-    }
-
-    public SongModel getNextSong() {
-        return queue.poll();
-    }
-
-    public SongModel peekNext() {
-        return queue.peek();
+        emit("queue-changed");
     }
 
     public boolean isEmpty() {
@@ -40,5 +44,6 @@ public final class SongQueue {
     public synchronized void replace(List<SongModel> songs) {
         queue.clear();
         queue.addAll(songs);
+        emit("queue-changed");
     }
 }

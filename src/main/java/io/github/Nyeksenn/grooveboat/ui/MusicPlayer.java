@@ -1,9 +1,15 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
 import io.github.Nyeksenn.grooveboat.audio.AppPipeline;
+import io.github.Nyeksenn.grooveboat.audio.SongQueue;
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
+import io.github.Nyeksenn.grooveboat.entities.SongModel;
+import io.github.Nyeksenn.grooveboat.entities.query.QSongModel;
 import io.github.Nyeksenn.grooveboat.gobjects.MediaSubsonic;
+import org.gnome.glib.GLib;
 import org.gnome.gtk.Box;
+import org.gnome.gtk.Image;
+import org.gnome.gtk.Label;
 import org.gnome.gtk.MediaControls;
 import org.javagi.gobject.annotations.InstanceInit;
 import org.javagi.gobject.annotations.RegisteredType;
@@ -20,16 +26,25 @@ import java.util.concurrent.ExecutorService;
 public class MusicPlayer extends Box {
     private static final Logger logger = LoggerFactory.getLogger(MusicPlayer.class);
 
+    @GtkChild(name = "player-album-picture")
+    public Image playerAlbumPicture;
+
+    @GtkChild(name = "player-song-name")
+    public Label playerSongName;
+
+    @GtkChild(name = "player-album-artist")
+    public Label playerAlbumArtist;
+
     @GtkChild(name = "media-controls")
     public MediaControls mediaControls;
 
     private Subsonic subsonic;
 
-    private MediaSubsonic subsonicStream;
-
     private ExecutorService executor;
 
     private AppPipeline pipeline;
+
+    private final SongQueue songQueue = SongQueue.getInstance();
 
     public void initClient() {
         if (this.subsonic == null && executor == null) {
@@ -37,15 +52,36 @@ public class MusicPlayer extends Box {
             var app = (GrooveboatApp) window.getApplication();
 
             this.executor = app.executor;
-
             this.pipeline = new AppPipeline();
-
             this.subsonic = app.subsonic;
-            subsonicStream = new MediaSubsonic("5803cc5962db50805941225a2920dd1f", 194, subsonic, pipeline, executor);
-            this.mediaControls.setMediaStream(subsonicStream);
 
-            subsonicStream.prepare();
+            songQueue.connect("queue-changed", (SongQueue.QueueChanged) this::queueChanged);
+
+            if (songQueue.isEmpty()) {
+                var initSong = new QSongModel().findList().getFirst();
+                songQueue.addSong(initSong);
+            }
         }
+    }
+
+    // Make sure that no two threads try to change pipeline in parallel
+    public void queueChanged() {
+        var oldStream = (MediaSubsonic) this.mediaControls.getMediaStream();
+
+        executor.submit(() -> {
+            if (oldStream != null) {
+                oldStream.close();
+            }
+
+            var nextSong = this.songQueue.peekSong();
+            var stream = new MediaSubsonic(
+                    nextSong.getSongId(),
+                    nextSong.getDuration().getSeconds(),
+                    subsonic, pipeline, executor
+            );
+            GLib.idleAddOnce(() -> this.mediaControls.setMediaStream(stream));
+            stream.prepare();
+        });
     }
 
     @InstanceInit
@@ -63,7 +99,7 @@ public class MusicPlayer extends Box {
 
     public void destroy() {
         logger.info("Closing Music Player");
-        this.subsonicStream.close();
-        this.mediaControls.setMediaStream(null);
+        var stream = (MediaSubsonic) this.mediaControls.getMediaStream();
+        stream.close();
     }
 }
