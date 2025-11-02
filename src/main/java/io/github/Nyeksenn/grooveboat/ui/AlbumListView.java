@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.foreign.MemorySegment;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/album-list.ui", name = "AlbumListView")
 @RegisteredType(name = "AlbumListView")
@@ -67,14 +68,18 @@ public class AlbumListView extends Box {
             this.executor.submit(() -> {
                 var albums = subsonic.getAlbums();
                 for (var album : albums) {
-                    try {
-                        var texture = albumTextureLoader.load(album.getAlbumId());
-                        var albumListItem = new AlbumListItem(texture, album.getTitle(), album.getDisplayArtist(), album.getAlbumId());
-                        GLib.idleAddOnce(() -> {
-                            this.store.append(albumListItem);
+                    try (var localExec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())) {
+                        localExec.submit(() -> {
+                            try {
+                                var texture = albumTextureLoader.load(album.getAlbumId());
+                                var albumListItem = new AlbumListItem(texture, album.getTitle(), album.getDisplayArtist(), album.getAlbumId());
+                                GLib.idleAddOnce(() -> {
+                                    this.store.append(albumListItem);
+                                });
+                            } catch (NullPointerException e) {
+                                logger.warn("Didn't find texture for album {}", album.getTitle());
+                            }
                         });
-                    } catch (NullPointerException e) {
-                        logger.warn("Didn't find texture for album {}", album.getTitle());
                     }
                 }
             });
