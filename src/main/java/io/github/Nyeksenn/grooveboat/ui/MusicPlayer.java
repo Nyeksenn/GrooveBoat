@@ -66,13 +66,14 @@ public class MusicPlayer extends Box {
     // Make sure that no two threads try to change pipeline in parallel
     public void queueChanged() {
         var oldStream = (MediaSubsonic) this.mediaControls.getMediaStream();
+        var nextSong = this.songQueue.peekSong();
+        var textureLoader = AlbumTextureLoader.getInstance();
 
         executor.submit(() -> {
             if (oldStream != null) {
                 oldStream.close();
             }
 
-            var nextSong = this.songQueue.peekSong();
             var stream = new MediaSubsonic(
                     nextSong.getSongId(),
                     nextSong.getDuration().getSeconds(),
@@ -81,6 +82,9 @@ public class MusicPlayer extends Box {
             GLib.idleAddOnce(() -> this.mediaControls.setMediaStream(stream));
             stream.initializeStream();
         });
+        this.playerAlbumArtist.setLabel(nextSong.getDisplayArtist());
+        this.playerSongName.setLabel(nextSong.getTitle());
+        this.playerAlbumPicture.setFromPaintable(textureLoader.load(nextSong.getAlbum().getAlbumId()));
     }
 
     @InstanceInit
