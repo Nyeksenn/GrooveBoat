@@ -77,7 +77,8 @@ public class MusicPlayer extends Box {
             var stream = new MediaSubsonic(
                     nextSong.getSongId(),
                     nextSong.getDuration().getSeconds(),
-                    subsonic, pipeline, executor
+                    subsonic, pipeline, executor,
+                    nextSong.getContentType()
             );
             GLib.idleAddOnce(() -> this.mediaControls.setMediaStream(stream));
             stream.initializeStream();

@@ -34,6 +34,7 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
     public volatile boolean enoughData = false;
     private final byte[] buffer = new byte[BUFFER_SIZE];
     private final Lock lock = new ReentrantLock();
+    private final String contentType;
 
     // These are the virtual methods
 
@@ -64,27 +65,18 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
     }
 
     public void initializeStream() {
-        var response = this.subsonic.getSongStream(songId);
-        if (response != null) {
-            socket = response.body();
-
-            Caps caps = null;
-            var contentType = response.headers().firstValue("Content-Type");
-            if (contentType.isPresent()) {
-                var ct = contentType.get();
-                if (Utils.hasMapping(ct)) {
-                    var gstCt = Utils.toGStreamerType(ct);
-                    caps = Caps.emptySimple(gstCt);
-                }
-            }
-
-            appSrc.setCapabilities(caps);
-            pipeline.pipeline.setState(State.PAUSED);
-            updateAudio(false, 1.0);
-            // This takes microseconds
-            streamPrepared(true, false, false, this.duration * 1000000);
-            GLib.timeoutAdd(200, 50, this::updatePosition);
+        Caps caps = null;
+        if (Utils.hasMapping(contentType)) {
+            var gstCt = Utils.toGStreamerType(contentType);
+            caps = Caps.emptySimple(gstCt);
         }
+
+        appSrc.setCapabilities(caps);
+        pipeline.pipeline.setState(State.PAUSED);
+        updateAudio(false, 1.0);
+        // This takes microseconds
+        streamPrepared(true, false, false, this.duration * 1000000);
+        GLib.timeoutAdd(200, 50, this::updatePosition);
     }
 
     // This stops playback and clears pipeline
@@ -100,7 +92,6 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
         this.pipeline.pipeline.remove(appSrc);
         //this.pipeline.appsrc.seek(1.0, Format.TIME, SeekFlags.FLUSH, SeekType.SET, 0L, SeekType.NONE, CLOCK_TIME_NONE.getValue());
         pipeline.pipeline.setState(State.READY);
-        // This only works if appsrc is seekable
 
         streamUnprepared();
     }
@@ -173,12 +164,13 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
 
     // The rest
 
-    public MediaSubsonic(String songId, long duration, Subsonic subsonic, AppPipeline pipeline, ExecutorService executor) {
+    public MediaSubsonic(String songId, long duration, Subsonic subsonic, AppPipeline pipeline, ExecutorService executor, String contentType) {
         this.songId = songId;
         this.subsonic = subsonic;
         this.pipeline = pipeline;
         this.duration = duration;
         this.executor = executor;
+        this.contentType = contentType;
 
         var enoughDataCallback = (AppSrcCallbacks.EnoughDataCallback) this::enoughDataHandler;
         var needDataCallback = (AppSrcCallbacks.NeedDataCallback) this::needDataHandler;
