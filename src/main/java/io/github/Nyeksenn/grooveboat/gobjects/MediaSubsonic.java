@@ -1,11 +1,12 @@
 package io.github.Nyeksenn.grooveboat.gobjects;
 
+import io.github.Nyeksenn.grooveboat.Utils;
 import io.github.Nyeksenn.grooveboat.audio.AppPipeline;
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import org.freedesktop.gstreamer.app.AppSrc;
 import org.freedesktop.gstreamer.app.AppSrcCallbacks;
 import org.freedesktop.gstreamer.gst.Buffer;
-import org.freedesktop.gstreamer.gst.ClockTime;
+import org.freedesktop.gstreamer.gst.Caps;
 import org.freedesktop.gstreamer.gst.FlowReturn;
 import org.freedesktop.gstreamer.gst.State;
 import org.gnome.gtk.MediaStream;
@@ -16,6 +17,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.foreign.Arena;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import static io.github.Nyeksenn.grooveboat.audio.AppPipeline.BUFFER_SIZE;
 
 public final class MediaSubsonic extends MediaStream implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(MediaSubsonic.class);
@@ -24,11 +29,12 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
     private final String songId;
     private final long duration;
     public final AppPipeline pipeline;
+    public AppSrc appSrc;
     private final ExecutorService executor;
     public InputStream socket;
     public volatile boolean enoughData = false;
-    private static final int BUFFER_SIZE = 8192;
     private final byte[] buffer = new byte[BUFFER_SIZE];
+    private final Lock lock = new ReentrantLock();
 
     // These are the virtual methods
 
@@ -62,6 +68,19 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
         var response = this.subsonic.getSongStream(songId);
         if (response != null) {
             socket = response.body();
+
+            Caps caps = null;
+            var contentType = response.headers().firstValue("Content-Type");
+            if (contentType.isPresent()) {
+                var ct = contentType.get();
+                if (Utils.hasMapping(ct)) {
+                    var gstCt = Utils.toGStreamerType(ct);
+                    caps = Caps.emptySimple(gstCt);
+                }
+            }
+
+            appSrc.setCapabilities(caps);
+            pipeline.pipeline.setState(State.PAUSED);
             updateAudio(false, 1.0);
             // This takes microseconds
             streamPrepared(true, false, false, this.duration * 1000000);
@@ -77,43 +96,46 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
         } catch (IOException e) {
             logger.warn("Couldn't close stream socket");
         }
-        this.pipeline.appsrc.endOfStream();
-        pipeline.pipeline.setState(State.READY);
-        pipeline.pipeline.setState(State.PAUSED);
-        // This only works if appsrc is seekable
+        this.appSrc.endOfStream();
+        this.pipeline.pipeline.remove(appSrc);
         //this.pipeline.appsrc.seek(1.0, Format.TIME, SeekFlags.FLUSH, SeekType.SET, 0L, SeekType.NONE, CLOCK_TIME_NONE.getValue());
+        pipeline.pipeline.setState(State.READY);
+        // This only works if appsrc is seekable
 
         streamUnprepared();
     }
 
     public void needDataHandler(AppSrc src, int i) {
-        logger.info("Need data");
         enoughData = false;
         executor.submit(() -> {
-            while (!enoughData) {
-                try {
-                    var len = socket.readNBytes(buffer, 0, BUFFER_SIZE);
-                    var flowReturn = src.pushBuffer(Buffer.memdup(buffer));
-                    if (flowReturn == FlowReturn.FLUSHING) return;
-                    if ((flowReturn == FlowReturn.OK) && (len < BUFFER_SIZE)) {
-                        src.endOfStream();
-                        pipeline.pipeline.setState(State.READY);
-                        pipeline.pipeline.setState(State.PAUSED);
-                        // This only works if appsrc is seekable
-                        //src.seek(1.0, Format.TIME, SeekFlags.FLUSH, SeekType.SET, 0L, SeekType.NONE, CLOCK_TIME_NONE.getValue());
+            while (true) {
+                synchronized (lock) {
+                    if (enoughData) return;
+                    try {
+                        var len = socket.readNBytes(buffer, 0, BUFFER_SIZE);
+                        var flowReturn = src.pushBuffer(Buffer.memdup(buffer));
+                        if (flowReturn == FlowReturn.FLUSHING) return;
+                        if ((flowReturn == FlowReturn.OK) && (len < BUFFER_SIZE)) {
+                            src.endOfStream();
+                            pipeline.pipeline.setState(State.READY);
+                            pipeline.pipeline.setState(State.PAUSED);
+                            // This only works if appsrc is seekable
+                            //src.seek(1.0, Format.TIME, SeekFlags.FLUSH, SeekType.SET, 0L, SeekType.NONE, CLOCK_TIME_NONE.getValue());
+                            return;
+                        }
+                    } catch (IOException e) {
+                        logger.warn("Couldn't read from socket");
                         return;
                     }
-                } catch (IOException e) {
-                    logger.warn("Couldn't read from socket");
-                    return;
                 }
             }
         });
     }
 
     public void enoughDataHandler(AppSrc src) {
-        logger.info("Enough Data");
-        this.enoughData = true;
+        synchronized (lock) {
+            this.enoughData = true;
+        }
     }
 
     public boolean seekDataHandler(AppSrc src, long offset) {
@@ -144,9 +166,6 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
         this.duration = duration;
         this.executor = executor;
 
-        // This takes nanoseconds
-        this.pipeline.appsrc.setDuration(new ClockTime(this.duration * 1000000000));
-
         var enoughDataCallback = (AppSrcCallbacks.EnoughDataCallback) this::enoughDataHandler;
         var needDataCallback = (AppSrcCallbacks.NeedDataCallback) this::needDataHandler;
         var seekDataCallback = (AppSrcCallbacks.SeekDataCallback) this::seekDataHandler;
@@ -154,6 +173,7 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
         callbacks.overrideEnoughData(enoughDataCallback, Arena.global());
         callbacks.overrideNeedData(needDataCallback, Arena.global());
         callbacks.overrideSeekData(seekDataCallback, Arena.global());
-        this.pipeline.appsrc.setCallbacks(callbacks, null);
+
+        appSrc = this.pipeline.initNewAppSrc(this.duration * 1000000000, callbacks, null);
     }
 }

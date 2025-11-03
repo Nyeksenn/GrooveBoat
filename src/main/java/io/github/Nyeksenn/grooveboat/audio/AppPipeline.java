@@ -1,6 +1,7 @@
 package io.github.Nyeksenn.grooveboat.audio;
 
 import org.freedesktop.gstreamer.app.AppSrc;
+import org.freedesktop.gstreamer.app.AppSrcCallbacks;
 import org.freedesktop.gstreamer.app.AppStreamType;
 import org.freedesktop.gstreamer.gst.*;
 import org.gnome.glib.GError;
@@ -15,8 +16,8 @@ public final class AppPipeline {
     private static final Logger logger = LoggerFactory.getLogger(AppPipeline.class);
     public Pipeline pipeline;
     private Bus bus;
+    public static final int BUFFER_SIZE = 8192;
     private int busWatchId;
-    public AppSrc appsrc;
     public Element audioconvert;
     public Element decodebin;
     public Element audioresample;
@@ -44,28 +45,45 @@ public final class AppPipeline {
 
         if (sinkpad != null) {
             pad.link(sinkpad);
+            pad.getParentElement().syncStateWithParent();
         } else {
             logger.warn("Sink pad not set");
         }
     }
 
-    public AppPipeline() {
-        Gst.init(null);
-        pipeline = new Pipeline("grooveboat-player");
-        appsrc = new AppSrc();
+    public AppSrc initNewAppSrc(long duration, AppSrcCallbacks callbacks, Caps caps) {
+        pipeline.setState(State.NULL);
+        var appsrc = new AppSrc();
         appsrc.setName("appsrc");
         appsrc.setStreamType(AppStreamType.SEEKABLE);
         appsrc.setFormat(Format.TIME);
-        appsrc.setMaxBuffers(100);
+        //appsrc.setMaxBuffers(BUFFER_SIZE * 10L);
+        appsrc.setMaxTime(new ClockTime(20000000000L));
         appsrc.setLive(false);
         appsrc.setProperty("block", false);
         appsrc.decorateStreamId("grooveboat-appsrc-stream");
+        appsrc.setDuration(new ClockTime(duration));
+        appsrc.setCallbacks(callbacks, null);
+        appsrc.setCapabilities(caps);
+
+        pipeline.add(appsrc);
+        var decoder = pipeline.getByName("decoder");
+        appsrc.link(decoder);
+
+        pipeline.setState(State.READY);
+
+        return appsrc;
+    }
+
+    public AppPipeline() {
+        Gst.init(null);
+        pipeline = new Pipeline("grooveboat-player");
         decodebin = ElementFactory.make("decodebin", "decoder");
         audioconvert = ElementFactory.make("audioconvert", "converter");
         audioresample = ElementFactory.make("audioresample", "resample");
         autoaudiosink = ElementFactory.make("autoaudiosink", "sink");
 
-        if (Stream.of(appsrc, decodebin, audioconvert, audioresample, autoaudiosink).anyMatch(Objects::isNull)) {
+        if (Stream.of(decodebin, audioconvert, audioresample, autoaudiosink).anyMatch(Objects::isNull)) {
             logger.warn("Couldn't create a gstreamer elmenet");
             return;
         }
@@ -73,12 +91,10 @@ public final class AppPipeline {
         bus = pipeline.getBus();
         busWatchId = bus.addWatch(0, this::busCall);
 
-        pipeline.addMany(appsrc, decodebin, audioconvert, audioresample, autoaudiosink, null);
-
-        appsrc.link(decodebin);
+        pipeline.addMany(decodebin, audioconvert, audioresample, autoaudiosink, null);
         audioconvert.linkMany(audioresample, autoaudiosink, null);
         decodebin.onPadAdded(this::onPadAdded);
 
-        pipeline.setState(State.PAUSED);
+        pipeline.setState(State.READY);
     }
 }
