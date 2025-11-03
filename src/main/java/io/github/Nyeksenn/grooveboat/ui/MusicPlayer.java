@@ -3,7 +3,6 @@ package io.github.Nyeksenn.grooveboat.ui;
 import io.github.Nyeksenn.grooveboat.audio.AppPipeline;
 import io.github.Nyeksenn.grooveboat.audio.SongQueue;
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
-import io.github.Nyeksenn.grooveboat.entities.SongModel;
 import io.github.Nyeksenn.grooveboat.entities.query.QSongModel;
 import io.github.Nyeksenn.grooveboat.gobjects.MediaSubsonic;
 import org.gnome.glib.GLib;
@@ -80,7 +79,7 @@ public class MusicPlayer extends Box {
                     subsonic, pipeline, executor
             );
             GLib.idleAddOnce(() -> this.mediaControls.setMediaStream(stream));
-            stream.prepare();
+            stream.initializeStream();
         });
     }
 
@@ -100,6 +99,8 @@ public class MusicPlayer extends Box {
     public void destroy() {
         logger.info("Closing Music Player");
         var stream = (MediaSubsonic) this.mediaControls.getMediaStream();
-        stream.close();
+        if (stream != null) {
+            stream.close();
+        }
     }
 }

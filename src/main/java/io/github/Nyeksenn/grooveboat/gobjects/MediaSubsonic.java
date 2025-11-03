@@ -3,17 +3,20 @@ package io.github.Nyeksenn.grooveboat.gobjects;
 import io.github.Nyeksenn.grooveboat.audio.AppPipeline;
 import io.github.Nyeksenn.grooveboat.audio.SongStreamer;
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
-import org.freedesktop.gstreamer.gst.ClockTime;
-import org.freedesktop.gstreamer.gst.Event;
-import org.freedesktop.gstreamer.gst.State;
-import org.freedesktop.gstreamer.gst.StateChangeReturn;
-import org.gnome.glib.GLib;
+import org.freedesktop.gstreamer.app.AppSrc;
+import org.freedesktop.gstreamer.app.AppSrcCallbacks;
+import org.freedesktop.gstreamer.gst.*;
 import org.gnome.gtk.MediaStream;
-import org.javagi.base.Out;
+import org.javagi.gobject.annotations.InstanceInit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.foreign.Arena;
 import java.util.concurrent.ExecutorService;
+
+import static org.freedesktop.gstreamer.gst.Gst.CLOCK_TIME_NONE;
 
 public final class MediaSubsonic extends MediaStream implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(MediaSubsonic.class);
@@ -24,6 +27,10 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
     private final AppPipeline pipeline;
     private final ExecutorService executor;
     private SongStreamer currentStreamer;
+    public InputStream socket;
+    public volatile boolean enoughData = false;
+    private static final int BUFFER_SIZE = 8192;
+    private final byte[] buffer = new byte[BUFFER_SIZE];
 
     // These are the virtual methods
 
@@ -35,6 +42,7 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
     @Override
     public boolean play() {
         pipeline.pipeline.setState(State.PLAYING);
+        logger.info("Now playing");
         return true;
     }
 
@@ -52,35 +60,56 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
         logger.warn("Update audio was called");
     }
 
-    public void prepare() {
-        while (true) {
-            var state = new Out<State>();
-            var pending = new Out<State>();
-            var stateChangeReturn = this.pipeline.appsrc.getState(state, pending, new ClockTime(1));
-
-            if ((state.get() == State.PAUSED) && stateChangeReturn == StateChangeReturn.SUCCESS) {
-                break;
-            }
+    public void initializeStream() {
+        var response = this.subsonic.getSongStream(songId);
+        if (response != null) {
+            socket = response.body();
+            updateAudio(false, 1.0);
+            // This takes microseconds
+            streamPrepared(true, false, false, this.duration * 1000000);
         }
-
-        this.currentStreamer = new SongStreamer(this.pipeline.appsrc, this.songId, this.subsonic);
-        executor.submit(this.currentStreamer);
-
-        updateAudio(false, 1.0);
-        streamPrepared(true, false, false, this.duration);
     }
 
-    private void feedData(int i) {
+    // This stops playback and clears pipeline
+    @Override
+    public void close() {
+        logger.info("Destroying Stream");
+        try {
+            socket.close();
+        } catch (IOException e) {
+            logger.warn("Couldn't close stream socket");
+        }
+        this.pipeline.appsrc.endOfStream();
+        this.pipeline.appsrc.seek(1.0, Format.TIME, SeekFlags.FLUSH, SeekType.SET, 0L, SeekType.NONE, CLOCK_TIME_NONE.getValue());
+        streamUnprepared();
+    }
+
+    private void needDataHandler(AppSrc appSrc, int i) {
         logger.info("Need data");
-        this.currentStreamer.resume();
+        enoughData = false;
+        executor.submit(() -> {
+            while (!enoughData) {
+                try {
+                    var len = socket.readNBytes(buffer, 0, BUFFER_SIZE);
+                    var flowReturn = appSrc.pushBuffer(Buffer.memdup(buffer));
+                    if (flowReturn == FlowReturn.FLUSHING) return;
+                    if ((flowReturn == FlowReturn.OK) && (len < BUFFER_SIZE)) {
+                        appSrc.endOfStream();
+                        appSrc.seek(1.0, Format.TIME, SeekFlags.FLUSH, SeekType.SET, 0L, SeekType.NONE, CLOCK_TIME_NONE.getValue());
+                        return;
+                    }
+                } catch (IOException e) {
+                    logger.warn("Couldn't read from socket");
+                }
+            }
+        });
     }
 
-    private void stopData() {
-        logger.info("Got enough data");
-        this.currentStreamer.pause();
+    private void enoughDataHandler(AppSrc appSrc) {
+        logger.info("Enough Data");
+        this.enoughData = true;
     }
     // The rest
-
 
     public MediaSubsonic(String songId, long duration, Subsonic subsonic, AppPipeline pipeline, ExecutorService executor) {
         this.songId = songId;
@@ -89,31 +118,14 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
         this.duration = duration;
         this.executor = executor;
 
-        this.pipeline.appsrc.onEnoughData(this::stopData);
-        this.pipeline.appsrc.onNeedData(this::feedData);
-    }
+        // This takes nanoseconds
+        this.pipeline.appsrc.setDuration(new ClockTime(this.duration * 1000000000));
 
-    // This stops playback and clears pipeline
-    @Override
-    public void close() {
-        logger.info("Destroying Stream");
-
-        this.pipeline.appsrc.endOfStream();
-
-        // Stop sending buffers
-        this.currentStreamer.stop();
-
-        var state = new Out<State>();
-        this.pipeline.appsrc.getState(state, null, new ClockTime(1));
-
-        if (state.get() == State.PLAYING) {
-            // Signal EOS if not PLAYING
-            this.pipeline.appsrc.emitEndOfStream();
-        } else {
-            // Flush pipeline
-            this.pipeline.appsrc.sendEvent(Event.flushStart());
-            this.pipeline.appsrc.sendEvent(Event.flushStop(true));
-        }
-        streamUnprepared();
+        var enoughDataCallback = (AppSrcCallbacks.EnoughDataCallback) this::enoughDataHandler;
+        var needDataCallback = (AppSrcCallbacks.NeedDataCallback) this::needDataHandler;
+        var callbacks = new AppSrcCallbacks();
+        callbacks.overrideEnoughData(enoughDataCallback, Arena.ofAuto());
+        callbacks.overrideNeedData(needDataCallback, Arena.ofAuto());
+        this.pipeline.appsrc.setCallbacks(callbacks, null);
     }
 }

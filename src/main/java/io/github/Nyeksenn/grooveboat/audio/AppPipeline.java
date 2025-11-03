@@ -25,8 +25,6 @@ public final class AppPipeline {
     private boolean busCall(Bus bus, Message msg) {
         if (msg.readType().contains(MessageType.EOS)) {
             logger.info("End of Stream");
-            pipeline.setStartTime(new ClockTime(0));
-            pipeline.setState(State.PAUSED);
         } else if (msg.readType().contains(MessageType.ERROR)) {
             Out<GError> error = new Out<>();
             Out<String> debug = new Out<>();
@@ -35,6 +33,7 @@ public final class AppPipeline {
             logger.warn("Error: {}", error.get().readMessage());
 
             pipeline.setState(State.NULL);
+            pipeline.setState(State.PAUSED);
         }
 
         return true;

@@ -342,7 +342,7 @@ public class SubsonicClient implements AutoCloseable {
 
     public void close() {
         if (httpClient != null) {
-            httpClient.close();
+            httpClient.shutdownNow();
         }
     }
 }
