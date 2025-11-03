@@ -5,11 +5,10 @@ import io.github.Nyeksenn.grooveboat.audio.AppPipeline;
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import org.freedesktop.gstreamer.app.AppSrc;
 import org.freedesktop.gstreamer.app.AppSrcCallbacks;
-import org.freedesktop.gstreamer.gst.Buffer;
-import org.freedesktop.gstreamer.gst.Caps;
-import org.freedesktop.gstreamer.gst.FlowReturn;
-import org.freedesktop.gstreamer.gst.State;
+import org.freedesktop.gstreamer.gst.*;
+import org.gnome.glib.GLib;
 import org.gnome.gtk.MediaStream;
+import org.javagi.base.Out;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,6 +83,7 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
             updateAudio(false, 1.0);
             // This takes microseconds
             streamPrepared(true, false, false, this.duration * 1000000);
+            GLib.timeoutAdd(200, 50, this::updatePosition);
         }
     }
 
@@ -155,6 +155,20 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
         } else {
             return false;
         }
+    }
+
+    public boolean updatePosition() {
+        Out<State> state = new Out<>();
+        pipeline.pipeline.getState(state, null, new ClockTime(Gst.CLOCK_TIME_NONE.getValue()));
+        if (!((state.get() == State.PLAYING) || (state.get() == State.PAUSED))) {
+            return false;
+        }
+        Out<Long> pos = new Out<>();
+        var position = pipeline.pipeline.queryPosition(Format.TIME, pos);
+        if (position) {
+            update(pos.get() / 1000);
+        }
+        return true;
     }
 
     // The rest
