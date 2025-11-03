@@ -54,10 +54,12 @@ public final class AppPipeline {
         pipeline = new Pipeline("grooveboat-player");
         appsrc = new AppSrc();
         appsrc.setName("appsrc");
-        appsrc.setStreamType(AppStreamType.STREAM);
+        appsrc.setStreamType(AppStreamType.SEEKABLE);
+        appsrc.setFormat(Format.TIME);
         appsrc.setMaxBuffers(100);
         appsrc.setLive(false);
         appsrc.setProperty("block", false);
+        appsrc.decorateStreamId("grooveboat-appsrc-stream");
         decodebin = ElementFactory.make("decodebin", "decoder");
         audioconvert = ElementFactory.make("audioconvert", "converter");
         audioresample = ElementFactory.make("audioresample", "resample");

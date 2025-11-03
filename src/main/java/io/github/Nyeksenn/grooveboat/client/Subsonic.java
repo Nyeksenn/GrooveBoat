@@ -19,7 +19,10 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Subsonic implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(Subsonic.class);
@@ -35,7 +38,7 @@ public class Subsonic implements AutoCloseable {
             var artistModelList = new ArrayList<ArtistModel>(100);
 
             if (numSavedArtists == artists.size()) {
-                return new QArtistModel().findList() ;
+                return new QArtistModel().findList();
             }
 
             try {
@@ -202,9 +205,18 @@ public class Subsonic implements AutoCloseable {
 
     public HttpResponse<InputStream> getSongStream(String songId) {
         try {
-            return this.client.stream(songId);
+            return this.client.stream(songId, false, 0L);
         } catch (IOException e) {
             logger.warn("Couldn't get stream for song {}", songId);
+            return null;
+        }
+    }
+
+    public HttpResponse<InputStream> seekSongStream(String songId, long position) {
+        try {
+            return this.client.stream(songId, true, position);
+        } catch (IOException e) {
+            logger.warn("Couldn't seek stream for song {}", songId);
             return null;
         }
     }

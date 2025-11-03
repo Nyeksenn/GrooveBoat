@@ -24,7 +24,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.*;
-import java.util.concurrent.Executors;
 
 import static org.gnome.glib.GLib.getHostName;
 
@@ -176,10 +175,19 @@ public class SubsonicClient implements AutoCloseable {
         }
     }
 
-    public HttpResponse<InputStream> stream(String songId) throws IOException {
-        var params = new HashMap<>(Map.of(
-                "id", songId
-        ));
+    public HttpResponse<InputStream> stream(String songId, boolean seek, long position) throws IOException {
+        Map<String, String> params;
+
+        if (seek) {
+            params = new HashMap<>(Map.of(
+                    "id", songId,
+                    "timeOffset", String.valueOf(position)
+            ));
+        } else {
+            params = new HashMap<>(Map.of(
+                    "id", songId
+            ));
+        }
 
         try {
             URI uri = getUri("/rest/stream", params);
@@ -224,9 +232,9 @@ public class SubsonicClient implements AutoCloseable {
         List<Album> albums = new ArrayList<>(200);
         var offset = 0;
         var params = new HashMap<>(Map.of(
-           "size", String.valueOf(500),
-           "offset", String.valueOf(offset),
-           "type", "alphabeticalByArtist"
+                "size", String.valueOf(500),
+                "offset", String.valueOf(offset),
+                "type", "alphabeticalByArtist"
         ));
 
         while (moreToGo) {
@@ -260,7 +268,7 @@ public class SubsonicClient implements AutoCloseable {
 
     public Artist getArtist(String id) throws IOException {
         var params = new HashMap<>(Map.of(
-           "id", id
+                "id", id
         ));
 
         try {
@@ -306,7 +314,7 @@ public class SubsonicClient implements AutoCloseable {
 
     public List<Song> getSongsByAlbum(String albumId) throws IOException {
         var params = new HashMap<>(Map.of(
-           "id", albumId
+                "id", albumId
         ));
 
         try {
