@@ -73,9 +73,7 @@ public class AlbumListView extends Box {
                             try {
                                 var texture = albumTextureLoader.load(album.getAlbumId());
                                 var albumListItem = new AlbumListItem(texture, album.getTitle(), album.getDisplayArtist(), album.getAlbumId());
-                                GLib.idleAddOnce(() -> {
-                                    this.store.append(albumListItem);
-                                });
+                                GLib.idleAddOnce(() -> this.store.append(albumListItem));
                             } catch (NullPointerException e) {
                                 logger.warn("Didn't find texture for album {}", album.getTitle());
                             }

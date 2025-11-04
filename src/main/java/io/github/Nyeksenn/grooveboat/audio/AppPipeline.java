@@ -88,8 +88,7 @@ public final class AppPipeline {
         appsrc.setName("appsrc");
         appsrc.setStreamType(AppStreamType.SEEKABLE);
         appsrc.setFormat(Format.TIME);
-        //appsrc.setMaxBuffers(BUFFER_SIZE * 10L);
-        appsrc.setMaxTime(new ClockTime(20000000000L));
+        appsrc.setMaxTime(new ClockTime(40000000000L));
         appsrc.setLive(false);
         appsrc.setProperty("block", false);
         appsrc.decorateStreamId("grooveboat-appsrc-stream");
