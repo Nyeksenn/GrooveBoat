@@ -2,6 +2,7 @@ package io.github.Nyeksenn.grooveboat.ui;
 
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import io.github.Nyeksenn.grooveboat.client.SubsonicClient;
+import io.github.Nyeksenn.grooveboat.gobjects.SecretKeeper;
 import org.gnome.adw.Application;
 import org.gnome.gdk.Display;
 import org.gnome.gio.ApplicationFlags;
@@ -47,6 +48,13 @@ public class GrooveboatApp extends Application {
         var url = settings.getString("url");
         var client = new SubsonicClient(url, username, password);
         this.subsonic = new Subsonic(client);
+
+        var secrets = SecretKeeper.getInstance();
+        //try {
+        //    secrets.storePassword("testpwd").join();
+        //} catch (GErrorException e) {
+        //    logger.info("Couldn't save password: {}", e.getMessage());
+        //}
 
         GrooveboatWindow win = new GrooveboatWindow(this);
         win.present();
