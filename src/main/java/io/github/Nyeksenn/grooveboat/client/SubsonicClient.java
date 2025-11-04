@@ -90,7 +90,7 @@ public class SubsonicClient implements AutoCloseable {
 
         this.httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
-                .connectTimeout(Duration.ofMillis(200))
+                .connectTimeout(Duration.ofMillis(150))
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
     }
@@ -224,7 +224,7 @@ public class SubsonicClient implements AutoCloseable {
                     retryCounter--;
                 }
             }
-            return httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+            return null;
         } catch (URISyntaxException e) {
             throw new IOException("Invalid URI: " + e.getMessage(), e);
         } catch (InterruptedException e) {

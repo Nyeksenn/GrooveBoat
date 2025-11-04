@@ -20,6 +20,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static io.github.Nyeksenn.grooveboat.audio.AppPipeline.BUFFER_SIZE;
+import static org.freedesktop.gstreamer.gst.Gst.CLOCK_TIME_NONE;
 
 public final class MediaSubsonic extends MediaStream implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(MediaSubsonic.class);
@@ -31,10 +32,13 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
     public AppSrc appSrc;
     private final ExecutorService executor;
     public InputStream socket;
-    public volatile boolean enoughData = false;
     private final byte[] buffer = new byte[BUFFER_SIZE];
-    private final Lock lock = new ReentrantLock();
     private final String contentType;
+
+    public volatile boolean enoughData = false;
+    private final Lock enoughDataLock = new ReentrantLock();
+
+    public volatile boolean pushingData = false;
 
     // These are the virtual methods
 
@@ -52,8 +56,11 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
 
     @Override
     public void seek(long timestamp) {
-        asParent().seek(timestamp);
-        logger.info("Seek was called with timestamp: {}", timestamp);
+        synchronized (enoughDataLock) {
+            enoughData = true;
+            pipeline.pipeline.seek(1.0, Format.TIME, SeekFlags.FLUSH, SeekType.SET, timestamp * 1000, SeekType.NONE, CLOCK_TIME_NONE.getValue());
+            logger.info("Seek was called with timestamp: {}", timestamp);
+        }
     }
 
     @Override
@@ -65,6 +72,7 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
     }
 
     public void initializeStream() {
+        logger.info("Initializing stream");
         Caps caps = null;
         if (Utils.hasMapping(contentType)) {
             var gstCt = Utils.toGStreamerType(contentType);
@@ -73,10 +81,11 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
 
         appSrc.setCapabilities(caps);
         pipeline.pipeline.setState(State.PAUSED);
+
         updateAudio(false, 1.0);
         // This takes microseconds
-        streamPrepared(true, false, false, this.duration * 1000000);
-        GLib.timeoutAdd(200, 50, this::updatePosition);
+        streamPrepared(true, false, true, this.duration * 1000000);
+        GLib.timeoutAdd(200, 100, this::updatePosition);
     }
 
     // This stops playback and clears pipeline
@@ -90,76 +99,91 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
         }
         this.appSrc.endOfStream();
         this.pipeline.pipeline.remove(appSrc);
-        //this.pipeline.appsrc.seek(1.0, Format.TIME, SeekFlags.FLUSH, SeekType.SET, 0L, SeekType.NONE, CLOCK_TIME_NONE.getValue());
         pipeline.pipeline.setState(State.READY);
 
         streamUnprepared();
     }
 
     public void needDataHandler(AppSrc src, int i) {
-        enoughData = false;
-        executor.submit(() -> {
-            while (true) {
-                synchronized (lock) {
-                    if (enoughData) return;
-                    try {
-                        var len = socket.readNBytes(buffer, 0, BUFFER_SIZE);
-                        var flowReturn = src.pushBuffer(Buffer.memdup(buffer));
-                        if (flowReturn == FlowReturn.FLUSHING) return;
-                        if ((flowReturn == FlowReturn.OK) && (len < BUFFER_SIZE)) {
-                            src.endOfStream();
-                            pipeline.pipeline.setState(State.READY);
-                            pipeline.pipeline.setState(State.PAUSED);
-                            // This only works if appsrc is seekable
-                            //src.seek(1.0, Format.TIME, SeekFlags.FLUSH, SeekType.SET, 0L, SeekType.NONE, CLOCK_TIME_NONE.getValue());
+        if (!pushingData) {
+            enoughData = false;
+            executor.submit(() -> {
+                while (true) {
+                    synchronized (enoughDataLock) {
+                        pushingData = true;
+                        if (enoughData) {
+                            pushingData = false;
                             return;
                         }
-                    } catch (IOException e) {
-                        logger.warn("Couldn't read from socket");
-                        return;
+                        try {
+                            var len = socket.readNBytes(buffer, 0, BUFFER_SIZE);
+                            var flowReturn = src.pushBuffer(Buffer.memdup(buffer));
+                            if (flowReturn == FlowReturn.FLUSHING) return;
+                            if ((flowReturn == FlowReturn.OK) && (len < BUFFER_SIZE)) {
+                                src.endOfStream();
+                                pipeline.pipeline.setState(State.READY);
+                                pipeline.pipeline.setState(State.PAUSED);
+                                pushingData = false;
+                                return;
+                            }
+                        } catch (IOException e) {
+                            logger.warn("Couldn't read from socket");
+                            pushingData = false;
+                            return;
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
     public void enoughDataHandler(AppSrc src) {
-        synchronized (lock) {
+        synchronized (enoughDataLock) {
             this.enoughData = true;
         }
     }
 
     public boolean seekDataHandler(AppSrc src, long offset) {
-        logger.info("Seek data");
-        if (socket != null) {
-            try {
-                socket.close();
-            } catch (IOException e) {
-                logger.warn("Couldn't close socket");
-            }
-        }
+        synchronized (enoughDataLock) {
+            enoughData = true;
 
-        var response = this.subsonic.seekSongStream(songId, offset * 1000000000);
-        if (response != null) {
-            this.socket = response.body();
-            return true;
-        } else {
-            return false;
+            logger.info("Seek data");
+            if (socket != null) {
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    logger.warn("Couldn't close socket");
+                }
+            }
+
+            var response = this.subsonic.seekSongStream(songId, offset * 1000000000);
+            if (response != null) {
+                this.socket = response.body();
+                return true;
+            } else {
+                return false;
+            }
         }
     }
 
     public boolean updatePosition() {
         Out<State> state = new Out<>();
-        pipeline.pipeline.getState(state, null, new ClockTime(Gst.CLOCK_TIME_NONE.getValue()));
-        if (!((state.get() == State.PLAYING) || (state.get() == State.PAUSED))) {
+        Out<State> pending = new Out<>();
+        pipeline.pipeline.getState(state, pending, new ClockTime(CLOCK_TIME_NONE.getValue()));
+
+        if (state.get() == State.PLAYING || state.get() == State.PAUSED) {
+            if (pending.get() == State.READY || pending.get() == State.NULL) {
+                return false;
+            }
+            Out<Long> pos = new Out<>();
+            var position = pipeline.pipeline.queryPosition(Format.TIME, pos);
+            if (position) {
+                update(pos.get() / 1000);
+            }
+            return true;
+        } else {
             return false;
         }
-        Out<Long> pos = new Out<>();
-        var position = pipeline.pipeline.queryPosition(Format.TIME, pos);
-        if (position) {
-            update(pos.get() / 1000);
-        }
-        return true;
     }
 
     // The rest
