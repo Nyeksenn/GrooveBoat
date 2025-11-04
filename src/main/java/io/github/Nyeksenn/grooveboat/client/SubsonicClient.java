@@ -23,7 +23,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 import static org.gnome.glib.GLib.getHostName;
 
@@ -87,7 +89,8 @@ public class SubsonicClient implements AutoCloseable {
         this.host = splitResults[1];
 
         this.httpClient = HttpClient.newBuilder()
-                .version(HttpClient.Version.HTTP_2)
+                .version(HttpClient.Version.HTTP_1_1)
+                .connectTimeout(Duration.ofMillis(200))
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
     }
@@ -150,9 +153,18 @@ public class SubsonicClient implements AutoCloseable {
         try {
             URI uri = getUri(endpoint, params);
 
+            var retryCounter = 3;
             var request = HttpRequest.newBuilder().GET().uri(uri).build();
-            var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            return response.body();
+
+            while (retryCounter > 0) {
+                try {
+                    return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString()).get().body();
+                } catch (ExecutionException e) {
+                    logger.warn("Execution of string request failed");
+                    retryCounter--;
+                }
+            }
+            return null;
         } catch (URISyntaxException e) {
             throw new IOException("Invalid URI: " + e.getMessage(), e);
         }
@@ -167,9 +179,19 @@ public class SubsonicClient implements AutoCloseable {
                 case RelativeEndpoint ep -> uri = getUri(ep.url(), params);
             }
 
+            var retryCounter = 3;
+
             var request = HttpRequest.newBuilder().GET().uri(uri).build();
-            var response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
-            return response.body();
+            while (retryCounter > 0) {
+                try {
+                    return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofByteArray()).get().body();
+                } catch (ExecutionException e) {
+                    logger.warn("Execution of binary request failed");
+                    retryCounter--;
+                }
+            }
+
+            return null;
         } catch (URISyntaxException e) {
             throw new IOException("Invalid URI: " + e.getMessage(), e);
         }
@@ -189,9 +211,19 @@ public class SubsonicClient implements AutoCloseable {
             ));
         }
 
+        var retryCounter = 3;
+
         try {
             URI uri = getUri("/rest/stream", params);
-            var request = HttpRequest.newBuilder().GET().uri(uri).build();
+            var request = HttpRequest.newBuilder().GET().timeout(Duration.ofHours(3)).uri(uri).build();
+            while (retryCounter > 0) {
+                try {
+                    return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream()).get();
+                } catch (ExecutionException e) {
+                    logger.warn("Execution of streaming request failed");
+                    retryCounter--;
+                }
+            }
             return httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
         } catch (URISyntaxException e) {
             throw new IOException("Invalid URI: " + e.getMessage(), e);
