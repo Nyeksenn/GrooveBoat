@@ -35,9 +35,8 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
     private final byte[] buffer = new byte[BUFFER_SIZE];
     private final String contentType;
 
-    public volatile boolean enoughData = false;
     private final Lock enoughDataLock = new ReentrantLock();
-
+    public volatile boolean enoughData = false;
     public volatile boolean pushingData = false;
 
     // These are the virtual methods
@@ -167,23 +166,17 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
     }
 
     public boolean updatePosition() {
-        Out<State> state = new Out<>();
-        Out<State> pending = new Out<>();
-        pipeline.pipeline.getState(state, pending, new ClockTime(CLOCK_TIME_NONE.getValue()));
-
-        if (state.get() == State.PLAYING || state.get() == State.PAUSED) {
-            if (pending.get() == State.READY || pending.get() == State.NULL) {
+        var pos = new Out<Long>();
+        var position = pipeline.pipeline.queryPosition(Format.TIME, pos);
+        if (position) {
+            if (this.isPrepared()) {
+                update(pos.get() / 1000);
+                return true;
+            } else {
                 return false;
             }
-            Out<Long> pos = new Out<>();
-            var position = pipeline.pipeline.queryPosition(Format.TIME, pos);
-            if (position) {
-                update(pos.get() / 1000);
-            }
-            return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     // The rest
