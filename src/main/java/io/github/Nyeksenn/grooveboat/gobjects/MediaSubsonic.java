@@ -28,7 +28,7 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
     private final Subsonic subsonic;
     private final String songId;
     private final long duration;
-    public final AppPipeline pipeline;
+    public final AppPipeline pipeline = AppPipeline.getInstance();
     public AppSrc appSrc;
     private final ExecutorService executor;
     public InputStream socket;
@@ -188,10 +188,9 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
 
     // The rest
 
-    public MediaSubsonic(String songId, long duration, Subsonic subsonic, AppPipeline pipeline, ExecutorService executor, String contentType) {
+    public MediaSubsonic(String songId, long duration, Subsonic subsonic, ExecutorService executor, String contentType) {
         this.songId = songId;
         this.subsonic = subsonic;
-        this.pipeline = pipeline;
         this.duration = duration;
         this.executor = executor;
         this.contentType = contentType;

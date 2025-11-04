@@ -23,6 +23,37 @@ public final class AppPipeline {
     public Element audioresample;
     public Element autoaudiosink;
 
+    private AppPipeline() {
+        Gst.init(null);
+        pipeline = new Pipeline("grooveboat-player");
+        decodebin = ElementFactory.make("decodebin", "decoder");
+        audioconvert = ElementFactory.make("audioconvert", "converter");
+        audioresample = ElementFactory.make("audioresample", "resample");
+        autoaudiosink = ElementFactory.make("autoaudiosink", "sink");
+
+        if (Stream.of(decodebin, audioconvert, audioresample, autoaudiosink).anyMatch(Objects::isNull)) {
+            logger.warn("Couldn't create a gstreamer element");
+            return;
+        }
+
+        bus = pipeline.getBus();
+        busWatchId = bus.addWatch(0, this::busCall);
+
+        pipeline.addMany(decodebin, audioconvert, audioresample, autoaudiosink, null);
+        audioconvert.linkMany(audioresample, autoaudiosink, null);
+        decodebin.onPadAdded(this::onPadAdded);
+
+        pipeline.setState(State.READY);
+    }
+
+    private static class Holder {
+        private static final AppPipeline INSTANCE = new AppPipeline();
+    }
+
+    public static AppPipeline getInstance() {
+        return Holder.INSTANCE;
+    }
+
     private boolean busCall(Bus bus, Message msg) {
         if (msg.readType().contains(MessageType.EOS)) {
             logger.info("End of Stream");
@@ -73,28 +104,5 @@ public final class AppPipeline {
         pipeline.setState(State.READY);
 
         return appsrc;
-    }
-
-    public AppPipeline() {
-        Gst.init(null);
-        pipeline = new Pipeline("grooveboat-player");
-        decodebin = ElementFactory.make("decodebin", "decoder");
-        audioconvert = ElementFactory.make("audioconvert", "converter");
-        audioresample = ElementFactory.make("audioresample", "resample");
-        autoaudiosink = ElementFactory.make("autoaudiosink", "sink");
-
-        if (Stream.of(decodebin, audioconvert, audioresample, autoaudiosink).anyMatch(Objects::isNull)) {
-            logger.warn("Couldn't create a gstreamer elmenet");
-            return;
-        }
-
-        bus = pipeline.getBus();
-        busWatchId = bus.addWatch(0, this::busCall);
-
-        pipeline.addMany(decodebin, audioconvert, audioresample, autoaudiosink, null);
-        audioconvert.linkMany(audioresample, autoaudiosink, null);
-        decodebin.onPadAdded(this::onPadAdded);
-
-        pipeline.setState(State.READY);
     }
 }

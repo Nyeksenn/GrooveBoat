@@ -51,7 +51,7 @@ public class MusicPlayer extends Box {
             var app = (GrooveboatApp) window.getApplication();
 
             this.executor = app.executor;
-            this.pipeline = new AppPipeline();
+            this.pipeline = AppPipeline.getInstance();
             this.subsonic = app.subsonic;
 
             songQueue.connect("queue-changed", (SongQueue.QueueChanged) this::queueChanged);
@@ -77,7 +77,7 @@ public class MusicPlayer extends Box {
             var stream = new MediaSubsonic(
                     nextSong.getSongId(),
                     nextSong.getDuration().getSeconds(),
-                    subsonic, pipeline, executor,
+                    subsonic, executor,
                     nextSong.getContentType()
             );
             GLib.idleAddOnce(() -> this.mediaControls.setMediaStream(stream));
