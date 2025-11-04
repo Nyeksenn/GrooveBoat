@@ -3,8 +3,8 @@ package io.github.Nyeksenn.grooveboat;
 import io.ebean.DatabaseFactory;
 import io.ebean.config.DatabaseConfig;
 import io.github.Nyeksenn.grooveboat.ui.*;
+import org.freedesktop.gstreamer.audio.GstAudio;
 import org.gnome.gio.Resource;
-import org.gnome.glib.GLib;
 import org.javagi.base.GErrorException;
 import org.javagi.gtk.types.TemplateTypes;
 import org.slf4j.Logger;
@@ -17,7 +17,7 @@ import java.util.Properties;
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
-    public static void main(String[] args) throws GErrorException {
+    public static void main(String[] args) {
         var cfg = new DatabaseConfig();
         var properties = new Properties();
         properties.put("ebean.migration.run", "true");
@@ -38,6 +38,9 @@ public class Main {
         cfg.setDefaultServer(true);
         cfg.setPackages(List.of("io.github.Nyeksenn.grooveboat.entities"));
         DatabaseFactory.create(cfg);
+
+        // Make sure GstAudio is loaded to avoid getType returning null
+        GstAudio.javagi$ensureInitialized();
 
         try {
             var resource = Resource.load(

@@ -5,6 +5,8 @@ import io.github.Nyeksenn.grooveboat.audio.AppPipeline;
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import org.freedesktop.gstreamer.app.AppSrc;
 import org.freedesktop.gstreamer.app.AppSrcCallbacks;
+import org.freedesktop.gstreamer.audio.StreamVolume;
+import org.freedesktop.gstreamer.audio.StreamVolumeFormat;
 import org.freedesktop.gstreamer.gst.*;
 import org.gnome.glib.GLib;
 import org.gnome.gtk.MediaStream;
@@ -64,10 +66,16 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
 
     @Override
     protected void updateAudio(boolean muted, double volume) {
-        // TODO: Implement actual volume change
-        asParent().setVolume(1.0);
-        asParent().setMuted(false);
-        logger.warn("Update audio was called");
+        var type = StreamVolume.getType();
+        var element = pipeline.pipeline.getByInterface(type);
+        try {
+            // I need this because Element is constructed in native code
+            var volumeElement = new StreamVolume.StreamVolume$Impl(element.handle());
+            volumeElement.setVolume(StreamVolumeFormat.LINEAR, volume);
+            volumeElement.setMute(muted);
+        } catch (Exception e) {
+            logger.warn(e.getMessage());
+        }
     }
 
     public void initializeStream() {
