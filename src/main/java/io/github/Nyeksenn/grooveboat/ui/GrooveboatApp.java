@@ -23,6 +23,7 @@ public class GrooveboatApp extends Application {
 
     public Subsonic subsonic;
     public ExecutorService executor;
+    private final SecretKeeper secrets = SecretKeeper.getInstance();
 
     @Override
     public void activate() {
@@ -44,17 +45,11 @@ public class GrooveboatApp extends Application {
 
         // Setup Client on Startup
         var username = settings.getString("username");
-        var password = settings.getString("password");
         var url = settings.getString("url");
+        var split = url.split("://");
+        var password = secrets.lookupPassword(username, split[0], split[1]).join();
         var client = new SubsonicClient(url, username, password);
         this.subsonic = new Subsonic(client);
-
-        var secrets = SecretKeeper.getInstance();
-        //try {
-        //    secrets.storePassword("testpwd").join();
-        //} catch (GErrorException e) {
-        //    logger.info("Couldn't save password: {}", e.getMessage());
-        //}
 
         GrooveboatWindow win = new GrooveboatWindow(this);
         win.present();
@@ -95,6 +90,7 @@ public class GrooveboatApp extends Application {
             logger.warn("Unable to cleanup client");
         }
         executor.shutdown();
+        SecretKeeper.getInstance().close();
     }
 
     public GrooveboatApp() {

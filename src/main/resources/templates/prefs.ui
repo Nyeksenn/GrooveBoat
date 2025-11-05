@@ -21,6 +21,7 @@
             <child>
               <object class="AdwPasswordEntryRow" id="entry_password">
                 <property name="title" translatable="yes">Password</property>
+                <signal name="changed" handler="password-changed-handler"/>
               </object>
             </child>
           </object>
