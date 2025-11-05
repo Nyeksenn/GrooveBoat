@@ -12,6 +12,11 @@
     <child>
       <object class="GtkImage" id="player-album-picture">
         <property name="pixel-size">250</property>
+        <property name="valign">GTK_ALIGN_BASELINE_CENTER</property>
+        <property name="halign">GTK_ALIGN_BASELINE_CENTER</property>
+        <style>
+          <class name="image-shadow" />
+        </style>
       </object>
     </child>
     <child>
@@ -25,6 +30,9 @@
         <child>
           <object class="GtkLabel" id="player-album-artist">
             <property name="wrap">true</property>
+            <style>
+              <class name="grey"/>
+            </style>
           </object>
         </child>
       </object>

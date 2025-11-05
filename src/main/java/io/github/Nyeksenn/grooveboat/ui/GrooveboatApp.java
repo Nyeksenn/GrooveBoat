@@ -32,6 +32,7 @@ public class GrooveboatApp extends Application {
         this.executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
         var display = Display.getDefault();
+        var gtkSettings = org.gnome.gtk.Settings.getForDisplay(display);
 
         // Setup Icons
         var theme = IconTheme.getForDisplay(display);
@@ -39,9 +40,9 @@ public class GrooveboatApp extends Application {
 
         // Setup Styles
 
-        var cssProvider = new CssProvider();
-        cssProvider.loadFromResource("/io/github/Nyeksenn/grooveboat/styles.css");
-        Gtk.styleContextAddProviderForDisplay(display, cssProvider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
+        gtkSettings.onNotify("gtk-application-prefer-dark-theme", (pspec) -> loadStyles(display, gtkSettings));
+        gtkSettings.onNotify("gtk-theme-name", (pspec) -> loadStyles(display, gtkSettings));
+        loadStyles(display, gtkSettings);
 
         // Setup Client on Startup
         var username = settings.getString("username");
@@ -53,6 +54,20 @@ public class GrooveboatApp extends Application {
 
         GrooveboatWindow win = new GrooveboatWindow(this);
         win.present();
+    }
+
+    private void loadStyles(Display display, org.gnome.gtk.Settings settings) {
+        var cssProvider = new CssProvider();
+        var themeName = settings.getProperty("gtk-theme-name").toString();
+        var preferDarkTheme = (Boolean) settings.getProperty("gtk-application-prefer-dark-theme");
+
+        if (themeName.toLowerCase().contains("dark") || preferDarkTheme) {
+            cssProvider.loadFromResource("/io/github/Nyeksenn/grooveboat/dark-styles.css");
+        } else {
+            cssProvider.loadFromResource("/io/github/Nyeksenn/grooveboat/light-styles.css");
+        }
+
+        Gtk.styleContextAddProviderForDisplay(display, cssProvider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
     }
 
     public void preferencesActivated(Variant parameter) {

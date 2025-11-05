@@ -10,6 +10,11 @@
     <child>
       <object class="GtkImage" id="song-picture">
         <property name="pixel-size">50</property>
+        <property name="valign">GTK_ALIGN_BASELINE_CENTER</property>
+        <property name="halign">GTK_ALIGN_BASELINE_CENTER</property>
+        <style>
+          <class name="song-border"/>
+        </style>
       </object>
     </child>
     <child>
@@ -31,6 +36,9 @@
             <property name="wrap">true</property>
             <property name="halign">start</property>
             <property name="hexpand">true</property>
+            <style>
+              <class name="grey"/>
+            </style>
           </object>
         </child>
       </object>

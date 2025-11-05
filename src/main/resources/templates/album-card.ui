@@ -6,9 +6,15 @@
     <property name="margin-end">10</property>
     <property name="margin-top">10</property>
     <property name="margin-bottom">10</property>
+    <property name="spacing">4</property>
     <child>
       <object class="GtkImage" id="album-picture">
-          <property name="pixel-size">200</property>
+        <property name="pixel-size">200</property>
+        <property name="valign">GTK_ALIGN_BASELINE_CENTER</property>
+        <property name="halign">GTK_ALIGN_BASELINE_CENTER</property>
+        <style>
+          <class name="album-border"/>
+        </style>
       </object>
     </child>
     <child>
@@ -19,6 +25,9 @@
     <child>
       <object class="GtkLabel" id="album-artist">
         <property name="wrap">true</property>
+        <style>
+          <class name="grey"/>
+        </style>
       </object>
     </child>
     <child>
