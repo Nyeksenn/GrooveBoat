@@ -205,21 +205,11 @@ public class Subsonic implements AutoCloseable {
     }
 
     public HttpResponse<InputStream> getSongStream(String songId) {
-        try {
-            return this.client.stream(songId, false, 0L);
-        } catch (IOException e) {
-            logger.warn("Couldn't get stream for song {}", songId);
-            return null;
-        }
+        return this.client.stream(songId, false, 0L);
     }
 
     public HttpResponse<InputStream> seekSongStream(String songId, long position) {
-        try {
-            return this.client.stream(songId, true, position);
-        } catch (IOException e) {
-            logger.warn("Couldn't seek stream for song {}", songId);
-            return null;
-        }
+        return this.client.stream(songId, true, position);
     }
 
     public SubsonicResponse checkCredentials(String username) throws IOException {
