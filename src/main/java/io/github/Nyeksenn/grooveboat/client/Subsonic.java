@@ -88,7 +88,12 @@ public class Subsonic implements AutoCloseable {
                     var savedAlbumModel = new QAlbumModel().albumId.equalTo(album.id()).findOne();
 
                     var albumArtists = resolveArtists(album.artists());
-                    var albumCover = client.getCoverArt(album.coverArt(), 500);
+                    byte[] albumCover;
+                    try {
+                        albumCover = client.getCoverArt(album.coverArt(), 500);
+                    } catch (IOException e) {
+                        albumCover = null;
+                    }
 
                     var newAlbumModel = new AlbumModel(album.id(), album.name(), album.songCount(), album.year(), Duration.ofSeconds(album.duration()), albumCover, albumArtists);
 
@@ -204,11 +209,11 @@ public class Subsonic implements AutoCloseable {
         }
     }
 
-    public HttpResponse<InputStream> getSongStream(String songId) {
+    public HttpResponse<InputStream> getSongStream(String songId) throws IOException {
         return this.client.stream(songId, false, 0L);
     }
 
-    public HttpResponse<InputStream> seekSongStream(String songId, long position) {
+    public HttpResponse<InputStream> seekSongStream(String songId, long position) throws IOException {
         return this.client.stream(songId, true, position);
     }
 

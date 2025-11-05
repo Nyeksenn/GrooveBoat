@@ -2,6 +2,7 @@ package io.github.Nyeksenn.grooveboat.ui;
 
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import io.github.Nyeksenn.grooveboat.gobjects.SecretKeeper;
+import org.apache.commons.validator.routines.UrlValidator;
 import org.gnome.adw.EntryRow;
 import org.gnome.adw.PreferencesDialog;
 import org.gnome.adw.PreferencesGroup;
@@ -26,6 +27,7 @@ public class GrooveboatPrefs extends PreferencesDialog {
     private final Settings settings = new Settings("io.github.Nyeksenn.groovebox");
     private final ExecutorService exec;
     private final Subsonic subsonic;
+    private final UrlValidator validator = new UrlValidator();
 
     @GtkChild(name = "entry_username")
     public EntryRow usernameEntry;
@@ -59,6 +61,10 @@ public class GrooveboatPrefs extends PreferencesDialog {
                 urlEntry.setText(url);
                 passwordEntry.setText(pwd);
                 prefsButtonGroup.setVisible(false);
+
+                subsonic.client.setUsername(username);
+                subsonic.client.setPassword(pwd);
+                subsonic.client.setBaseUrl(url);
             });
         });
     }
@@ -69,14 +75,16 @@ public class GrooveboatPrefs extends PreferencesDialog {
         var password = passwordEntry.getText();
         var url = urlEntry.getText();
 
-        // TODO: Validate credentials working
-        // TODO: If change client
-
         exec.submit(() -> {
-            var split = url.split("://");
-            if (split.length == 2) {
+            if (validator.isValid(url)) {
+                var split = url.split("://");
+                subsonic.client.setUsername(username);
+                subsonic.client.setPassword(password);
+                subsonic.client.setBaseUrl(url);
+
                 var serverReachable = false;
                 try {
+                    // first need to set username for credentials
                     var resp = subsonic.checkCredentials(username);
                     if (resp.status().equals("ok")) {
                         serverReachable = true;

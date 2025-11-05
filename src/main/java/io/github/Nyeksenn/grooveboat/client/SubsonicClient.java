@@ -17,6 +17,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
+import java.net.http.HttpConnectTimeoutException;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
@@ -148,28 +149,28 @@ public class SubsonicClient implements AutoCloseable {
         );
     }
 
-    private String executeGetString(String endpoint, Map<String, String> params) {
+    private String executeGetString(String endpoint, Map<String, String> params) throws IOException {
         try {
             URI uri = getUri(endpoint, params);
 
-            var retryCounter = 3;
+            var retryCounter = 5;
             var request = HttpRequest.newBuilder().GET().uri(uri).build();
 
             while (retryCounter > 0) {
                 try {
                     return httpClient.send(request, HttpResponse.BodyHandlers.ofString()).body();
-                } catch (Exception e) {
+                } catch (HttpConnectTimeoutException | InterruptedException e) {
                     logger.warn("Execution of string request failed");
                     retryCounter--;
                 }
             }
-            return null;
+            throw new IOException("Couldn't connect after" + retryCounter + "retries");
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Invalid URI: " + e.getMessage(), e);
         }
     }
 
-    private byte[] executeGetBinary(Endpoint endpoint, Map<String, String> params) {
+    private byte[] executeGetBinary(Endpoint endpoint, Map<String, String> params) throws IOException {
         try {
             URI uri;
 
@@ -178,25 +179,25 @@ public class SubsonicClient implements AutoCloseable {
                 case RelativeEndpoint ep -> uri = getUri(ep.url(), params);
             }
 
-            var retryCounter = 3;
+            var retryCounter = 5;
 
             var request = HttpRequest.newBuilder().GET().uri(uri).build();
             while (retryCounter > 0) {
                 try {
                     return httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray()).body();
-                } catch (Exception e) {
+                } catch (HttpConnectTimeoutException | InterruptedException e) {
                     logger.warn("Execution of binary request failed");
                     retryCounter--;
                 }
             }
 
-            return null;
+            throw new IOException("Couldn't connect after" + retryCounter + "retries");
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Invalid URI: " + e.getMessage(), e);
         }
     }
 
-    public HttpResponse<InputStream> stream(String songId, boolean seek, long position) {
+    public HttpResponse<InputStream> stream(String songId, boolean seek, long position) throws IOException {
         Map<String, String> params;
 
         if (seek) {
@@ -210,7 +211,7 @@ public class SubsonicClient implements AutoCloseable {
             ));
         }
 
-        var retryCounter = 3;
+        var retryCounter = 5;
 
         try {
             URI uri = getUri("/rest/stream", params);
@@ -218,22 +219,22 @@ public class SubsonicClient implements AutoCloseable {
             while (retryCounter > 0) {
                 try {
                     return httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
-                } catch (Exception e) {
+                } catch (HttpConnectTimeoutException | InterruptedException e) {
                     logger.warn("Execution of streaming request failed");
                     retryCounter--;
                 }
             }
-            return null;
+            throw new IOException("Couldn't connect after" + retryCounter + "retries");
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Invalid URI: " + e.getMessage(), e);
         }
     }
 
-    public byte[] getArtistImage(String url) {
+    public byte[] getArtistImage(String url) throws IOException {
         return executeGetBinary(new AbsoluteEndpoint(url), null);
     }
 
-    public byte[] getCoverArt(String id, int size) {
+    public byte[] getCoverArt(String id, int size) throws IOException {
         var params = new HashMap<>(Map.of(
                 "id", id,
                 "size", String.valueOf(size)
@@ -277,7 +278,7 @@ public class SubsonicClient implements AutoCloseable {
         return albums;
     }
 
-    public Artist getArtist(String id) {
+    public Artist getArtist(String id) throws IOException {
         var params = new HashMap<>(Map.of(
                 "id", id
         ));
@@ -343,7 +344,7 @@ public class SubsonicClient implements AutoCloseable {
             var root = om.readTree(response);
             var subsonicResponse = root.path("subsonic-response");
             return om.treeToValue(subsonicResponse, SubsonicResponse.class);
-        } catch (JacksonException e) {
+        } catch (JacksonException | IOException e) {
             logger.warn(e.getCause().toString());
             return null;
         }

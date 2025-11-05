@@ -163,11 +163,12 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
                 }
             }
 
-            var response = this.subsonic.seekSongStream(songId, offset * 1000000000);
-            if (response != null) {
+            try {
+                var response = this.subsonic.seekSongStream(songId, offset * 1000000000);
                 this.socket = response.body();
                 return true;
-            } else {
+            } catch (IOException e) {
+                logger.warn("Couldn't seek stream: {}", e.getMessage());
                 return false;
             }
         }
