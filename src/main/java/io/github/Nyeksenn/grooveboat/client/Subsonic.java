@@ -4,6 +4,7 @@ import io.ebean.DB;
 import io.ebean.Database;
 import io.ebean.DuplicateKeyException;
 import io.github.Nyeksenn.grooveboat.deserializer.ShortArtist;
+import io.github.Nyeksenn.grooveboat.deserializer.SubsonicResponse;
 import io.github.Nyeksenn.grooveboat.entities.AlbumModel;
 import io.github.Nyeksenn.grooveboat.entities.ArtistModel;
 import io.github.Nyeksenn.grooveboat.entities.SongModel;
@@ -219,6 +220,10 @@ public class Subsonic implements AutoCloseable {
             logger.warn("Couldn't seek stream for song {}", songId);
             return null;
         }
+    }
+
+    public SubsonicResponse checkCredentials(String username) throws IOException {
+        return this.client.userPing(username);
     }
 
     public Subsonic(SubsonicClient client) {

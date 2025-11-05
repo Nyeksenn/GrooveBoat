@@ -1,9 +1,11 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
+import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import io.github.Nyeksenn.grooveboat.gobjects.SecretKeeper;
 import org.gnome.adw.EntryRow;
 import org.gnome.adw.PreferencesDialog;
 import org.gnome.adw.PreferencesGroup;
+import org.gnome.adw.Toast;
 import org.gnome.gio.Settings;
 import org.gnome.glib.GLib;
 import org.javagi.base.GErrorException;
@@ -14,11 +16,16 @@ import org.javagi.gtk.annotations.GtkTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/prefs.ui", name = "GrooveboatPrefs")
 public class GrooveboatPrefs extends PreferencesDialog {
     private static final Logger logger = LoggerFactory.getLogger(GrooveboatPrefs.class);
     private final SecretKeeper secrets = SecretKeeper.getInstance();
     private final Settings settings = new Settings("io.github.Nyeksenn.groovebox");
+    private final ExecutorService exec;
+    private final Subsonic subsonic;
 
     @GtkChild(name = "entry_username")
     public EntryRow usernameEntry;
@@ -65,28 +72,52 @@ public class GrooveboatPrefs extends PreferencesDialog {
         // TODO: Validate credentials working
         // TODO: If change client
 
-        var split = url.split("://");
-        if (split.length == 2) {
-            try {
-                secrets.storePassword(username, split[0], split[1], password).thenAccept((saved) -> {
-                    if (saved) {
-                        settings.setString("username", username);
-                        settings.setString("url", url);
+        exec.submit(() -> {
+            var split = url.split("://");
+            if (split.length == 2) {
+                var serverReachable = false;
+                try {
+                    var resp = subsonic.checkCredentials(username);
+                    if (resp.status().equals("ok")) {
+                        serverReachable = true;
                     }
-                    GLib.idleAddOnce(() -> prefsButtonGroup.setVisible(false));
+                } catch (IOException e) {
+                    logger.warn("Couldn't reach server");
+                }
+                if (serverReachable) {
+                    try {
+                        secrets.storePassword(username, split[0], split[1], password).thenAccept((saved) -> {
+                            if (saved) {
+                                settings.setString("username", username);
+                                settings.setString("url", url);
+                            }
+                            GLib.idleAddOnce(() -> prefsButtonGroup.setVisible(false));
+                        });
+                    } catch (GErrorException e) {
+                        logger.warn("Couldn't store password");
+                        reloadSavedConnectionDetails();
+                    }
+                } else {
+                    GLib.idleAddOnce(() -> {
+                        this.addToast(new Toast("Server unreachable. Check settings"));
+                    });
+                }
+            } else {
+                GLib.idleAddOnce(() -> {
+                    urlEntry.addCssClass("error");
+                    this.addToast(new Toast("Invalid URL"));
                 });
-            } catch (GErrorException e) {
-                logger.warn("Couldn't store password");
-                reloadSavedConnectionDetails();
             }
-        }
+        });
     }
 
     @InstanceInit
     public void init() {
     }
 
-    public GrooveboatPrefs() {
+    public GrooveboatPrefs(ExecutorService exec, Subsonic subsonic) {
+        this.exec = exec;
+        this.subsonic = subsonic;
         reloadSavedConnectionDetails();
     }
 }

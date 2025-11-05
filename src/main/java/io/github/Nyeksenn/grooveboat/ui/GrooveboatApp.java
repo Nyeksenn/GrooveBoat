@@ -57,7 +57,7 @@ public class GrooveboatApp extends Application {
 
     public void preferencesActivated(Variant parameter) {
         GrooveboatWindow win = (GrooveboatWindow) getActiveWindow();
-        GrooveboatPrefs prefs = new GrooveboatPrefs();
+        GrooveboatPrefs prefs = new GrooveboatPrefs(executor, subsonic);
         prefs.present(win);
     }
 

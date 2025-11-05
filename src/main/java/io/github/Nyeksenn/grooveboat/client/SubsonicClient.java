@@ -364,10 +364,12 @@ public class SubsonicClient implements AutoCloseable {
         }
     }
 
-    public SubsonicResponse ping() throws IOException {
+    public SubsonicResponse userPing(String username) throws IOException {
         try {
-            var response = executeGetString("/rest/ping", null);
-
+            var params = Map.of(
+                    "username", username
+            );
+            var response = executeGetString("/rest/getUser", params);
             var root = om.readTree(response);
             var subsonicResponse = root.path("subsonic-response");
             return om.treeToValue(subsonicResponse, SubsonicResponse.class);
