@@ -3,9 +3,9 @@ package io.github.Nyeksenn.grooveboat.ui;
 import io.github.Nyeksenn.grooveboat.gobjects.SecretKeeper;
 import org.gnome.adw.EntryRow;
 import org.gnome.adw.PreferencesDialog;
+import org.gnome.adw.PreferencesGroup;
 import org.gnome.gio.Settings;
-import org.gnome.gio.SettingsBindFlags;
-import org.gnome.gtk.Editable;
+import org.gnome.glib.GLib;
 import org.javagi.base.GErrorException;
 import org.javagi.gobject.annotations.InstanceInit;
 import org.javagi.gtk.annotations.GtkCallback;
@@ -18,36 +18,75 @@ import org.slf4j.LoggerFactory;
 public class GrooveboatPrefs extends PreferencesDialog {
     private static final Logger logger = LoggerFactory.getLogger(GrooveboatPrefs.class);
     private final SecretKeeper secrets = SecretKeeper.getInstance();
+    private final Settings settings = new Settings("io.github.Nyeksenn.groovebox");
 
     @GtkChild(name = "entry_username")
-    public EntryRow username;
+    public EntryRow usernameEntry;
 
     @GtkChild(name = "entry_password")
-    public EntryRow password;
+    public EntryRow passwordEntry;
 
     @GtkChild(name = "entry_url")
-    public EntryRow url;
+    public EntryRow urlEntry;
 
-    @GtkCallback(name = "password-changed-handler")
-    public void passwordChangedHandler(Editable entry) {
-        var split = url.getText().split("://");
-        try {
-            secrets.storePassword(username.getText(), split[0], split[1], entry.getText());
-        } catch (GErrorException e) {
-            logger.warn("Couldn't store password");
+    @GtkChild(name = "prefs-button-group")
+    public PreferencesGroup prefsButtonGroup;
+
+    @GtkCallback(name = "connection-details-changed")
+    public void connectionDetailsChanged() {
+        prefsButtonGroup.setVisible(true);
+    }
+
+    @GtkCallback(name = "connection-details-revert")
+    public void connectionDetailsRevert() {
+        reloadSavedConnectionDetails();
+    }
+
+    private void reloadSavedConnectionDetails() {
+        var username = settings.getString("username");
+        var url = settings.getString("url");
+        var split = url.split("://");
+        secrets.lookupPassword(username, split[0], split[1]).thenAccept(pwd -> {
+            GLib.idleAddOnce(() -> {
+                usernameEntry.setText(username);
+                urlEntry.setText(url);
+                passwordEntry.setText(pwd);
+                prefsButtonGroup.setVisible(false);
+            });
+        });
+    }
+
+    @GtkCallback(name = "connection-details-save")
+    public void connectionDetailsSave() {
+        var username = usernameEntry.getText();
+        var password = passwordEntry.getText();
+        var url = urlEntry.getText();
+
+        // TODO: Validate credentials working
+        // TODO: If change client
+
+        var split = url.split("://");
+        if (split.length == 2) {
+            try {
+                secrets.storePassword(username, split[0], split[1], password).thenAccept((saved) -> {
+                    if (saved) {
+                        settings.setString("username", username);
+                        settings.setString("url", url);
+                    }
+                    GLib.idleAddOnce(() -> prefsButtonGroup.setVisible(false));
+                });
+            } catch (GErrorException e) {
+                logger.warn("Couldn't store password");
+                reloadSavedConnectionDetails();
+            }
         }
     }
 
-    Settings settings;
-
     @InstanceInit
     public void init() {
-        settings = new Settings("io.github.Nyeksenn.groovebox");
-        settings.bind("username", username, "text", SettingsBindFlags.DEFAULT);
-        //settings.bind("password", password, "text", SettingsBindFlags.DEFAULT);
-        settings.bind("url", url, "text", SettingsBindFlags.DEFAULT);
     }
 
     public GrooveboatPrefs() {
+        reloadSavedConnectionDetails();
     }
 }

@@ -7,11 +7,6 @@
             <default>""</default>
             <description>The Subsonic API Username</description>
         </key>
-        <key name="password" type="s">
-            <summary>Password</summary>
-            <default>""</default>
-            <description>The Subsonic API Password</description>
-        </key>
         <key name="url" type="s">
             <summary>URL</summary>
             <default>""</default>
