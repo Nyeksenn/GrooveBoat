@@ -61,6 +61,7 @@ public class GrooveboatPrefs extends PreferencesDialog {
                 urlEntry.setText(url);
                 passwordEntry.setText(pwd);
                 prefsButtonGroup.setVisible(false);
+                urlEntry.removeCssClass("error");
 
                 subsonic.client.setUsername(username);
                 subsonic.client.setPassword(pwd);
