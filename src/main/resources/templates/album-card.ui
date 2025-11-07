@@ -8,10 +8,11 @@
     <property name="margin-bottom">10</property>
     <property name="spacing">4</property>
     <child>
-      <object class="GtkImage" id="album-picture">
+      <object class="RoundedImage" id="album-picture">
         <property name="pixel-size">200</property>
-        <property name="valign">GTK_ALIGN_BASELINE_CENTER</property>
-        <property name="halign">GTK_ALIGN_BASELINE_CENTER</property>
+        <property name="valign">center</property>
+        <property name="halign">center</property>
+        <property name="radius">10.0</property>
         <style>
           <class name="album-border"/>
         </style>

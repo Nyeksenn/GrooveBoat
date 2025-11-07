@@ -2,10 +2,12 @@ package io.github.Nyeksenn.grooveboat;
 
 import io.ebean.DatabaseFactory;
 import io.ebean.config.DatabaseConfig;
+import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
 import io.github.Nyeksenn.grooveboat.ui.*;
 import org.freedesktop.gstreamer.audio.GstAudio;
 import org.gnome.gio.Resource;
 import org.javagi.base.GErrorException;
+import org.javagi.gobject.types.Types;
 import org.javagi.gtk.types.TemplateTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +52,7 @@ public class Main {
             TemplateTypes.register(AlbumListView.class);
             TemplateTypes.register(MusicPlayer.class);
             TemplateTypes.register(SongListPage.class);
+            Types.register(RoundedImage.class);
         } catch (GErrorException e) {
             logger.error("Couldn't load resources. Exiting");
             return;

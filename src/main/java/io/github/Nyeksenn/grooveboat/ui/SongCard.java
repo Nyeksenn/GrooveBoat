@@ -1,10 +1,9 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
 import io.github.Nyeksenn.grooveboat.audio.SongQueue;
-import io.github.Nyeksenn.grooveboat.entities.SongModel;
 import io.github.Nyeksenn.grooveboat.entities.query.QSongModel;
+import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
 import org.gnome.gtk.Box;
-import org.gnome.gtk.Image;
 import org.gnome.gtk.Label;
 import org.javagi.gobject.annotations.RegisteredType;
 import org.javagi.gtk.annotations.GtkCallback;
@@ -25,7 +24,7 @@ public class SongCard extends Box {
     private String songId;
 
     @GtkChild(name = "song-picture")
-    public Image songPicture;
+    public RoundedImage songPicture;
 
     @GtkChild(name = "song-name")
     public Label songName;
