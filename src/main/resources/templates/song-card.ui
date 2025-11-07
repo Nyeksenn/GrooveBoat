@@ -8,12 +8,13 @@
     <property name="margin-top">10</property>
     <property name="margin-bottom">10</property>
     <child>
-      <object class="GtkImage" id="song-picture">
+      <object class="RoundedImage" id="song-picture">
         <property name="pixel-size">50</property>
-        <property name="valign">GTK_ALIGN_BASELINE_CENTER</property>
-        <property name="halign">GTK_ALIGN_BASELINE_CENTER</property>
+        <property name="valign">center</property>
+        <property name="halign">center</property>
+        <property name="radius">3.0</property>
         <style>
-          <class name="song-border"/>
+          <class name="album-border"/>
         </style>
       </object>
     </child>

@@ -1,8 +1,8 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
+import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
 import org.gnome.adw.NavigationView;
 import org.gnome.gtk.Box;
-import org.gnome.gtk.Image;
 import org.gnome.gtk.Label;
 import org.javagi.gtk.annotations.GtkCallback;
 import org.javagi.gtk.annotations.GtkChild;
@@ -18,7 +18,7 @@ public class AlbumCard extends Box {
     private GrooveboatWindow win;
 
     @GtkChild(name = "album-picture")
-    public Image albumPicture;
+    public RoundedImage albumPicture;
 
     @GtkChild(name = "album-name")
     public Label albumName;

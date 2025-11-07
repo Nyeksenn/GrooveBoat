@@ -5,9 +5,9 @@ import io.github.Nyeksenn.grooveboat.audio.SongQueue;
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import io.github.Nyeksenn.grooveboat.entities.query.QSongModel;
 import io.github.Nyeksenn.grooveboat.gobjects.MediaSubsonic;
+import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
 import org.gnome.glib.GLib;
 import org.gnome.gtk.Box;
-import org.gnome.gtk.Image;
 import org.gnome.gtk.Label;
 import org.gnome.gtk.MediaControls;
 import org.javagi.gobject.annotations.InstanceInit;
@@ -26,7 +26,7 @@ public class MusicPlayer extends Box {
     private static final Logger logger = LoggerFactory.getLogger(MusicPlayer.class);
 
     @GtkChild(name = "player-album-picture")
-    public Image playerAlbumPicture;
+    public RoundedImage playerAlbumPicture;
 
     @GtkChild(name = "player-song-name")
     public Label playerSongName;
@@ -85,7 +85,7 @@ public class MusicPlayer extends Box {
         });
         this.playerAlbumArtist.setLabel(nextSong.getDisplayArtist());
         this.playerSongName.setLabel(nextSong.getTitle());
-        this.playerAlbumPicture.setFromPaintable(textureLoader.load(nextSong.getAlbum().getAlbumId()));
+        this.playerAlbumPicture.setTexture(textureLoader.load(nextSong.getAlbum().getAlbumId()));
     }
 
     @InstanceInit
