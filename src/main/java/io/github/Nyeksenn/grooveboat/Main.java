@@ -53,7 +53,6 @@ public class Main {
             TemplateTypes.register(MusicPlayer.class);
             TemplateTypes.register(SongListPage.class);
             Types.register(RoundedImage.class);
-            Types.register(SongCard.class);
         } catch (GErrorException e) {
             logger.error("Couldn't load resources. Exiting");
             return;

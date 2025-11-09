@@ -5,18 +5,15 @@ import io.github.Nyeksenn.grooveboat.entities.query.QSongModel;
 import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
 import org.gnome.gtk.Box;
 import org.gnome.gtk.Label;
-import org.javagi.gobject.annotations.RegisteredType;
 import org.javagi.gtk.annotations.GtkCallback;
 import org.javagi.gtk.annotations.GtkChild;
 import org.javagi.gtk.annotations.GtkTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.foreign.MemorySegment;
 import java.util.List;
 
-@GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/song-card.ui")
-@RegisteredType(name = "SongCard")
+@GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/song-card.ui", name = "SongCard")
 public class SongCard extends Box {
     private static final Logger logger = LoggerFactory.getLogger(SongCard.class);
     private SongQueue songQueue;
@@ -48,10 +45,6 @@ public class SongCard extends Box {
 
     public void setSongQueue(SongQueue songQueue) {
         this.songQueue = songQueue;
-    }
-
-    public SongCard(MemorySegment address) {
-        super(address);
     }
 
     public SongCard() {
