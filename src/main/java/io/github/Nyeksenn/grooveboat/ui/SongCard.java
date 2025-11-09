@@ -18,8 +18,8 @@ import java.util.List;
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/song-card.ui")
 @RegisteredType(name = "SongCard")
 public class SongCard extends Box {
-    private static final Logger logger = LoggerFactory.getLogger(GrooveboatApp.class);
-    private static final SongQueue queue = SongQueue.getInstance();
+    private static final Logger logger = LoggerFactory.getLogger(SongCard.class);
+    private SongQueue songQueue;
 
     private String songId;
 
@@ -39,11 +39,15 @@ public class SongCard extends Box {
     public void songClicked(int n_press, double x, double y) {
         var song = new QSongModel().songId.equalTo(songId).findOne();
         assert song != null;
-        queue.replace(List.of(song));
+        songQueue.replace(List.of(song));
     }
 
     public void setSongId(String songId) {
         this.songId = songId;
+    }
+
+    public void setSongQueue(SongQueue songQueue) {
+        this.songQueue = songQueue;
     }
 
     public SongCard(MemorySegment address) {

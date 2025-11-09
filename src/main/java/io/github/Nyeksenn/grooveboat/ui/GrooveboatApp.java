@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
+import io.github.Nyeksenn.grooveboat.audio.SongQueue;
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import io.github.Nyeksenn.grooveboat.client.SubsonicClient;
 import io.github.Nyeksenn.grooveboat.gobjects.SecretKeeper;
@@ -23,6 +24,7 @@ public class GrooveboatApp extends Application {
 
     public Subsonic subsonic;
     public ExecutorService executor;
+    public SongQueue songQueue;
     private final SecretKeeper secrets = SecretKeeper.getInstance();
 
     @Override
@@ -51,6 +53,7 @@ public class GrooveboatApp extends Application {
         var password = secrets.lookupPassword(username, split[0], split[1]).join();
         var client = new SubsonicClient(url, username, password);
         this.subsonic = new Subsonic(client);
+        this.songQueue = new SongQueue();
 
         GrooveboatWindow win = new GrooveboatWindow(this);
         win.present();

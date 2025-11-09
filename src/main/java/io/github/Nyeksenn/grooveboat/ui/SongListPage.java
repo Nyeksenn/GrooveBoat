@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
+import io.github.Nyeksenn.grooveboat.audio.SongQueue;
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import io.github.Nyeksenn.grooveboat.gobjects.SongListItem;
 import org.gnome.adw.NavigationPage;
@@ -28,6 +29,7 @@ public class SongListPage extends NavigationPage {
     private ListStore<SongListItem> store;
     private Subsonic subsonic;
     private ExecutorService executor;
+    private SongQueue songQueue;
 
     @GtkChild(name = "album-page-label")
     public Label albumPageLabel;
@@ -48,6 +50,7 @@ public class SongListPage extends NavigationPage {
         var songCard = (SongCard) listItem.getChild();
         var song = (SongListItem) listItem.getItem();
 
+        songCard.setSongQueue(songQueue);
         songCard.songName.setLabel(song.getSongName());
         songCard.songArtist.setLabel(song.getArtistName());
         songCard.songDuration.setLabel(song.getDurationString());
@@ -63,6 +66,7 @@ public class SongListPage extends NavigationPage {
 
             this.subsonic = app.subsonic;
             this.executor = app.executor;
+            this.songQueue = app.songQueue;
 
             this.executor.submit(() -> {
                 var songs = subsonic.getSongs(albumId);
