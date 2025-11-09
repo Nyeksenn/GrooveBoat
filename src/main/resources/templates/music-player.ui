@@ -45,21 +45,11 @@
       <object class="GtkSeparator" id="music-player-separator"/>
     </child>
     <child>
-      <object class="GtkScrolledWindow">
-        <property name="hscrollbar-policy">GTK_POLICY_NEVER</property>
-        <property name="vexpand">true</property>
-        <child>
-          <object class="GtkListView" id="queue-list-view">
-            <property name="show-separators">true</property>
-            <property name="orientation">1</property>
-            <property name="factory">
-              <object class="GtkSignalListItemFactory">
-                <signal name="setup" handler="queue-list-setup"/>
-                <signal name="bind" handler="queue-list-bind"/>
-              </object>
-            </property>
-          </object>
-        </child>
+      <object class="GtkListBox" id="queue-list-box">
+        <property name="selection-mode">none</property>
+        <style>
+          <class name="boxed-list"/>
+        </style>
       </object>
     </child>
   </template>

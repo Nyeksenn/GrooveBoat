@@ -4,15 +4,14 @@ import io.github.Nyeksenn.grooveboat.audio.SongQueue;
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import io.github.Nyeksenn.grooveboat.entities.query.QSongModel;
 import io.github.Nyeksenn.grooveboat.gobjects.MediaSubsonic;
-import io.github.Nyeksenn.grooveboat.gobjects.QueueListItem;
 import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
-import org.gnome.gio.ListStore;
 import org.gnome.glib.GLib;
-import org.gnome.gobject.GObject;
-import org.gnome.gtk.*;
+import org.gnome.gtk.Box;
+import org.gnome.gtk.Label;
+import org.gnome.gtk.ListBox;
+import org.gnome.gtk.MediaControls;
 import org.javagi.gobject.annotations.InstanceInit;
 import org.javagi.gobject.annotations.RegisteredType;
-import org.javagi.gtk.annotations.GtkCallback;
 import org.javagi.gtk.annotations.GtkChild;
 import org.javagi.gtk.annotations.GtkTemplate;
 import org.slf4j.Logger;
@@ -38,8 +37,8 @@ public class MusicPlayer extends Box {
     @GtkChild(name = "media-controls")
     public MediaControls mediaControls;
 
-    @GtkChild(name = "queue-list-view")
-    public ListView queueListView;
+    @GtkChild(name = "queue-list-box")
+    public ListBox queueListBox;
 
     private Subsonic subsonic;
 
@@ -49,28 +48,6 @@ public class MusicPlayer extends Box {
 
     private SongQueue songQueue;
 
-    private ListStore<QueueListItem> store;
-
-    @GtkCallback(name = "queue-list-setup")
-    public void queueListSetup(GObject object) {
-        var listItem = (ListItem) object;
-        var queueCard = new QueueCard();
-        listItem.setChild(queueCard);
-    }
-
-    @GtkCallback(name = "queue-list-bind")
-    public void queueListBind(GObject object) {
-        var listItem = (ListItem) object;
-        var queueCard = (QueueCard) listItem.getChild();
-        var queueItem = (QueueListItem) listItem.getItem();
-
-        queueCard.songName.setLabel(queueItem.getSongName());
-        queueCard.songArtist.setLabel(queueItem.getArtistName());
-        queueCard.songDuration.setLabel(queueItem.getDurationString());
-        queueCard.songPicture.setTexture(queueItem.getCoverArt());
-        queueCard.setSongId(queueItem.getSongId());
-    }
-
     public void initPlayer() {
         if (this.subsonic == null && executor == null) {
             var window = (GrooveboatWindow) getRoot();
@@ -79,9 +56,6 @@ public class MusicPlayer extends Box {
             this.songQueue = app.songQueue;
             this.executor = app.executor;
             this.subsonic = app.subsonic;
-
-            this.store = new ListStore<>();
-            NoSelection<ListStore<QueueListItem>> model = new NoSelection<>(this.store);
 
             songQueue.connect("queue-changed", (SongQueue.QueueChanged) this::queueChanged);
             songQueue.connect("queue-replaced", (SongQueue.QueueReplaced) this::queueReplaced);
@@ -99,34 +73,36 @@ public class MusicPlayer extends Box {
             var song = new QSongModel().songId.equalTo(songId).findOne();
             if (song != null) {
                 var texture = loader.load(song.getAlbum().getAlbumId());
-                var queueItem = new QueueListItem(
-                        song.getTitle(),
-                        song.getSongId(),
-                        song.getDisplayArtist(),
-                        song.getAlbum().getTitle(),
-                        song.getDuration(),
-                        texture
-                );
-                GLib.idleAddOnce(() -> this.store.add(queueItem));
+                var card = new QueueCard();
+                var coverArt = new RoundedImage();
+                coverArt.setTexture(texture);
+                coverArt.setPixelSize(40);
+                card.setTitle(song.getTitle());
+                card.setSubtitle(song.getDisplayArtist());
+                card.addPrefix(coverArt);
+                card.setSongId(song.getSongId());
+                GLib.idleAddOnce(() -> {
+                    this.queueListBox.append(card);
+                });
             }
         });
     }
 
     public void queueReplaced() {
         executor.submit(() -> {
-            GLib.idleAddOnce(() -> this.store.removeAll());
+            GLib.idleAddOnce(() -> queueListBox.removeAll());
             for (var it = songQueue.iterate(); it.hasNext(); ) {
                 var song = it.next();
                 var texture = loader.load(song.getAlbum().getAlbumId());
-                var queueItem = new QueueListItem(
-                        song.getTitle(),
-                        song.getSongId(),
-                        song.getDisplayArtist(),
-                        song.getAlbum().getTitle(),
-                        song.getDuration(),
-                        texture
-                );
-                GLib.idleAddOnce(() -> this.store.append(queueItem));
+                var card = new QueueCard();
+                var coverArt = new RoundedImage();
+                coverArt.setPixelSize(40);
+                coverArt.setTexture(texture);
+                card.setTitle(song.getTitle());
+                card.setSubtitle(song.getDisplayArtist());
+                card.addPrefix(coverArt);
+                card.setSongId(song.getSongId());
+                GLib.idleAddOnce(() -> queueListBox.append(card));
             }
         });
     }

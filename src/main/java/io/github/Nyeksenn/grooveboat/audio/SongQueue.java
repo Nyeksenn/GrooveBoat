@@ -1,7 +1,6 @@
 package io.github.Nyeksenn.grooveboat.audio;
 
 import io.github.Nyeksenn.grooveboat.entities.SongModel;
-import org.gnome.gio.ListModel;
 import org.gnome.gobject.GObject;
 import org.javagi.gobject.annotations.RegisteredType;
 import org.javagi.gobject.annotations.Signal;
@@ -13,7 +12,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 @RegisteredType(name = "SongQueue")
-public final class SongQueue extends GObject implements ListModel {
+public final class SongQueue extends GObject {
     @Signal(name = "queue-changed")
     public interface QueueChanged {
         void run();
