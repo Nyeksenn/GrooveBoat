@@ -26,6 +26,13 @@
                 <property name="hexpand">true</property>
               </object>
             </child>
+            <child>
+              <object class="GtkButton">
+                <property name="icon-name">media-playback-start-symbolic</property>
+                <property name="valign">end</property>
+                <property name="has-frame">false</property>
+              </object>
+            </child>
           </object>
         </child>
         <child>

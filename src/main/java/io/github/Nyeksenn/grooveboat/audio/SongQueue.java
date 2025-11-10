@@ -25,7 +25,7 @@ public final class SongQueue extends GObject {
 
     @Signal(name = "queue-added")
     public interface QueueAdded {
-        void run(String songId);
+        void run(String songIds);
     }
 
     private final Deque<SongModel> queue = new ConcurrentLinkedDeque<>();
@@ -34,9 +34,18 @@ public final class SongQueue extends GObject {
         return queue.peek();
     }
 
-    public void addSong(SongModel song) {
-        queue.add(song);
-        emit("queue-added", song.getSongId());
+
+    public void addSongList(List<SongModel> songs) {
+        queue.addAll(songs);
+        var numSongs = songs.size();
+        var sb = new StringBuilder();
+        for (var i = 0; i < numSongs; i++) {
+            sb.append(songs.get(i).getSongId());
+            if (i < (numSongs - 1)) {
+                sb.append(';');
+            }
+        }
+        emit("queue-added", sb.toString());
         emit("queue-changed");
     }
 

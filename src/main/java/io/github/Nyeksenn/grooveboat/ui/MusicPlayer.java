@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.foreign.MemorySegment;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/music-player.ui", name = "MusicPlayer")
@@ -51,44 +52,48 @@ public class MusicPlayer extends Box {
     public void initPlayer() {
         if (this.subsonic == null && executor == null) {
             var window = (GrooveboatWindow) getRoot();
+
             var app = (GrooveboatApp) window.getApplication();
 
             this.songQueue = app.songQueue;
             this.executor = app.executor;
             this.subsonic = app.subsonic;
 
-            songQueue.connect("queue-changed", (SongQueue.QueueChanged) this::queueChanged);
-            songQueue.connect("queue-replaced", (SongQueue.QueueReplaced) this::queueReplaced);
-            songQueue.connect("queue-added", (SongQueue.QueueAdded) this::queueAdded);
+            songQueue.connect("queue-changed", (SongQueue.QueueChanged) this::reinitStream);
+            songQueue.connect("queue-replaced", (SongQueue.QueueReplaced) this::replaceSongsListBox);
+            songQueue.connect("queue-added", (SongQueue.QueueAdded) this::addSongListBox);
 
             if (songQueue.isEmpty()) {
                 var initSong = new QSongModel().findList().getFirst();
-                songQueue.addSong(initSong);
+                songQueue.addSongList(List.of(initSong));
             }
         }
     }
 
-    public void queueAdded(String songId) {
+    public void addSongListBox(String idString) {
         this.executor.submit(() -> {
-            var song = new QSongModel().songId.equalTo(songId).findOne();
-            if (song != null) {
-                var texture = loader.load(song.getAlbum().getAlbumId());
-                var card = new QueueCard();
-                var coverArt = new RoundedImage();
-                coverArt.setTexture(texture);
-                coverArt.setPixelSize(40);
-                card.setTitle(song.getTitle());
-                card.setSubtitle(song.getDisplayArtist());
-                card.addPrefix(coverArt);
-                card.setSongId(song.getSongId());
-                GLib.idleAddOnce(() -> {
-                    this.queueListBox.append(card);
-                });
+            var songIds = idString.split(";");
+            for (var songId : songIds) {
+                var song = new QSongModel().songId.equalTo(songId).findOne();
+                if (song != null) {
+                    var texture = loader.load(song.getAlbum().getAlbumId());
+                    var card = new QueueCard();
+                    var coverArt = new RoundedImage();
+                    coverArt.setTexture(texture);
+                    coverArt.setPixelSize(40);
+                    card.setTitle(song.getTitle());
+                    card.setSubtitle(song.getDisplayArtist());
+                    card.addPrefix(coverArt);
+                    card.setSongId(song.getSongId());
+                    GLib.idleAddOnce(() -> {
+                        this.queueListBox.append(card);
+                    });
+                }
             }
         });
     }
 
-    public void queueReplaced() {
+    public void replaceSongsListBox() {
         executor.submit(() -> {
             GLib.idleAddOnce(() -> queueListBox.removeAll());
             for (var it = songQueue.iterate(); it.hasNext(); ) {
@@ -107,8 +112,7 @@ public class MusicPlayer extends Box {
         });
     }
 
-    // Make sure that no two threads try to change pipeline in parallel
-    public void queueChanged() {
+    public void reinitStream() {
         var oldStream = (MediaSubsonic) this.mediaControls.getMediaStream();
         var nextSong = this.songQueue.peekSong();
         var textureLoader = AlbumTextureLoader.getInstance();
