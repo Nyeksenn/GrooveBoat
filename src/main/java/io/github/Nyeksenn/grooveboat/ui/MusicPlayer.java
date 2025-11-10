@@ -6,6 +6,7 @@ import io.github.Nyeksenn.grooveboat.entities.query.QSongModel;
 import io.github.Nyeksenn.grooveboat.gobjects.MediaSubsonic;
 import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
 import org.gnome.glib.GLib;
+import org.gnome.glib.Variant;
 import org.gnome.gtk.Box;
 import org.gnome.gtk.Label;
 import org.gnome.gtk.ListBox;
@@ -18,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.foreign.MemorySegment;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/music-player.ui", name = "MusicPlayer")
@@ -65,7 +65,7 @@ public class MusicPlayer extends Box {
 
             if (songQueue.isEmpty()) {
                 var initSong = new QSongModel().findList().getFirst();
-                songQueue.addSongList(List.of(initSong));
+                window.activateAction("queue-song", Variant.string(initSong.getSongId()));
             }
         }
     }
@@ -96,6 +96,7 @@ public class MusicPlayer extends Box {
     public void replaceSongsListBox() {
         executor.submit(() -> {
             GLib.idleAddOnce(() -> queueListBox.removeAll());
+
             for (var it = songQueue.iterate(); it.hasNext(); ) {
                 var song = it.next();
                 var texture = loader.load(song.getAlbum().getAlbumId());

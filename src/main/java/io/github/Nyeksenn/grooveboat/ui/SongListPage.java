@@ -37,6 +37,11 @@ public class SongListPage extends NavigationPage {
     @GtkChild(name = "song-list-view")
     public ListView songListView;
 
+    @GtkCallback(name = "play-album-clicked")
+    public void playAlbumClicked() {
+        //activateActionIfExists("win.play-album", Variant.string(albumId));
+    }
+
     @GtkCallback(name = "song-list-setup")
     public void songListSetup(GObject object) {
         var listItem = (ListItem) object;

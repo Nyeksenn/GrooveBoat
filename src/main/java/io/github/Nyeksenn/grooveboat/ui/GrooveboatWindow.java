@@ -117,5 +117,6 @@ public class GrooveboatWindow extends ApplicationWindow {
     @InstanceInit
     public void init() {
         connDetails = new ConnDetails();
+        setupActions();
     }
 }
