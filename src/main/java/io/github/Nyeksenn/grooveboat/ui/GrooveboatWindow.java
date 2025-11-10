@@ -72,11 +72,13 @@ public class GrooveboatWindow extends ApplicationWindow {
         entries.add(new ActionEntry(
                 "queue-song",
                 (action, parameter) -> {
-                    var songId = parameter.getString(null);
-                    var song = new QSongModel().songId.equalTo(songId).findOne();
-                    if (song != null) {
-                        songQueue.addSongList(List.of(song));
-                    }
+                    exec.submit(() -> {
+                        var songId = parameter.getString(null);
+                        var song = new QSongModel().songId.equalTo(songId).findOne();
+                        if (song != null) {
+                            songQueue.addSongList(List.of(song));
+                        }
+                    });
                 },
                 Variant.string("").getTypeString(),
                 null,
@@ -85,12 +87,14 @@ public class GrooveboatWindow extends ApplicationWindow {
         entries.add(new ActionEntry(
                 "play-album",
                 (action, parameter) -> {
-                    var albumId = parameter.getString(null);
-                    var album = new QAlbumModel().albumId.equalTo(albumId).findOne();
-                    if (album != null) {
-                        var songs = album.getSongs();
-                        songQueue.replace(songs);
-                    }
+                    exec.submit(() -> {
+                        var albumId = parameter.getString(null);
+                        var album = new QAlbumModel().albumId.equalTo(albumId).findOne();
+                        if (album != null) {
+                            var songs = album.getSongs();
+                            songQueue.replace(songs);
+                        }
+                    });
                 },
                 Variant.string("").getTypeString(),
                 null,
@@ -99,12 +103,14 @@ public class GrooveboatWindow extends ApplicationWindow {
         entries.add(new ActionEntry(
                 "queue-album",
                 (action, parameter) -> {
-                    var albumId = parameter.getString(null);
-                    var album = new QAlbumModel().albumId.equalTo(albumId).findOne();
-                    if (album != null) {
-                        var songs = album.getSongs();
-                        songQueue.addSongList(songs);
-                    }
+                    exec.submit(() -> {
+                        var albumId = parameter.getString(null);
+                        var album = new QAlbumModel().albumId.equalTo(albumId).findOne();
+                        if (album != null) {
+                            var songs = album.getSongs();
+                            songQueue.addSongList(songs);
+                        }
+                    });
                 },
                 Variant.string("").getTypeString(),
                 null,

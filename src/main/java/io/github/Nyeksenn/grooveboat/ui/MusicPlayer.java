@@ -65,7 +65,8 @@ public class MusicPlayer extends Box {
 
             if (songQueue.isEmpty()) {
                 var initSong = new QSongModel().findList().getFirst();
-                window.activateAction("queue-song", Variant.string(initSong.getSongId()));
+                var action = window.lookupAction("queue-song");
+                action.activate(Variant.string(initSong.getSongId()));
             }
         }
     }

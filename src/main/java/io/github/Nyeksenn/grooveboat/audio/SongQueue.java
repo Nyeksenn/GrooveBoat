@@ -5,7 +5,6 @@ import org.gnome.gobject.GObject;
 import org.javagi.gobject.annotations.RegisteredType;
 import org.javagi.gobject.annotations.Signal;
 
-import java.lang.foreign.MemorySegment;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
@@ -65,9 +64,5 @@ public final class SongQueue extends GObject {
     }
 
     public SongQueue() {
-    }
-
-    public SongQueue(MemorySegment address) {
-        super(address);
     }
 }
