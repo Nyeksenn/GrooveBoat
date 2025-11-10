@@ -37,6 +37,7 @@ public class RoundedImage extends Widget {
 
     public void setTexture(Texture texture) {
         this.texture = texture;
+        queueDraw();
     }
 
     @Property

@@ -86,7 +86,7 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
             caps = Caps.emptySimple(gstCt);
         }
 
-        appSrc.setCapabilities(caps);
+        //appSrc.setCapabilities(caps);
         pipeline.pipeline.setState(State.PAUSED);
 
         updateAudio(false, 1.0);

@@ -12,11 +12,6 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 
 @RegisteredType(name = "SongQueue")
 public final class SongQueue extends GObject {
-    @Signal(name = "queue-changed")
-    public interface QueueChanged {
-        void run();
-    }
-
     @Signal(name = "queue-replaced")
     public interface QueueReplaced {
         void run();
@@ -45,7 +40,6 @@ public final class SongQueue extends GObject {
             }
         }
         emit("queue-added", sb.toString());
-        emit("queue-changed");
     }
 
     public boolean isEmpty() {
@@ -56,7 +50,6 @@ public final class SongQueue extends GObject {
         queue.clear();
         queue.addAll(songs);
         emit("queue-replaced");
-        emit("queue-changed");
     }
 
     public Iterator<SongModel> iterate() {
