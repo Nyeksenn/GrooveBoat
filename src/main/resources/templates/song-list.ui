@@ -31,6 +31,7 @@
                 <property name="icon-name">media-playback-start-symbolic</property>
                 <property name="valign">end</property>
                 <property name="has-frame">false</property>
+                <signal name="clicked" handler="play-album-clicked"/>
               </object>
             </child>
           </object>
