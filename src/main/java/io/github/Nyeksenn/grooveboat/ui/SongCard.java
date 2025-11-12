@@ -1,6 +1,5 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
-import io.github.Nyeksenn.grooveboat.audio.SongQueue;
 import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
 import org.gnome.gdk.Rectangle;
 import org.gnome.gio.Menu;
@@ -18,8 +17,6 @@ import org.slf4j.LoggerFactory;
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/song-card.ui", name = "SongCard")
 public class SongCard extends Box {
     private static final Logger logger = LoggerFactory.getLogger(SongCard.class);
-    private SongQueue songQueue;
-
     private String songId;
 
     @GtkChild(name = "song-picture")
@@ -58,10 +55,6 @@ public class SongCard extends Box {
         item.setActionAndTargetValue("win.queue-song", Variant.string(songId));
         songContextMenu.appendItem(item);
         this.songId = songId;
-    }
-
-    public void setSongQueue(SongQueue songQueue) {
-        this.songQueue = songQueue;
     }
 
     public SongCard() {

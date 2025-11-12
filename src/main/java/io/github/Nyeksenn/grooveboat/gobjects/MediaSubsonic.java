@@ -128,8 +128,6 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
                             if (flowReturn == FlowReturn.FLUSHING) return;
                             if ((flowReturn == FlowReturn.OK) && (len < BUFFER_SIZE)) {
                                 src.endOfStream();
-                                pipeline.pipeline.setState(State.READY);
-                                pipeline.pipeline.setState(State.PAUSED);
                                 pushingData = false;
                                 return;
                             }

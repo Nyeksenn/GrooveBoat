@@ -4,8 +4,6 @@ import org.freedesktop.gstreamer.app.AppSrc;
 import org.freedesktop.gstreamer.app.AppSrcCallbacks;
 import org.freedesktop.gstreamer.app.AppStreamType;
 import org.freedesktop.gstreamer.gst.*;
-import org.gnome.glib.GError;
-import org.javagi.base.Out;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +15,6 @@ public final class AppPipeline {
     public Pipeline pipeline;
     private Bus bus;
     public static final int BUFFER_SIZE = 8192;
-    private int busWatchId;
     public Element audioconvert;
     public Element decodebin;
     public Element audioresample;
@@ -36,9 +33,6 @@ public final class AppPipeline {
             return;
         }
 
-        bus = pipeline.getBus();
-        busWatchId = bus.addWatch(0, this::busCall);
-
         pipeline.addMany(decodebin, audioconvert, audioresample, autoaudiosink, null);
         audioconvert.linkMany(audioresample, autoaudiosink, null);
         decodebin.onPadAdded(this::onPadAdded);
@@ -52,23 +46,6 @@ public final class AppPipeline {
 
     public static AppPipeline getInstance() {
         return Holder.INSTANCE;
-    }
-
-    private boolean busCall(Bus bus, Message msg) {
-        if (msg.readType().contains(MessageType.EOS)) {
-            logger.info("End of Stream");
-        } else if (msg.readType().contains(MessageType.ERROR)) {
-            Out<GError> error = new Out<>();
-            Out<String> debug = new Out<>();
-            msg.parseError(error, debug);
-
-            logger.warn("Error: {}", error.get().readMessage());
-
-            pipeline.setState(State.NULL);
-            pipeline.setState(State.PAUSED);
-        }
-
-        return true;
     }
 
     private void onPadAdded(Pad pad) {
