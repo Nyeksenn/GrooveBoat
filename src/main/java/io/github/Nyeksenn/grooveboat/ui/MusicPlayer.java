@@ -65,7 +65,7 @@ public class MusicPlayer extends Box {
 
             if (songQueue.isEmpty()) {
                 var initSong = new QSongModel().findList().getFirst();
-                var action = window.lookupAction("queue-song");
+                var action = window.lookupAction("play-song");
                 action.activate(Variant.string(initSong.getSongId()));
             }
         }
@@ -74,11 +74,11 @@ public class MusicPlayer extends Box {
     public void addSongListBox(String idString) {
         this.executor.submit(() -> {
             var songIds = idString.split(";");
-            var texture = loader.load(songQueue.peekSong().getAlbum().getAlbumId());
 
             for (var songId : songIds) {
                 var song = new QSongModel().songId.equalTo(songId).findOne();
                 if (song != null) {
+                    var texture = loader.load(song.getAlbum().getAlbumId());
                     var card = new QueueCard();
                     var coverArt = new RoundedImage();
                     coverArt.setTexture(texture);
@@ -92,7 +92,6 @@ public class MusicPlayer extends Box {
                     });
                 }
             }
-            reinitStream(texture);
         });
     }
 
