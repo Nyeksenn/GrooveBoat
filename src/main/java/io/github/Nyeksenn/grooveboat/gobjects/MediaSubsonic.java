@@ -7,10 +7,12 @@ import org.freedesktop.gstreamer.app.AppSrc;
 import org.freedesktop.gstreamer.app.AppSrcCallbacks;
 import org.freedesktop.gstreamer.audio.StreamVolume;
 import org.freedesktop.gstreamer.audio.StreamVolumeFormat;
-import org.freedesktop.gstreamer.gst.*;
+import org.freedesktop.gstreamer.gst.Buffer;
+import org.freedesktop.gstreamer.gst.Caps;
+import org.freedesktop.gstreamer.gst.FlowReturn;
+import org.freedesktop.gstreamer.gst.State;
 import org.gnome.glib.GLib;
 import org.gnome.gtk.MediaStream;
-import org.javagi.base.Out;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,9 +24,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static io.github.Nyeksenn.grooveboat.audio.AppPipeline.BUFFER_SIZE;
-import static org.freedesktop.gstreamer.gst.Gst.CLOCK_TIME_NONE;
 
-public final class MediaSubsonic extends MediaStream implements AutoCloseable {
+public final class MediaSubsonic extends MediaStream {
     private static final Logger logger = LoggerFactory.getLogger(MediaSubsonic.class);
 
     private final Subsonic subsonic;
@@ -42,15 +43,14 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
     public volatile boolean pushingData = false;
 
     // These are the virtual methods
-
     @Override
     public void pause() {
-        pipeline.pipeline.setState(State.PAUSED);
+        pipeline.setState(State.PAUSED);
     }
 
     @Override
     public boolean play() {
-        pipeline.pipeline.setState(State.PLAYING);
+        pipeline.setState(State.PLAYING);
         logger.info("Now playing");
         return true;
     }
@@ -59,22 +59,23 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
     public void seek(long timestamp) {
         synchronized (enoughDataLock) {
             enoughData = true;
-            pipeline.pipeline.seek(1.0, Format.TIME, SeekFlags.FLUSH, SeekType.SET, timestamp * 1000, SeekType.NONE, CLOCK_TIME_NONE.getValue());
+            var seekSuccess = pipeline.seek(timestamp);
             logger.info("Seek was called with timestamp: {}", timestamp);
         }
     }
 
     @Override
     protected void updateAudio(boolean muted, double volume) {
-        var type = StreamVolume.getType();
-        var element = pipeline.pipeline.getByInterface(type);
-        try {
-            // I need this because Element is constructed in native code
-            var volumeElement = new StreamVolume.StreamVolume$Impl(element.handle());
-            volumeElement.setVolume(StreamVolumeFormat.LINEAR, volume);
-            volumeElement.setMute(muted);
-        } catch (Exception e) {
-            logger.warn(e.getMessage());
+        var streamVolume = pipeline.getStreamVolume();
+        if (streamVolume != null) {
+            try {
+                // I need this because Element is constructed in native code
+                var volumeElement = new StreamVolume.StreamVolume$Impl(streamVolume.handle());
+                volumeElement.setVolume(StreamVolumeFormat.LINEAR, volume);
+                volumeElement.setMute(muted);
+            } catch (Exception e) {
+                logger.warn(e.getMessage());
+            }
         }
     }
 
@@ -87,17 +88,16 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
         }
 
         //appSrc.setCapabilities(caps);
-        pipeline.pipeline.setState(State.PAUSED);
+        pipeline.setState(State.PAUSED);
 
-        updateAudio(false, 1.0);
         // This takes microseconds
         streamPrepared(true, false, true, this.duration * 1000000);
+        updateAudio(false, 1.0);
         GLib.timeoutAdd(200, 100, this::updatePosition);
     }
 
     // This stops playback and clears pipeline
-    @Override
-    public void close() {
+    public void destroyStream() {
         logger.info("Destroying Stream");
         try {
             socket.close();
@@ -105,8 +105,8 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
             logger.warn("Couldn't close stream socket");
         }
         this.appSrc.endOfStream();
-        this.pipeline.pipeline.remove(appSrc);
-        pipeline.pipeline.setState(State.READY);
+        var removed = pipeline.removeAppSrc(appSrc);
+        pipeline.setState(State.READY);
 
         streamUnprepared();
     }
@@ -173,11 +173,10 @@ public final class MediaSubsonic extends MediaStream implements AutoCloseable {
     }
 
     public boolean updatePosition() {
-        var pos = new Out<Long>();
-        var position = pipeline.pipeline.queryPosition(Format.TIME, pos);
-        if (position) {
+        var pos = pipeline.queryPosition();
+        if (pos >= 0L) {
             if (this.isPrepared()) {
-                update(pos.get() / 1000);
+                update(pos);
                 return true;
             } else {
                 return false;

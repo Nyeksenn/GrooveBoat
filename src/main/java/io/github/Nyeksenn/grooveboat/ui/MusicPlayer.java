@@ -13,6 +13,7 @@ import org.freedesktop.gstreamer.gst.Message;
 import org.freedesktop.gstreamer.gst.MessageType;
 import org.freedesktop.gstreamer.gst.State;
 import org.gnome.gdk.Texture;
+import org.gnome.gio.ActionEntry;
 import org.gnome.gio.SimpleAction;
 import org.gnome.glib.GError;
 import org.gnome.glib.GLib;
@@ -64,6 +65,7 @@ public class MusicPlayer extends Box {
 
     private final SongQueue songQueue = new SongQueue();
 
+    public MediaSubsonic stream;
 
     public void initPlayer() {
         if (this.subsonic == null && exec == null) {
@@ -76,12 +78,12 @@ public class MusicPlayer extends Box {
 
             setupActions(window);
 
-            var bus = appPipeline.pipeline.getBus();
+            var bus = appPipeline.getBus();
             bus.addWatch(0, this::handleBusMessage);
 
             if (songQueue.isEmpty()) {
                 var initSong = new QSongModel().findList().getFirst();
-                var action = window.lookupAction("play-song");
+                var action = window.lookupAction("queue-song");
                 action.activate(Variant.string(initSong.getSongId()));
             }
         }
@@ -91,7 +93,7 @@ public class MusicPlayer extends Box {
         if (msg.readType().contains(MessageType.EOS)) {
             logger.info("End of Stream");
             var newSong = songQueue.next();
-            playNext(newSong.getSongId());
+            exec.submit(() -> playNext(newSong.getSongId()));
         } else if (msg.readType().contains(MessageType.ERROR)) {
             Out<GError> error = new Out<>();
             Out<String> debug = new Out<>();
@@ -99,8 +101,8 @@ public class MusicPlayer extends Box {
 
             logger.warn("Error: {}", error.get().readMessage());
 
-            appPipeline.pipeline.setState(State.NULL);
-            appPipeline.pipeline.setState(State.PAUSED);
+            appPipeline.setState(State.NULL);
+            appPipeline.setState(State.PAUSED);
         }
 
         return true;
@@ -141,48 +143,51 @@ public class MusicPlayer extends Box {
             GLib.idleAddOnce(() -> queueListBox.append(card));
         }
 
-        GLib.idleAddOnce(() -> reinitStream(texture));
+        initializeMediaStream(texture, true);
     }
 
     public void playNext(String songId) {
-        exec.submit(() -> {
-            var newSong = new QSongModel().songId.equalTo(songId).findOne();
-            if (newSong != null) {
-                var texture = loader.load(newSong.getAlbum().getAlbumId());
+        var newSong = new QSongModel().songId.equalTo(songId).findOne();
+        if (newSong != null) {
+            var texture = loader.load(newSong.getAlbum().getAlbumId());
 
-                GLib.idleAddOnce(() -> {
-                    var oldSong = queueListBox.getFirstChild();
-                    queueListBox.remove(oldSong);
-                    reinitStream(texture);
-                });
-            }
-        });
+            GLib.idleAddOnce(() -> {
+                var oldSong = queueListBox.getFirstChild();
+                queueListBox.remove(oldSong);
+            });
+            initializeMediaStream(texture, true);
+        }
     }
 
-    public void reinitStream(Texture albumCover) {
-        var oldStream = (MediaSubsonic) this.mediaControls.getMediaStream();
+    public void initializeMediaStream(Texture albumCover, boolean shouldPlay) {
+        this.mediaControls.setMediaStream(null);
         var nextSong = this.songQueue.peekSong();
 
-        exec.submit(() -> {
-            if (oldStream != null) {
-                oldStream.close();
-            }
+        if (stream != null) {
+            stream.destroyStream();
+            stream = null;
+        }
 
-            var stream = new MediaSubsonic(
-                    nextSong.getSongId(),
-                    nextSong.getDuration().getSeconds(),
-                    subsonic, exec,
-                    nextSong.getContentType()
-            );
-            GLib.idleAddOnce(() -> this.mediaControls.setMediaStream(stream));
+        stream = new MediaSubsonic(
+                nextSong.getSongId(),
+                nextSong.getDuration().getSeconds(),
+                subsonic,
+                exec,
+                nextSong.getContentType()
+        );
+
+        GLib.idleAddOnce(() -> {
+            this.mediaControls.setMediaStream(stream);
             stream.initializeStream();
+            stream.setPlaying(shouldPlay);
+            this.playerAlbumArtist.setLabel(nextSong.getDisplayArtist());
+            this.playerSongName.setLabel(nextSong.getTitle());
+            this.playerAlbumPicture.setTexture(albumCover);
         });
-        this.playerAlbumArtist.setLabel(nextSong.getDisplayArtist());
-        this.playerSongName.setLabel(nextSong.getTitle());
-        this.playerAlbumPicture.setTexture(albumCover);
     }
 
     private void setupActions(GrooveboatWindow win) {
+        ActionEntry[] entries = new ActionEntry[4];
         var playSongAction = new SimpleAction("play-song", VariantTypes.STRING);
         playSongAction.onActivate((parameter) -> {
             if (parameter != null) {
@@ -274,7 +279,7 @@ public class MusicPlayer extends Box {
         logger.info("Closing Music Player");
         var stream = (MediaSubsonic) this.mediaControls.getMediaStream();
         if (stream != null) {
-            stream.close();
+            stream.destroyStream();
         }
     }
 }
