@@ -74,9 +74,9 @@ public final class AppPipeline {
     }
 
     public StreamVolume getStreamVolume() {
-        var sv = pipeline.getByInterface(StreamVolume.getType());
+        Element sv = pipeline.getByInterface(StreamVolume.getType());
         if (sv != null) {
-            return (StreamVolume) sv;
+            return new StreamVolume.StreamVolume$Impl(sv.handle());
         }
         return null;
     }

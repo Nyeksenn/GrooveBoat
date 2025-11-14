@@ -5,7 +5,6 @@ import io.github.Nyeksenn.grooveboat.audio.AppPipeline;
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import org.freedesktop.gstreamer.app.AppSrc;
 import org.freedesktop.gstreamer.app.AppSrcCallbacks;
-import org.freedesktop.gstreamer.audio.StreamVolume;
 import org.freedesktop.gstreamer.audio.StreamVolumeFormat;
 import org.freedesktop.gstreamer.gst.Buffer;
 import org.freedesktop.gstreamer.gst.Caps;
@@ -70,9 +69,8 @@ public final class MediaSubsonic extends MediaStream {
         if (streamVolume != null) {
             try {
                 // I need this because Element is constructed in native code
-                var volumeElement = new StreamVolume.StreamVolume$Impl(streamVolume.handle());
-                volumeElement.setVolume(StreamVolumeFormat.LINEAR, volume);
-                volumeElement.setMute(muted);
+                streamVolume.setVolume(StreamVolumeFormat.LINEAR, volume);
+                streamVolume.setMute(muted);
             } catch (Exception e) {
                 logger.warn(e.getMessage());
             }

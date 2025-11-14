@@ -13,7 +13,6 @@ import org.freedesktop.gstreamer.gst.Message;
 import org.freedesktop.gstreamer.gst.MessageType;
 import org.freedesktop.gstreamer.gst.State;
 import org.gnome.gdk.Texture;
-import org.gnome.gio.ActionEntry;
 import org.gnome.gio.SimpleAction;
 import org.gnome.glib.GError;
 import org.gnome.glib.GLib;
@@ -109,6 +108,7 @@ public class MusicPlayer extends Box {
     }
 
     public void addSongListBox(List<String> songIds) {
+        // runs on separate thread
         for (var songId : songIds) {
             var song = new QSongModel().songId.equalTo(songId).findOne();
             if (song != null) {
@@ -127,6 +127,7 @@ public class MusicPlayer extends Box {
     }
 
     public void playNew() {
+        // runs on separate thread
         GLib.idleAddOnce(() -> queueListBox.removeAll());
         var texture = loader.load(songQueue.peekSong().getAlbum().getAlbumId());
 
@@ -143,10 +144,11 @@ public class MusicPlayer extends Box {
             GLib.idleAddOnce(() -> queueListBox.append(card));
         }
 
-        initializeMediaStream(texture, true);
+        GLib.idleAddOnce(() -> initializeMediaStream(texture, true));
     }
 
     public void playNext(String songId) {
+        // runs on separate thread
         var newSong = new QSongModel().songId.equalTo(songId).findOne();
         if (newSong != null) {
             var texture = loader.load(newSong.getAlbum().getAlbumId());
@@ -154,12 +156,13 @@ public class MusicPlayer extends Box {
             GLib.idleAddOnce(() -> {
                 var oldSong = queueListBox.getFirstChild();
                 queueListBox.remove(oldSong);
+                initializeMediaStream(texture, true);
             });
-            initializeMediaStream(texture, true);
         }
     }
 
     public void initializeMediaStream(Texture albumCover, boolean shouldPlay) {
+        // runs on main thread
         this.mediaControls.setMediaStream(null);
         var nextSong = this.songQueue.peekSong();
 
@@ -176,18 +179,15 @@ public class MusicPlayer extends Box {
                 nextSong.getContentType()
         );
 
-        GLib.idleAddOnce(() -> {
-            this.mediaControls.setMediaStream(stream);
-            stream.initializeStream();
-            stream.setPlaying(shouldPlay);
-            this.playerAlbumArtist.setLabel(nextSong.getDisplayArtist());
-            this.playerSongName.setLabel(nextSong.getTitle());
-            this.playerAlbumPicture.setTexture(albumCover);
-        });
+        this.mediaControls.setMediaStream(stream);
+        stream.initializeStream();
+        stream.setPlaying(shouldPlay);
+        this.playerAlbumArtist.setLabel(nextSong.getDisplayArtist());
+        this.playerSongName.setLabel(nextSong.getTitle());
+        this.playerAlbumPicture.setTexture(albumCover);
     }
 
     private void setupActions(GrooveboatWindow win) {
-        ActionEntry[] entries = new ActionEntry[4];
         var playSongAction = new SimpleAction("play-song", VariantTypes.STRING);
         playSongAction.onActivate((parameter) -> {
             if (parameter != null) {
