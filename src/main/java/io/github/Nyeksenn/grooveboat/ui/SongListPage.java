@@ -4,6 +4,8 @@ import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import io.github.Nyeksenn.grooveboat.gobjects.SongListItem;
 import org.gnome.adw.NavigationPage;
 import org.gnome.gio.ListStore;
+import org.gnome.gio.Menu;
+import org.gnome.gio.MenuItem;
 import org.gnome.glib.GLib;
 import org.gnome.glib.Variant;
 import org.gnome.gobject.GObject;
@@ -37,6 +39,9 @@ public class SongListPage extends NavigationPage {
 
     @GtkChild(name = "song-list-view")
     public ListView songListView;
+
+    @GtkChild(name = "album-queue-menu")
+    public Menu albumQueueMenu;
 
     @GtkCallback(name = "play-album-clicked")
     public void playAlbumClicked() {
@@ -78,6 +83,11 @@ public class SongListPage extends NavigationPage {
             this.subsonic = app.subsonic;
             this.executor = app.executor;
             this.win = window;
+
+            var menuItem = new MenuItem();
+            menuItem.setLabel("Queue album");
+            menuItem.setActionAndTargetValue("win.queue-album", Variant.string(albumId));
+            this.albumQueueMenu.appendItem(menuItem);
 
             this.executor.submit(() -> {
                 var songs = subsonic.getSongs(albumId);

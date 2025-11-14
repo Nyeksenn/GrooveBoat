@@ -27,10 +27,11 @@
               </object>
             </child>
             <child>
-              <object class="GtkButton" id="play-album-button">
+              <object class="AdwSplitButton">
+                <property name="halign">3</property>
                 <property name="icon-name">media-playback-start-symbolic</property>
+                <property name="menu-model">album-queue-menu</property>
                 <property name="valign">end</property>
-                <property name="has-frame">false</property>
                 <signal name="clicked" handler="play-album-clicked"/>
               </object>
             </child>
@@ -65,4 +66,6 @@
       </object>
     </property>
   </template>
+
+  <menu id="album-queue-menu"/>
 </interface>
