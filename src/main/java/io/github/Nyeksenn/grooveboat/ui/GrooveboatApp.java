@@ -84,7 +84,7 @@ public class GrooveboatApp extends Application {
     public void startup() {
         super.startup();
 
-        var preferences = new SimpleAction("preferences", null);
+        var preferences = new SimpleAction("account-settings", null);
         preferences.onActivate(this::preferencesActivated);
         addAction(preferences);
 
