@@ -41,5 +41,21 @@
     <child>
       <object class="GtkMediaControls" id="media-controls"/>
     </child>
+    <child>
+      <object class="GtkSeparator" id="music-player-separator"/>
+    </child>
+    <child>
+      <object class="GtkScrolledWindow">
+        <property name="propagate-natural-height">true</property>
+        <property name="child">
+          <object class="GtkListBox" id="queue-list-box">
+            <property name="selection-mode">none</property>
+            <style>
+              <class name="boxed-list"/>
+            </style>
+          </object>
+        </property>
+      </object>
+    </child>
   </template>
 </interface>

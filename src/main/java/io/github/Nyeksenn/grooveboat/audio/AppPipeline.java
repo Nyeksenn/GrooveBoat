@@ -3,8 +3,8 @@ package io.github.Nyeksenn.grooveboat.audio;
 import org.freedesktop.gstreamer.app.AppSrc;
 import org.freedesktop.gstreamer.app.AppSrcCallbacks;
 import org.freedesktop.gstreamer.app.AppStreamType;
+import org.freedesktop.gstreamer.audio.StreamVolume;
 import org.freedesktop.gstreamer.gst.*;
-import org.gnome.glib.GError;
 import org.javagi.base.Out;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,16 +12,17 @@ import org.slf4j.LoggerFactory;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import static org.freedesktop.gstreamer.gst.Gst.CLOCK_TIME_NONE;
+
 public final class AppPipeline {
     private static final Logger logger = LoggerFactory.getLogger(AppPipeline.class);
-    public Pipeline pipeline;
+    private Pipeline pipeline;
     private Bus bus;
     public static final int BUFFER_SIZE = 8192;
-    private int busWatchId;
-    public Element audioconvert;
-    public Element decodebin;
-    public Element audioresample;
-    public Element autoaudiosink;
+    private Element audioconvert;
+    private Element decodebin;
+    private Element audioresample;
+    private Element autoaudiosink;
 
     private AppPipeline() {
         Gst.init(null);
@@ -36,12 +37,11 @@ public final class AppPipeline {
             return;
         }
 
-        bus = pipeline.getBus();
-        busWatchId = bus.addWatch(0, this::busCall);
-
         pipeline.addMany(decodebin, audioconvert, audioresample, autoaudiosink, null);
         audioconvert.linkMany(audioresample, autoaudiosink, null);
         decodebin.onPadAdded(this::onPadAdded);
+
+        bus = pipeline.getBus();
 
         pipeline.setState(State.READY);
     }
@@ -54,23 +54,6 @@ public final class AppPipeline {
         return Holder.INSTANCE;
     }
 
-    private boolean busCall(Bus bus, Message msg) {
-        if (msg.readType().contains(MessageType.EOS)) {
-            logger.info("End of Stream");
-        } else if (msg.readType().contains(MessageType.ERROR)) {
-            Out<GError> error = new Out<>();
-            Out<String> debug = new Out<>();
-            msg.parseError(error, debug);
-
-            logger.warn("Error: {}", error.get().readMessage());
-
-            pipeline.setState(State.NULL);
-            pipeline.setState(State.PAUSED);
-        }
-
-        return true;
-    }
-
     private void onPadAdded(Pad pad) {
         Pad sinkpad = audioconvert.getStaticPad("sink");
 
@@ -80,6 +63,40 @@ public final class AppPipeline {
         } else {
             logger.warn("Sink pad not set");
         }
+    }
+
+    public StateChangeReturn setState(State state) {
+        return pipeline.setState(state);
+    }
+
+    public boolean seek(long timestampMs) {
+        return pipeline.seek(1.0, Format.TIME, SeekFlags.FLUSH, SeekType.SET, timestampMs * 1000, SeekType.NONE, CLOCK_TIME_NONE.getValue());
+    }
+
+    public StreamVolume getStreamVolume() {
+        Element sv = pipeline.getByInterface(StreamVolume.getType());
+        if (sv != null) {
+            return new StreamVolume.StreamVolume$Impl(sv.handle());
+        }
+        return null;
+    }
+
+    public boolean removeAppSrc(AppSrc appSrc) {
+        return pipeline.remove(appSrc);
+    }
+
+    public long queryPosition() {
+        var pos = new Out<Long>();
+        var success = pipeline.queryPosition(Format.TIME, pos);
+        if (success) {
+            return pos.get() / 1000L;
+        } else {
+            return -1L;
+        }
+    }
+
+    public Bus getBus() {
+        return bus;
     }
 
     public AppSrc initNewAppSrc(long duration, AppSrcCallbacks callbacks, Caps caps) {

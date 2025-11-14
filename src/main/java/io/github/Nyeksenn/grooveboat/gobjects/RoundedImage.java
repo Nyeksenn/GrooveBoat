@@ -1,12 +1,14 @@
 package io.github.Nyeksenn.grooveboat.gobjects;
 
-import org.gnome.gdk.Display;
 import org.gnome.gdk.Texture;
 import org.gnome.gobject.ParamSpec;
 import org.gnome.graphene.Rect;
 import org.gnome.gsk.RoundedRect;
 import org.gnome.gsk.ScalingFilter;
-import org.gnome.gtk.*;
+import org.gnome.gtk.CssProvider;
+import org.gnome.gtk.Orientation;
+import org.gnome.gtk.Snapshot;
+import org.gnome.gtk.Widget;
 import org.javagi.base.Out;
 import org.javagi.gobject.annotations.InstanceInit;
 import org.javagi.gobject.annotations.Property;
@@ -35,6 +37,7 @@ public class RoundedImage extends Widget {
 
     public void setTexture(Texture texture) {
         this.texture = texture;
+        queueDraw();
     }
 
     @Property
@@ -154,10 +157,10 @@ public class RoundedImage extends Widget {
 
     @InstanceInit
     public void init() {
-        cssProvider = new CssProvider();
-        addCssClass("rounded-image");
-        Gtk.styleContextAddProviderForDisplay(Display.getDefault(), cssProvider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
-        onNotify("radius", this::updateCss);
+//        cssProvider = new CssProvider();
+//        addCssClass("rounded-image");
+//        Gtk.styleContextAddProviderForDisplay(Display.getDefault(), cssProvider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
+//        onNotify("radius", this::updateCss);
     }
 
     public RoundedImage() {
