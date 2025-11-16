@@ -7,6 +7,7 @@
     <property name="margin-end">10</property>
     <property name="margin-top">10</property>
     <property name="margin-bottom">10</property>
+
     <child>
       <object class="RoundedImage" id="song-picture">
         <property name="pixel-size">50</property>

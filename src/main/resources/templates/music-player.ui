@@ -16,7 +16,7 @@
         <property name="halign">center</property>
         <property name="radius">10.0</property>
         <style>
-          <class name="image-shadow" />
+          <class name="shadow" />
         </style>
       </object>
     </child>

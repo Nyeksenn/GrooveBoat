@@ -1,14 +1,12 @@
 package io.github.Nyeksenn.grooveboat.gobjects;
 
+import org.gnome.gdk.Display;
 import org.gnome.gdk.Texture;
-import org.gnome.gobject.ParamSpec;
+import org.gnome.glib.GLib;
 import org.gnome.graphene.Rect;
 import org.gnome.gsk.RoundedRect;
 import org.gnome.gsk.ScalingFilter;
-import org.gnome.gtk.CssProvider;
-import org.gnome.gtk.Orientation;
-import org.gnome.gtk.Snapshot;
-import org.gnome.gtk.Widget;
+import org.gnome.gtk.*;
 import org.javagi.base.Out;
 import org.javagi.gobject.annotations.InstanceInit;
 import org.javagi.gobject.annotations.Property;
@@ -22,6 +20,7 @@ public class RoundedImage extends Widget {
     private float radius = 5.0F;
     private Texture texture;
     private CssProvider cssProvider;
+    private String uuid;
 
     public int getPixelSize() {
         return pixelSize;
@@ -40,12 +39,12 @@ public class RoundedImage extends Widget {
         queueDraw();
     }
 
-    @Property
+    @Property(name = "radius")
     public float getRadius() {
         return radius;
     }
 
-    @Property
+    @Property(name = "radius")
     public void setRadius(float radius) {
         this.radius = radius;
     }
@@ -143,28 +142,28 @@ public class RoundedImage extends Widget {
         }
     }
 
-    private void updateCss(ParamSpec paramSpec) {
+    private void updateCss() {
         if (cssProvider != null) {
             var css =
                     String.format("""
-                            .rounded-image {
+                            .rounded-image-%s {
                                 border-radius: %fpx;
                             }
-                            """, radius);
+                            """, uuid, getRadius());
             cssProvider.loadFromString(css);
         }
     }
 
     @InstanceInit
     public void init() {
-//        cssProvider = new CssProvider();
-//        addCssClass("rounded-image");
-//        Gtk.styleContextAddProviderForDisplay(Display.getDefault(), cssProvider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
-//        onNotify("radius", this::updateCss);
+        uuid = GLib.uuidStringRandom();
+        cssProvider = new CssProvider();
+        addCssClass("rounded-image-" + uuid);
+        Gtk.styleContextAddProviderForDisplay(Display.getDefault(), cssProvider, Gtk.STYLE_PROVIDER_PRIORITY_USER);
+        onMap(this::updateCss);
     }
 
     public RoundedImage() {
-
     }
 
     public RoundedImage(MemorySegment address) {

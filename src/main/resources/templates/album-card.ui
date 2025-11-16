@@ -9,15 +9,13 @@
     <property name="halign">center</property>
     <property name="valign">center</property>
     <property name="spacing">10</property>
+
     <child>
       <object class="RoundedImage" id="album-picture">
         <property name="pixel-size">200</property>
         <property name="valign">center</property>
         <property name="halign">center</property>
         <property name="radius">10.0</property>
-        <style>
-          <class name="album-border"/>
-        </style>
       </object>
     </child>
     <child>
