@@ -32,7 +32,7 @@
           <object class="GtkLabel" id="player-album-artist">
             <property name="wrap">true</property>
             <style>
-              <class name="grey"/>
+              <class name="dimmed"/>
             </style>
           </object>
         </child>

@@ -58,14 +58,7 @@ public class GrooveboatApp extends Application {
 
     private void loadStyles(Display display, org.gnome.gtk.Settings settings) {
         var cssProvider = new CssProvider();
-        var themeName = settings.getProperty("gtk-theme-name").toString();
-        var preferDarkTheme = (Boolean) settings.getProperty("gtk-application-prefer-dark-theme");
-
-        if (themeName.toLowerCase().contains("dark") || preferDarkTheme) {
-            cssProvider.loadFromResource("/io/github/Nyeksenn/grooveboat/dark-styles.css");
-        } else {
-            cssProvider.loadFromResource("/io/github/Nyeksenn/grooveboat/light-styles.css");
-        }
+        cssProvider.loadFromResource("/io/github/Nyeksenn/grooveboat/main.css");
 
         Gtk.styleContextAddProviderForDisplay(display, cssProvider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
     }

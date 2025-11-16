@@ -38,7 +38,7 @@
             <property name="halign">start</property>
             <property name="hexpand">true</property>
             <style>
-              <class name="grey"/>
+              <class name="dimmed"/>
             </style>
           </object>
         </child>

@@ -12,8 +12,7 @@
     <file compressed="true" alias="song-card.ui" preprocess="xml-stripblanks">templates/song-card.ui</file>
     <file compressed="true" alias="queue-card.ui" preprocess="xml-stripblanks">templates/queue-card.ui</file>
 
-    <file compressed="true" alias="dark-styles.css">css/dark-styles.css</file>
-    <file compressed="true" alias="light-styles.css">css/light-styles.css</file>
+    <file compressed="true" alias="main.css">css/main.css</file>
   </gresource>
   <gresource prefix="/io/github/Nyeksenn/grooveboat/icons/scalable/actions/">
     <file alias="interlinked-rectangles-symbolic.svg" preprocess="xml-stripblanks">icons/interlinked-rectangles-symbolic.svg</file>

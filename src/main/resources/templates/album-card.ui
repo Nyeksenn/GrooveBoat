@@ -6,7 +6,9 @@
     <property name="margin-end">10</property>
     <property name="margin-top">10</property>
     <property name="margin-bottom">10</property>
-    <property name="spacing">4</property>
+    <property name="halign">center</property>
+    <property name="valign">center</property>
+    <property name="spacing">10</property>
     <child>
       <object class="RoundedImage" id="album-picture">
         <property name="pixel-size">200</property>
@@ -19,16 +21,21 @@
       </object>
     </child>
     <child>
-      <object class="GtkLabel" id="album-name">
-        <property name="wrap">true</property>
-      </object>
-    </child>
-    <child>
-      <object class="GtkLabel" id="album-artist">
-        <property name="wrap">true</property>
-        <style>
-          <class name="grey"/>
-        </style>
+      <object class="GtkBox">
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkLabel" id="album-name">
+            <property name="wrap">true</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel" id="album-artist">
+            <property name="wrap">true</property>
+            <style>
+              <class name="dimmed"/>
+            </style>
+          </object>
+        </child>
       </object>
     </child>
     <child>

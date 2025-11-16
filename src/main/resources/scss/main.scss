@@ -1,0 +1,23 @@
+.transparent-background {
+  background-color: transparent;
+}
+
+.avatar-button {
+  border-radius: 50%;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.avatar-button:hover {
+  background-color: color-mix(in srgb, var(--window-fg-color) 25%, transparent);
+}
+
+.avatar-button:active {
+  background-color: color-mix(in srgb, var(--window-fg-color) 35%, transparent);
+}
+
+.avatar-button:focus {
+  outline: none;
+}

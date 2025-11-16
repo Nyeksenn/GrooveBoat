@@ -68,7 +68,17 @@ tasks.register('generateMigrations', JavaExec) {
 }
 
 
-tasks.register('compileResources', CompileUiFiles) {}
+tasks.register('compileSass', Exec) {
+    description = 'Compile SASS files to CSS'
+    group = 'build'
+
+    workingDir = file('src/main/resources/scss')
+    commandLine 'sass', '--no-source-map', 'main.scss:../css/main.css'
+}
+
+tasks.register('compileResources', CompileUiFiles) {
+    dependsOn compileSass
+}
 
 tasks.named('classes') {
     dependsOn compileResources
