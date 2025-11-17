@@ -159,7 +159,7 @@ public class RoundedImage extends Widget {
         uuid = GLib.uuidStringRandom();
         cssProvider = new CssProvider();
         addCssClass("rounded-image-" + uuid);
-        Gtk.styleContextAddProviderForDisplay(Display.getDefault(), cssProvider, Gtk.STYLE_PROVIDER_PRIORITY_USER);
+        Gtk.styleContextAddProviderForDisplay(Display.getDefault(), cssProvider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
         onMap(this::updateCss);
     }
 
