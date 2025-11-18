@@ -13,7 +13,7 @@ import org.freedesktop.gstreamer.gst.Message;
 import org.freedesktop.gstreamer.gst.MessageType;
 import org.freedesktop.gstreamer.gst.State;
 import org.gnome.gdk.Texture;
-import org.gnome.gio.SimpleAction;
+import org.gnome.gio.ActionEntry;
 import org.gnome.glib.GError;
 import org.gnome.glib.GLib;
 import org.gnome.glib.Variant;
@@ -30,6 +30,7 @@ import org.javagi.gtk.annotations.GtkTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -188,26 +189,31 @@ public class MusicPlayer extends Box {
     }
 
     private void setupActions(GrooveboatWindow win) {
-        var playSongAction = new SimpleAction("play-song", VariantTypes.STRING);
-        playSongAction.onActivate((parameter) -> {
-            if (parameter != null) {
-                exec.submit(() -> {
-                    logger.info("Playing this song:");
-                    var songId = parameter.getString(null);
-                    var song = new QSongModel().songId.equalTo(songId).findOne();
-                    if (song != null) {
-                        logger.info("{}", song.getTitle());
-                        songQueue.replace(List.of(song));
-                        playNew();
+        var entries = new ActionEntry[4];
+        entries[0] = new ActionEntry(
+                "play-song",
+                (action, parameter) -> {
+                    if (parameter != null) {
+                        exec.submit(() -> {
+                            logger.info("Playing this song:");
+                            var songId = parameter.getString(null);
+                            var song = new QSongModel().songId.equalTo(songId).findOne();
+                            if (song != null) {
+                                logger.info("{}", song.getTitle());
+                                songQueue.replace(List.of(song));
+                                playNew();
+                            }
+                        });
                     }
-                });
-            }
-        });
-        win.addAction(playSongAction);
-
-        var queueSongAction = new SimpleAction("queue-song", VariantTypes.STRING);
-        queueSongAction.onActivate(
-                (parameter) -> {
+                },
+                VariantTypes.STRING.dupString(),
+                null,
+                null,
+                Arena.global()
+        );
+        entries[1] = new ActionEntry(
+                "queue-song",
+                (action, parameter) -> {
                     if (parameter != null) {
                         exec.submit(() -> {
                             logger.info("Queueing this song:");
@@ -220,13 +226,15 @@ public class MusicPlayer extends Box {
                             }
                         });
                     }
-                }
+                },
+                VariantTypes.STRING.dupString(),
+                null,
+                null,
+                Arena.global()
         );
-        win.addAction(queueSongAction);
-
-        var playAlbumAction = new SimpleAction("play-album", VariantTypes.STRING);
-        playAlbumAction.onActivate(
-                (parameter) -> {
+        entries[2] = new ActionEntry(
+                "play-album",
+                (action, parameter) -> {
                     if (parameter != null) {
                         exec.submit(() -> {
                             var albumId = parameter.getString(null);
@@ -238,13 +246,15 @@ public class MusicPlayer extends Box {
                             }
                         });
                     }
-                }
+                },
+                VariantTypes.STRING.dupString(),
+                null,
+                null,
+                Arena.global()
         );
-        win.addAction(playAlbumAction);
-
-        var queueAlbumAction = new SimpleAction("queue-album", VariantTypes.STRING);
-        queueAlbumAction.onActivate(
-                (parameter) -> {
+        entries[3] = new ActionEntry(
+                "queue-album",
+                (action, parameter) -> {
                     if (parameter != null) {
                         exec.submit(() -> {
                             var albumId = parameter.getString(null);
@@ -256,9 +266,13 @@ public class MusicPlayer extends Box {
                             }
                         });
                     }
-                }
+                },
+                VariantTypes.STRING.dupString(),
+                null,
+                null,
+                Arena.global()
         );
-        win.addAction(queueAlbumAction);
+        win.addActionEntries(entries, null);
     }
 
 
