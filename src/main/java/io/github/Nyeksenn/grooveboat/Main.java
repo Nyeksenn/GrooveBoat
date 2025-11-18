@@ -52,6 +52,7 @@ public class Main {
             TemplateTypes.register(AlbumListView.class);
             TemplateTypes.register(MusicPlayer.class);
             TemplateTypes.register(SongListPage.class);
+            TemplateTypes.register(Avatar.class);
             Types.register(RoundedImage.class);
         } catch (GErrorException e) {
             logger.error("Couldn't load resources. Exiting");

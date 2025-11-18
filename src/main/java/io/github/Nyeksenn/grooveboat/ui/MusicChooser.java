@@ -6,7 +6,6 @@ import org.gnome.adw.ViewSwitcher;
 import org.gnome.adw.ViewSwitcherBar;
 import org.javagi.gobject.annotations.InstanceInit;
 import org.javagi.gobject.annotations.RegisteredType;
-import org.javagi.gtk.annotations.GtkCallback;
 import org.javagi.gtk.annotations.GtkChild;
 import org.javagi.gtk.annotations.GtkTemplate;
 import org.slf4j.Logger;
@@ -27,11 +26,6 @@ public class MusicChooser extends NavigationPage {
 
     @GtkChild(name = "music-switcher-bar")
     public ViewSwitcherBar musicSwitcherBar;
-
-    @GtkCallback(name = "account-menu-clicked")
-    public void accountMenuClicked() {
-        activateActionIfExists("app.account-settings", null);
-    }
 
     @InstanceInit
     public void init() {

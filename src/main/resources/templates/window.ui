@@ -36,10 +36,26 @@
           <object class="GtkStackPage" id="error-page">
             <property name="name">error-page</property>
             <property name="child">
-              <object class="AdwStatusPage">
-                <property name="icon-name">sad-computer-symbolic</property>
-                <property name="title">Connection Error</property>
-                <property name="description">Unable to reach the server. Please check your internet connection and your connection settings.</property>
+              <object class="AdwToolbarView">
+                <child type="top">
+                  <object class="AdwHeaderBar">
+                    <property name="title-widget">
+                      <object class="AdwWindowTitle">
+                        <property name="title">GrooveBoat</property>
+                      </object>
+                    </property>
+                    <child type="start">
+                      <object class="Avatar" id="account-menu"/>
+                    </child>
+                  </object>
+                </child>
+                <property name="content">
+                  <object class="AdwStatusPage">
+                    <property name="icon-name">sad-computer-symbolic</property>
+                    <property name="title">Connection Error</property>
+                    <property name="description">Unable to reach the server. Please check your internet connection and your connection settings.</property>
+                  </object>
+                </property>
               </object>
             </property>
           </object>

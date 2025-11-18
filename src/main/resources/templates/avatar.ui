@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="Avatar" parent="GtkButton">
+    <signal name="clicked" handler="account-menu-clicked"/>
+    <style>
+      <class name="avatar-button" />
+    </style>
+    <child>
+      <object class="AdwAvatar">
+        <property name="size">25</property>
+        <property name="show-initials">true</property>
+        <property name="text">Jay Doe</property>
+        <property name="margin-top">5</property>
+        <property name="margin-bottom">5</property>
+        <property name="margin-start">5</property>
+        <property name="margin-end">5</property>
+      </object>
+    </child>
+  </template>
+</interface>

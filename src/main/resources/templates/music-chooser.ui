@@ -14,23 +14,7 @@
               </object>
             </property>
             <child type="start">
-              <object class="GtkButton" id="account-menu">
-                <signal name="clicked" handler="account-menu-clicked"/>
-                <style>
-                  <class name="avatar-button" />
-                </style>
-                <child>
-                  <object class="AdwAvatar" id="headerbar-menu-button">
-                    <property name="size">25</property>
-                    <property name="show-initials">true</property>
-                    <property name="text">Jay Doe</property>
-                    <property name="margin-top">5</property>
-                    <property name="margin-bottom">5</property>
-                    <property name="margin-start">5</property>
-                    <property name="margin-end">5</property>
-                  </object>
-                </child>
-              </object>
+              <object class="Avatar" id="account-menu"/>
             </child>
           </object>
         </child>
