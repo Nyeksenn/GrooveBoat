@@ -28,6 +28,7 @@ public class GrooveboatPrefs extends PreferencesDialog {
     private final ExecutorService exec;
     private final Subsonic subsonic;
     private final UrlValidator validator = new UrlValidator();
+    private GrooveboatWindow win;
 
     @GtkChild(name = "entry_username")
     public EntryRow usernameEntry;
@@ -100,7 +101,12 @@ public class GrooveboatPrefs extends PreferencesDialog {
                                 settings.setString("username", username);
                                 settings.setString("url", url);
                             }
-                            GLib.idleAddOnce(() -> prefsButtonGroup.setVisible(false));
+                            GLib.idleAddOnce(() -> {
+                                prefsButtonGroup.setVisible(false);
+                                if (win != null) {
+                                    win.checkConnection();
+                                }
+                            });
                         });
                     } catch (GErrorException e) {
                         logger.warn("Couldn't store password");
@@ -120,8 +126,13 @@ public class GrooveboatPrefs extends PreferencesDialog {
         });
     }
 
+    public void setWindow() {
+        win = (GrooveboatWindow) getRoot();
+    }
+
     @InstanceInit
     public void init() {
+        onRealize(this::setWindow);
     }
 
     public GrooveboatPrefs(ExecutorService exec, Subsonic subsonic) {

@@ -33,7 +33,7 @@ public class GrooveboatWindow extends ApplicationWindow {
 
     public Subsonic subsonic;
 
-    public void realizeHandler() {
+    public void checkConnection() {
         mainStack.setVisibleChildName("loading-page");
         executor.submit(() -> {
             String username, url, password = null;
@@ -56,8 +56,8 @@ public class GrooveboatWindow extends ApplicationWindow {
                     var response = subsonic.checkCredentials(username);
                     if (response != null && response.status().equals("ok")) {
                         connectionSuccessful = true;
+                        GLib.idleAddOnce(() -> mainStack.setVisibleChildName("content-page"));
                     }
-                    GLib.idleAddOnce(() -> mainStack.setVisibleChildName("content-page"));
                 } catch (IOException e) {
                     logger.warn("Connection failed: {}", e.getMessage());
                 }
@@ -80,7 +80,7 @@ public class GrooveboatWindow extends ApplicationWindow {
 
     @InstanceInit
     public void init() {
-        onRealize(this::realizeHandler);
+        onRealize(this::checkConnection);
         onUnrealize(this::unrealizeHandler);
     }
 
