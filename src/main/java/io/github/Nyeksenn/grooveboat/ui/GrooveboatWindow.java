@@ -24,7 +24,7 @@ public class GrooveboatWindow extends ApplicationWindow {
     private static final Logger logger = LoggerFactory.getLogger(GrooveboatWindow.class);
     private final SecretKeeper secrets = SecretKeeper.getInstance();
     public final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-    private final Settings settings = new Settings("io.github.Nyeksenn.groovebox");
+    private final Settings settings = new Settings("io.github.Nyeksenn.grooveboat");
 
     @GtkChild(name = "music-chooser")
     public MusicChooser musicChooser;

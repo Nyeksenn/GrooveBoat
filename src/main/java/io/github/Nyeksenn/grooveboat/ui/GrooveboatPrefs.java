@@ -24,7 +24,7 @@ import java.util.concurrent.ExecutorService;
 public class GrooveboatPrefs extends PreferencesDialog {
     private static final Logger logger = LoggerFactory.getLogger(GrooveboatPrefs.class);
     private final SecretKeeper secrets = SecretKeeper.getInstance();
-    private final Settings settings = new Settings("io.github.Nyeksenn.groovebox");
+    private final Settings settings = new Settings("io.github.Nyeksenn.grooveboat");
     private final ExecutorService exec;
     private final Subsonic subsonic;
     private final UrlValidator validator = new UrlValidator();

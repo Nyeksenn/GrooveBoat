@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE schemalist SYSTEM "/usr/share/glib-2.0/schemas/gschema.dtd">
 <schemalist>
-    <schema path="/io/github/Nyeksenn/groovebox/" id="io.github.Nyeksenn.groovebox">
-        <key name="username" type="s">
-            <summary>Username</summary>
-            <default>""</default>
-            <description>The Subsonic API Username</description>
-        </key>
-        <key name="url" type="s">
-            <summary>URL</summary>
-            <default>""</default>
-            <description>URL of the Subsonic-compatible Server</description>
-        </key>
-    </schema>
+  <schema path="/io/github/Nyeksenn/grooveboat/" id="io.github.Nyeksenn.grooveboat">
+    <key name="username" type="s">
+      <summary>Username</summary>
+      <default>""</default>
+      <description>The Subsonic API Username</description>
+    </key>
+    <key name="url" type="s">
+      <summary>URL</summary>
+      <default>""</default>
+      <description>URL of the Subsonic-compatible Server</description>
+    </key>
+  </schema>
 </schemalist>

@@ -22,14 +22,15 @@
                         <property name="wrap">true</property>
                         <property name="justify">GTK_JUSTIFY_LEFT</property>
                         <property name="label">
-Let's connect you to your music server in just two quick steps:
+                          Let's connect you to your music server in just two quick steps:
 
-1. Enter your server address
-2. Add your login credentials
+                          1. Enter your server address
+                          2. Add your login credentials
 
-GrooveBoat is compatible with Subsonic and other compatible servers like Navidrome, Airsonic, and Gonic.
+                          GrooveBoat is compatible with Subsonic and other compatible servers like Navidrome, Airsonic,
+                          and Gonic.
 
-Ready? Let's get started!
+                          Ready? Let's get started!
                         </property>
                         <style>
                           <class name="document"/>
@@ -39,18 +40,24 @@ Ready? Let's get started!
                   </object>
                 </property>
                 <child type="bottom">
-                  <object class="GtkBox">
-                    <property name="orientation">horizontal</property>
-                    <property name="halign">fill</property>
-                    <child>
+                  <object class="GtkActionBar">
+                    <child type="start">
+                      <object class="GtkButton">
+                        <property name="label" translatable="yes">Quit</property>
+                        <property name="action-name">app.quit</property>
+                        <style>
+                          <class name="destructive-action"/>
+                          <class name="raised"/>
+                        </style>
+                      </object>
+                    </child>
+                    <child type="end">
                       <object class="GtkButton">
                         <property name="label" translatable="yes">Next</property>
-                        <property name="halign">end</property>
-                        <property name="valign">center</property>
                         <property name="action-name">navigation.push</property>
                         <property name="action-target">'connection-page'</property>
                         <style>
-                          <class name="pill"/>
+                          <class name="raised"/>
                         </style>
                       </object>
                     </child>
@@ -72,7 +79,9 @@ Ready? Let's get started!
                     <child>
                       <object class="AdwPreferencesGroup">
                         <property name="title" translatable="yes">Connection</property>
-                        <property name="description" translatable="yes">Enter the hostname of the instance to which you want to connect to</property>
+                        <property name="description" translatable="yes">Enter the hostname of the instance to which you
+                          want to connect to
+                        </property>
                         <child>
                           <object class="AdwEntryRow" id="entry-url">
                             <property name="title" translatable="yes">URL</property>
@@ -84,15 +93,26 @@ Ready? Let's get started!
                   </object>
                 </property>
                 <child type="bottom">
-                  <object class="GtkButton">
-                    <property name="label" translatable="yes">Next</property>
-                    <property name="halign">center</property>
-                    <property name="valign">center</property>
-                    <property name="action-name">navigation.push</property>
-                    <property name="action-target">'credentials-page'</property>
-                    <style>
-                      <class name="pill"/>
-                    </style>
+                  <object class="GtkActionBar">
+                    <child type="start">
+                      <object class="GtkButton">
+                        <property name="label" translatable="yes">Back</property>
+                        <property name="action-name">navigation.pop</property>
+                        <style>
+                          <class name="raised"/>
+                        </style>
+                      </object>
+                    </child>
+                    <child type="end">
+                      <object class="GtkButton">
+                        <property name="label" translatable="yes">Next</property>
+                        <property name="action-name">navigation.push</property>
+                        <property name="action-target">'credentials-page'</property>
+                        <style>
+                          <class name="raised"/>
+                        </style>
+                      </object>
+                    </child>
                   </object>
                 </child>
               </object>
@@ -129,13 +149,25 @@ Ready? Let's get started!
                   </object>
                 </property>
                 <child type="bottom">
-                  <object class="GtkButton">
-                    <property name="label" translatable="yes">Finish</property>
-                    <property name="halign">center</property>
-                    <property name="valign">center</property>
-                    <style>
-                      <class name="pill"/>
-                    </style>
+                  <object class="GtkActionBar">
+                    <child type="start">
+                      <object class="GtkButton">
+                        <property name="label" translatable="yes">Back</property>
+                        <property name="action-name">navigation.pop</property>
+                        <style>
+                          <class name="raised"/>
+                        </style>
+                      </object>
+                    </child>
+                    <child type="end">
+                      <object class="GtkButton">
+                        <property name="label" translatable="yes">Next</property>
+                        <style>
+                          <class name="raised"/>
+                          <class name="suggested-action"/>
+                        </style>
+                      </object>
+                    </child>
                   </object>
                 </child>
               </object>
