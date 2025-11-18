@@ -3,6 +3,7 @@
   <gresource prefix="/io/github/Nyeksenn/grooveboat/">
     <file compressed="true" alias="music-chooser.ui" preprocess="xml-stripblanks">templates/music-chooser.ui</file>
     <file compressed="true" alias="window.ui" preprocess="xml-stripblanks">templates/window.ui</file>
+    <file compressed="true" alias="setup.ui" preprocess="xml-stripblanks">templates/setup.ui</file>
     <file compressed="true" alias="headerbar-menu.ui" preprocess="xml-stripblanks">templates/headerbar-menu.ui</file>
     <file compressed="true" alias="prefs.ui" preprocess="xml-stripblanks">templates/prefs.ui</file>
     <file compressed="true" alias="album-list.ui" preprocess="xml-stripblanks">templates/album-list.ui</file>
@@ -20,5 +21,7 @@
     <file alias="library-music-symbolic.svg" preprocess="xml-stripblanks">icons/library-music-symbolic.svg</file>
     <file alias="library-artists-symbolic.svg" preprocess="xml-stripblanks">icons/library-artists-symbolic.svg</file>
     <file alias="item-missing-symbolic.svg" preprocess="xml-stripblanks">icons/item-missing-symbolic.svg</file>
+    <file alias="build-configure-symbolic.svg" preprocess="xml-stripblanks">icons/build-configure-symbolic.svg</file>
+    <file alias="sad-computer-symbolic.svg" preprocess="xml-stripblanks">icons/sad-computer-symbolic.svg</file>
   </gresource>
 </gresources>

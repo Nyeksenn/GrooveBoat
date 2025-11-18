@@ -1,12 +1,9 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
-import io.github.Nyeksenn.grooveboat.client.Subsonic;
-import io.github.Nyeksenn.grooveboat.client.SubsonicClient;
 import io.github.Nyeksenn.grooveboat.gobjects.SecretKeeper;
 import org.gnome.adw.Application;
 import org.gnome.gdk.Display;
 import org.gnome.gio.ApplicationFlags;
-import org.gnome.gio.Settings;
 import org.gnome.gio.SimpleAction;
 import org.gnome.glib.Variant;
 import org.gnome.gtk.CssProvider;
@@ -15,20 +12,11 @@ import org.gnome.gtk.IconTheme;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 public class GrooveboatApp extends Application {
     private static final Logger logger = LoggerFactory.getLogger(GrooveboatApp.class);
 
-    public Subsonic subsonic;
-    public final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-    private final SecretKeeper secrets = SecretKeeper.getInstance();
-
     @Override
     public void activate() {
-        Settings settings = new Settings("io.github.Nyeksenn.groovebox");
-
         var display = Display.getDefault();
 
         // Setup Icons
@@ -38,28 +26,8 @@ public class GrooveboatApp extends Application {
         // Setup Styles
         loadStyles(display);
 
-
-        String username, url, password = null;
-
-        // Setup Client on Startup
-        username = settings.getString("username");
-        url = settings.getString("url");
-
-        if (username != null && url != null) {
-            var split = url.split("://");
-            password = secrets.lookupPassword(username, split[0], split[1]).join();
-        }
-
-        if (password != null) {
-            var client = new SubsonicClient(url, username, password);
-            this.subsonic = new Subsonic(client);
-
-            GrooveboatWindow win = new GrooveboatWindow(this);
-            win.present();
-        } else {
-            // Open Setup
-            logger.info("Not logged in. Opening setup");
-        }
+        var win = new GrooveboatWindow(this);
+        win.present();
     }
 
     private void loadStyles(Display display) {
@@ -71,7 +39,7 @@ public class GrooveboatApp extends Application {
 
     public void preferencesActivated(Variant parameter) {
         GrooveboatWindow win = (GrooveboatWindow) getActiveWindow();
-        GrooveboatPrefs prefs = new GrooveboatPrefs(executor, subsonic);
+        GrooveboatPrefs prefs = new GrooveboatPrefs(win.executor, win.subsonic);
         prefs.present(win);
     }
 
@@ -98,12 +66,6 @@ public class GrooveboatApp extends Application {
     @Override
     protected void shutdown() {
         super.shutdown();
-        try {
-            subsonic.close();
-        } catch (Exception e) {
-            logger.warn("Unable to cleanup client");
-        }
-        executor.shutdown();
         SecretKeeper.getInstance().close();
     }
 

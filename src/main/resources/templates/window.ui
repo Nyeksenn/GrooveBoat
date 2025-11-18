@@ -12,31 +12,71 @@
       </object>
     </child>
     <property name="content">
-      <object class="AdwNavigationSplitView" id="split-view">
-        <property name="sidebar-position">end</property>
-        <property name="sidebar-width-fraction">0.5</property>
-        <property name="show-content">true</property>
-        <property name="sidebar">
-          <object class="AdwNavigationPage">
-            <property name="title" translatable="yes">Sidebar</property>
-            <property name="tag">sidebar</property>
+      <object class="GtkStack" id="main-stack">
+        <property name="transition-type">GTK_STACK_TRANSITION_TYPE_CROSSFADE</property>
+        <child>
+          <object class="GtkStackPage" id="loading-page">
+            <property name="name">loading-page</property>
             <property name="child">
-              <object class="AdwToolbarView">
-                <child type="top">
-                  <object class="AdwHeaderBar">
-                    <property name="show-title">false</property>
+              <object class="AdwStatusPage">
+                <property name="title">Loading</property>
+                <property name="child">
+                  <object class="AdwSpinner">
+                    <property name="halign">center</property>
+                    <property name="valign">center</property>
+                    <property name="width-request">48</property>
+                    <property name="height-request">48</property>
                   </object>
-                </child>
-                <property name="content">
-                  <object class="MusicPlayer" id="music-player"/>
                 </property>
               </object>
             </property>
           </object>
-        </property>
-        <property name="content">
-          <object class="MusicChooser" id="music-chooser"/>
-        </property>
+        </child>
+        <child>
+          <object class="GtkStackPage" id="error-page">
+            <property name="name">error-page</property>
+            <property name="child">
+              <object class="AdwStatusPage">
+                <property name="icon-name">sad-computer-symbolic</property>
+                <property name="title">Connection Error</property>
+                <property name="description">Unable to reach the server. Please check your internet connection and your connection settings.</property>
+              </object>
+            </property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkStackPage" id="content-page">
+            <property name="name">content-page</property>
+            <property name="child">
+              <object class="AdwNavigationSplitView" id="split-view">
+                <property name="sidebar-position">end</property>
+                <property name="sidebar-width-fraction">0.5</property>
+                <property name="show-content">true</property>
+                <property name="sidebar">
+                  <object class="AdwNavigationPage">
+                    <property name="title" translatable="yes">Sidebar</property>
+                    <property name="tag">sidebar</property>
+                    <property name="child">
+                      <object class="AdwToolbarView">
+                        <child type="top">
+                          <object class="AdwHeaderBar">
+                            <property name="show-title">false</property>
+                          </object>
+                        </child>
+                        <property name="content">
+                          <object class="MusicPlayer" id="music-player"/>
+                        </property>
+                      </object>
+                    </property>
+                  </object>
+                </property>
+                <property name="content">
+                  <object class="MusicChooser" id="music-chooser"/>
+                </property>
+              </object>
+            </property>
+          </object>
+        </child>
       </object>
     </property>
   </template>

@@ -70,11 +70,9 @@ public class MusicPlayer extends Box {
     public void initPlayer() {
         if (this.subsonic == null && exec == null) {
             var window = (GrooveboatWindow) getRoot();
-
-            var app = (GrooveboatApp) window.getApplication();
-
-            this.exec = app.executor;
-            this.subsonic = app.subsonic;
+            
+            this.exec = window.executor;
+            this.subsonic = window.subsonic;
 
             setupActions(window);
 

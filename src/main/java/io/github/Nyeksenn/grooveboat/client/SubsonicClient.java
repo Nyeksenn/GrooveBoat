@@ -335,7 +335,7 @@ public class SubsonicClient implements AutoCloseable {
         }
     }
 
-    public SubsonicResponse userPing(String username) {
+    public SubsonicResponse userPing(String username) throws IOException {
         try {
             var params = new HashMap<>(Map.of(
                     "username", username
@@ -344,7 +344,7 @@ public class SubsonicClient implements AutoCloseable {
             var root = om.readTree(response);
             var subsonicResponse = root.path("subsonic-response");
             return om.treeToValue(subsonicResponse, SubsonicResponse.class);
-        } catch (JacksonException | IOException e) {
+        } catch (JacksonException e) {
             logger.warn(e.getCause().toString());
             return null;
         }
