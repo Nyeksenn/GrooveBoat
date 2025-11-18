@@ -22,27 +22,21 @@ public class GrooveboatApp extends Application {
     private static final Logger logger = LoggerFactory.getLogger(GrooveboatApp.class);
 
     public Subsonic subsonic;
-    public ExecutorService executor;
+    public final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     private final SecretKeeper secrets = SecretKeeper.getInstance();
 
     @Override
     public void activate() {
         Settings settings = new Settings("io.github.Nyeksenn.groovebox");
-
-        this.executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-
+        
         var display = Display.getDefault();
-        var gtkSettings = org.gnome.gtk.Settings.getForDisplay(display);
 
         // Setup Icons
         var theme = IconTheme.getForDisplay(display);
         theme.addResourcePath("/io/github/Nyeksenn/grooveboat/icons/");
 
         // Setup Styles
-
-        gtkSettings.onNotify("gtk-application-prefer-dark-theme", (pspec) -> loadStyles(display, gtkSettings));
-        gtkSettings.onNotify("gtk-theme-name", (pspec) -> loadStyles(display, gtkSettings));
-        loadStyles(display, gtkSettings);
+        loadStyles(display);
 
         // Setup Client on Startup
         var username = settings.getString("username");
@@ -56,7 +50,7 @@ public class GrooveboatApp extends Application {
         win.present();
     }
 
-    private void loadStyles(Display display, org.gnome.gtk.Settings settings) {
+    private void loadStyles(Display display) {
         var cssProvider = new CssProvider();
         cssProvider.loadFromResource("/io/github/Nyeksenn/grooveboat/main.css");
 
@@ -102,7 +96,7 @@ public class GrooveboatApp extends Application {
     }
 
     public GrooveboatApp() {
-        setApplicationId("org.gtk.grooveboat");
-        setFlags(ApplicationFlags.HANDLES_OPEN);
+        setApplicationId("io.github.Nyeksenn.grooveboat");
+        setFlags(ApplicationFlags.DEFAULT_FLAGS);
     }
 }
