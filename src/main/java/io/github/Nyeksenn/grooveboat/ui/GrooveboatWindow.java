@@ -7,6 +7,7 @@ import org.gnome.adw.ApplicationWindow;
 import org.gnome.gio.Settings;
 import org.gnome.glib.GLib;
 import org.gnome.gtk.Stack;
+import org.javagi.base.Out;
 import org.javagi.gobject.annotations.InstanceInit;
 import org.javagi.gtk.annotations.GtkCallback;
 import org.javagi.gtk.annotations.GtkChild;
@@ -33,40 +34,51 @@ public class GrooveboatWindow extends ApplicationWindow {
 
     public Subsonic subsonic;
 
-    public void checkConnection() {
-        mainStack.setVisibleChildName("loading-page");
-        executor.submit(() -> {
-            String username, url, password = null;
-            var connectionSuccessful = false;
+    private boolean checkConnection(String url, String username) {
+        if (username != null && url != null) {
+            var split = url.split("://");
+            var password = secrets.lookupPassword(username, split[0], split[1]).join();
 
-            // Setup Client on Startup
-            username = settings.getString("username");
-            url = settings.getString("url");
+            var client = new SubsonicClient(url, username, password);
+            this.subsonic = new Subsonic(client);
 
-            if (username != null && url != null) {
-                var split = url.split("://");
-                password = secrets.lookupPassword(username, split[0], split[1]).join();
-            }
-
-            if (password != null) {
-                var client = new SubsonicClient(url, username, password);
-                this.subsonic = new Subsonic(client);
-
-                try {
-                    var response = subsonic.checkCredentials(username);
-                    if (response != null && response.status().equals("ok")) {
-                        connectionSuccessful = true;
-                        GLib.idleAddOnce(() -> mainStack.setVisibleChildName("content-page"));
-                    }
-                } catch (IOException e) {
-                    logger.warn("Connection failed: {}", e.getMessage());
+            try {
+                var response = subsonic.checkCredentials(username);
+                if (response != null && response.status().equals("ok")) {
+                    return true;
                 }
+            } catch (IOException e) {
+                logger.warn("Connection failed: {}", e.getMessage());
             }
+        }
 
-            if (!connectionSuccessful) {
-                GLib.idleAddOnce(() -> mainStack.setVisibleChildName("error-page"));
-            }
-        });
+        return false;
+    }
+
+    public void initializeClient() {
+        mainStack.setVisibleChildName("loading-page");
+
+        final String username = settings.getString("username");
+        final String url = settings.getString("url");
+
+        if (username.isBlank() || url.isBlank()) {
+            var setupDialog = new SetupDialog();
+            var width = new Out<Integer>();
+            var height = new Out<Integer>();
+            this.getDefaultSize(width, height);
+            setupDialog.setContentHeight(height.get());
+            setupDialog.setContentWidth(width.get());
+            setupDialog.present(this);
+        } else {
+            executor.submit(() -> {
+                var connectionSuccessful = checkConnection(url, username);
+                if (connectionSuccessful) {
+                    GLib.idleAddOnce(() -> mainStack.setVisibleChildName("content-page"));
+                } else {
+                    GLib.idleAddOnce(() -> mainStack.setVisibleChildName("error-page"));
+                }
+            });
+        }
     }
 
     public void unrealizeHandler() {
@@ -80,7 +92,7 @@ public class GrooveboatWindow extends ApplicationWindow {
 
     @InstanceInit
     public void init() {
-        onRealize(this::checkConnection);
+        onRealize(this::initializeClient);
         onUnrealize(this::unrealizeHandler);
     }
 

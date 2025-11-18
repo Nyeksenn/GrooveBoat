@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <template class="SetupWindow" parent="AdwWindow">
-    <property name="default-width">600</property>
-    <property name="default-height">400</property>
-    <property name="content">
+  <template class="SetupWindow" parent="AdwDialog">
+    <property name="follows-content-size">false</property>
+    <property name="can-close">false</property>
+    <property name="presentation-mode">ADW_DIALOG_FLOATING</property>
+    <property name="child">
       <object class="AdwNavigationView" id="setup-nav-view">
         <child>
           <object class="AdwNavigationPage" id="nav-page-welcome">
@@ -11,14 +12,6 @@
             <property name="tag">welcome-page</property>
             <property name="child">
               <object class="AdwToolbarView">
-                <child type="top">
-                  <object class="AdwHeaderBar">
-                    <property name="decoration-layout">close</property>
-                    <property name="show-back-button">false</property>
-                    <property name="show-end-title-buttons">true</property>
-                    <property name="show-start-title-buttons">false</property>
-                  </object>
-                </child>
                 <property name="content">
                   <object class="AdwStatusPage">
                     <property name="icon-name">build-configure-symbolic</property>
@@ -73,14 +66,6 @@ Ready? Let's get started!
             <property name="tag">connection-page</property>
             <property name="child">
               <object class="AdwToolbarView">
-                <child type="top">
-                  <object class="AdwHeaderBar">
-                    <property name="decoration-layout">close</property>
-                    <property name="show-back-button">false</property>
-                    <property name="show-end-title-buttons">true</property>
-                    <property name="show-start-title-buttons">false</property>
-                  </object>
-                </child>
                 <property name="content">
                   <object class="AdwPreferencesPage">
                     <property name="title" translatable="yes">Connection</property>
@@ -120,14 +105,6 @@ Ready? Let's get started!
             <property name="tag">credentials-page</property>
             <property name="child">
               <object class="AdwToolbarView">
-                <child type="top">
-                  <object class="AdwHeaderBar">
-                    <property name="decoration-layout">close</property>
-                    <property name="show-back-button">false</property>
-                    <property name="show-end-title-buttons">true</property>
-                    <property name="show-start-title-buttons">false</property>
-                  </object>
-                </child>
                 <property name="content">
                   <object class="AdwPreferencesPage">
                     <property name="title" translatable="yes">Credentials</property>

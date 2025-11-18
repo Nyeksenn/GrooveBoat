@@ -104,7 +104,7 @@ public class GrooveboatPrefs extends PreferencesDialog {
                             GLib.idleAddOnce(() -> {
                                 prefsButtonGroup.setVisible(false);
                                 if (win != null) {
-                                    win.checkConnection();
+                                    win.initializeClient();
                                 }
                             });
                         });
