@@ -28,7 +28,7 @@ public class GrooveboatApp extends Application {
     @Override
     public void activate() {
         Settings settings = new Settings("io.github.Nyeksenn.groovebox");
-        
+
         var display = Display.getDefault();
 
         // Setup Icons
@@ -38,16 +38,28 @@ public class GrooveboatApp extends Application {
         // Setup Styles
         loadStyles(display);
 
-        // Setup Client on Startup
-        var username = settings.getString("username");
-        var url = settings.getString("url");
-        var split = url.split("://");
-        var password = secrets.lookupPassword(username, split[0], split[1]).join();
-        var client = new SubsonicClient(url, username, password);
-        this.subsonic = new Subsonic(client);
 
-        GrooveboatWindow win = new GrooveboatWindow(this);
-        win.present();
+        String username, url, password = null;
+
+        // Setup Client on Startup
+        username = settings.getString("username");
+        url = settings.getString("url");
+
+        if (username != null && url != null) {
+            var split = url.split("://");
+            password = secrets.lookupPassword(username, split[0], split[1]).join();
+        }
+
+        if (password != null) {
+            var client = new SubsonicClient(url, username, password);
+            this.subsonic = new Subsonic(client);
+
+            GrooveboatWindow win = new GrooveboatWindow(this);
+            win.present();
+        } else {
+            // Open Setup
+            logger.info("Not logged in. Opening setup");
+        }
     }
 
     private void loadStyles(Display display) {
