@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="ConnectionPage" parent="AdwNavigationPage">
+    <property name="title" translatable="yes">Hostname</property>
+    <property name="child">
+      <object class="AdwToolbarView">
+        <property name="content">
+          <object class="AdwPreferencesPage">
+            <property name="title" translatable="yes">Connection</property>
+            <child>
+              <object class="AdwPreferencesGroup">
+                <property name="title" translatable="yes">Connection</property>
+                <property name="description" translatable="yes">Enter the hostname of the instance to which you
+                  want to connect to
+                </property>
+                <child>
+                  <object class="AdwEntryRow" id="entry-url">
+                    <property name="title" translatable="yes">URL</property>
+                    <property name="input-purpose">5</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </property>
+        <child type="bottom">
+          <object class="GtkActionBar">
+            <property name="margin-start">30</property>
+            <property name="margin-end">30</property>
+            <property name="margin-bottom">15</property>
+            <property name="margin-top">15</property>
+            <child type="start">
+              <object class="GtkButton">
+                <property name="label" translatable="yes">Back</property>
+                <property name="action-name">navigation.pop</property>
+                <style>
+                  <class name="raised"/>
+                </style>
+              </object>
+            </child>
+            <child type="end">
+              <object class="GtkButton">
+                <property name="label" translatable="yes">Next</property>
+                <property name="action-name">navigation.push</property>
+                <property name="action-target">'credentials-page'</property>
+                <style>
+                  <class name="raised"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </property>
+  </template>
+</interface>

@@ -13,6 +13,9 @@
     <file compressed="true" alias="song-card.ui" preprocess="xml-stripblanks">templates/song-card.ui</file>
     <file compressed="true" alias="queue-card.ui" preprocess="xml-stripblanks">templates/queue-card.ui</file>
     <file compressed="true" alias="avatar.ui" preprocess="xml-stripblanks">templates/avatar.ui</file>
+    <file compressed="true" alias="welcome-page.ui" preprocess="xml-stripblanks">templates/welcome-page.ui</file>
+    <file compressed="true" alias="connection-page.ui" preprocess="xml-stripblanks">templates/connection-page.ui</file>
+    <file compressed="true" alias="credentials-page.ui" preprocess="xml-stripblanks">templates/credentials-page.ui</file>
 
     <file compressed="true" alias="main.css">css/main.css</file>
   </gresource>

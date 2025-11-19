@@ -7,171 +7,18 @@
     <property name="child">
       <object class="AdwNavigationView" id="setup-nav-view">
         <child>
-          <object class="AdwNavigationPage" id="nav-page-welcome">
-            <property name="title" translatable="yes">Setup</property>
+          <object class="WelcomePage" id="welcome-page">
             <property name="tag">welcome-page</property>
-            <property name="child">
-              <object class="AdwToolbarView">
-                <property name="content">
-                  <object class="AdwStatusPage">
-                    <property name="icon-name">build-configure-symbolic</property>
-                    <property name="title">Welcome to GrooveBoat!</property>
-                    <property name="child">
-                      <object class="GtkLabel" id="setup-welcome-label">
-                        <property name="use-markup">true</property>
-                        <property name="wrap">true</property>
-                        <property name="justify">GTK_JUSTIFY_LEFT</property>
-                        <property name="label">
-                          Let's connect you to your music server in just two quick steps:
-
-                          1. Enter your server address
-                          2. Add your login credentials
-
-                          GrooveBoat is compatible with Subsonic and other compatible servers like Navidrome, Airsonic,
-                          and Gonic.
-
-                          Ready? Let's get started!
-                        </property>
-                        <style>
-                          <class name="document"/>
-                        </style>
-                      </object>
-                    </property>
-                  </object>
-                </property>
-                <child type="bottom">
-                  <object class="GtkActionBar">
-                    <child type="start">
-                      <object class="GtkButton">
-                        <property name="label" translatable="yes">Quit</property>
-                        <property name="action-name">app.quit</property>
-                        <style>
-                          <class name="destructive-action"/>
-                          <class name="raised"/>
-                        </style>
-                      </object>
-                    </child>
-                    <child type="end">
-                      <object class="GtkButton">
-                        <property name="label" translatable="yes">Next</property>
-                        <property name="action-name">navigation.push</property>
-                        <property name="action-target">'connection-page'</property>
-                        <style>
-                          <class name="raised"/>
-                        </style>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-              </object>
-            </property>
           </object>
         </child>
         <child>
-          <object class="AdwNavigationPage" id="nav-page-hostname">
-            <property name="title" translatable="yes">Hostname</property>
+          <object class="ConnectionPage" id="connection-page">
             <property name="tag">connection-page</property>
-            <property name="child">
-              <object class="AdwToolbarView">
-                <property name="content">
-                  <object class="AdwPreferencesPage">
-                    <property name="title" translatable="yes">Connection</property>
-                    <child>
-                      <object class="AdwPreferencesGroup">
-                        <property name="title" translatable="yes">Connection</property>
-                        <property name="description" translatable="yes">Enter the hostname of the instance to which you
-                          want to connect to
-                        </property>
-                        <child>
-                          <object class="AdwEntryRow" id="entry-url">
-                            <property name="title" translatable="yes">URL</property>
-                            <property name="input-purpose">5</property>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                  </object>
-                </property>
-                <child type="bottom">
-                  <object class="GtkActionBar">
-                    <child type="start">
-                      <object class="GtkButton">
-                        <property name="label" translatable="yes">Back</property>
-                        <property name="action-name">navigation.pop</property>
-                        <style>
-                          <class name="raised"/>
-                        </style>
-                      </object>
-                    </child>
-                    <child type="end">
-                      <object class="GtkButton">
-                        <property name="label" translatable="yes">Next</property>
-                        <property name="action-name">navigation.push</property>
-                        <property name="action-target">'credentials-page'</property>
-                        <style>
-                          <class name="raised"/>
-                        </style>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-              </object>
-            </property>
           </object>
         </child>
         <child>
-          <object class="AdwNavigationPage" id="nav-page-credentials">
-            <property name="title" translatable="yes">Credentials</property>
+          <object class="CredentialsPage" id="credentials-page">
             <property name="tag">credentials-page</property>
-            <property name="child">
-              <object class="AdwToolbarView">
-                <property name="content">
-                  <object class="AdwPreferencesPage">
-                    <property name="title" translatable="yes">Credentials</property>
-                    <child>
-                      <object class="AdwPreferencesGroup">
-                        <property name="title" translatable="yes">Credentials</property>
-                        <property name="description" translatable="yes">Enter your username and password</property>
-                        <child>
-                          <object class="AdwEntryRow" id="entry-username">
-                            <property name="title" translatable="yes">Username</property>
-                            <property name="input-purpose">0</property>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="AdwPasswordEntryRow" id="entry-password">
-                            <property name="title" translatable="yes">Password</property>
-                            <property name="input-purpose">8</property>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                  </object>
-                </property>
-                <child type="bottom">
-                  <object class="GtkActionBar">
-                    <child type="start">
-                      <object class="GtkButton">
-                        <property name="label" translatable="yes">Back</property>
-                        <property name="action-name">navigation.pop</property>
-                        <style>
-                          <class name="raised"/>
-                        </style>
-                      </object>
-                    </child>
-                    <child type="end">
-                      <object class="GtkButton">
-                        <property name="label" translatable="yes">Next</property>
-                        <style>
-                          <class name="raised"/>
-                          <class name="suggested-action"/>
-                        </style>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-              </object>
-            </property>
           </object>
         </child>
       </object>
