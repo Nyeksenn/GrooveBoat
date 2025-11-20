@@ -1,7 +1,6 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
-import io.github.Nyeksenn.grooveboat.client.SubsonicClient;
 import io.github.Nyeksenn.grooveboat.gobjects.SecretKeeper;
 import org.gnome.adw.ApplicationWindow;
 import org.gnome.gio.Settings;
@@ -32,16 +31,14 @@ public class GrooveboatWindow extends ApplicationWindow {
     @GtkChild(name = "main-stack")
     public Stack mainStack;
 
-    public Subsonic subsonic;
+    public final Subsonic subsonic = new Subsonic();
 
     private boolean checkConnection(String url, String username) {
         if (username != null && url != null) {
             var split = url.split("://");
             var password = secrets.lookupPassword(username, split[0], split[1]).join();
 
-            var client = new SubsonicClient(url, username, password);
-            this.subsonic = new Subsonic(client);
-
+            subsonic.initClient(url, username, password);
             try {
                 var response = subsonic.checkCredentials(username);
                 if (response != null && response.status().equals("ok")) {

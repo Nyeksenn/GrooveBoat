@@ -1,7 +1,6 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
-import io.github.Nyeksenn.grooveboat.client.SubsonicClient;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.gnome.adw.EntryRow;
 import org.gnome.adw.NavigationPage;
@@ -30,6 +29,7 @@ public class ConnectionPage extends NavigationPage {
     private final UrlValidator validator = new UrlValidator();
     private final Semver minVersion = new Semver("1.16.1");
     private ExecutorService exec;
+    private Subsonic subsonic;
 
     @GtkChild(name = "connection-next-button")
     public Button connectionNextButton;
@@ -48,11 +48,14 @@ public class ConnectionPage extends NavigationPage {
     @GtkCallback(name = "url-validation")
     public void urlValidation() {
         assert exec != null;
+        assert subsonic != null;
+
         var url = entryUrl.getText();
 
         var future = exec.submit(() -> {
             if (validator.isValid(url)) {
-                try (var subsonic = new Subsonic(new SubsonicClient(url, "jdoe", ""))) {
+                subsonic.initClient(url, "jdoe", "");
+                try {
                     var resp = subsonic.ping();
                     if (resp.status().equals("failed")) {
                         var version = new Semver(resp.version());
@@ -89,6 +92,7 @@ public class ConnectionPage extends NavigationPage {
         onRealize(() -> {
             var win = (GrooveboatWindow) getRoot();
             this.exec = win.executor;
+            this.subsonic = win.subsonic;
         });
     }
 

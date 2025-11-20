@@ -45,15 +45,19 @@ public class SubsonicClient implements AutoCloseable {
     private static final ObjectReader songReader = om.readerFor(new TypeReference<List<Song>>() {
     });
 
-    private final HttpClient httpClient;
+    private static final HttpClient httpClient = HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_1_1)
+            .connectTimeout(Duration.ofMillis(150))
+            .followRedirects(HttpClient.Redirect.NORMAL)
+            .build();
 
-    private final HashMap<String, String> baseQueryParams;
+    private final HashMap<String, String> baseQueryParams = new HashMap<>();
 
     private String scheme;
     private String host;
     private String username;
     private String password;
-    private final SecureRandom rng;
+    private static final SecureRandom rng = new SecureRandom();
 
     public void setBaseUrl(String baseUrl) {
         var splitResults = baseUrl.split("://");
@@ -77,9 +81,7 @@ public class SubsonicClient implements AutoCloseable {
     public SubsonicClient(String baseUrl, String username, String password) {
         this.username = username;
         this.password = password;
-        this.rng = new SecureRandom();
 
-        this.baseQueryParams = new HashMap<>();
         baseQueryParams.put("u", this.username);
         baseQueryParams.put("f", "json");
         baseQueryParams.put("v", "1.16.1");
@@ -87,12 +89,6 @@ public class SubsonicClient implements AutoCloseable {
         var splitResults = baseUrl.split("://");
         this.scheme = splitResults[0];
         this.host = splitResults[1];
-
-        this.httpClient = HttpClient.newBuilder()
-                .version(HttpClient.Version.HTTP_1_1)
-                .connectTimeout(Duration.ofMillis(150))
-                .followRedirects(HttpClient.Redirect.NORMAL)
-                .build();
     }
 
     private String generateSalt() {
@@ -360,6 +356,9 @@ public class SubsonicClient implements AutoCloseable {
             logger.warn(e.getCause().toString());
             return null;
         }
+    }
+
+    public static void ensureInitialized() {
     }
 
     public void close() {

@@ -29,7 +29,7 @@ public class Subsonic implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(Subsonic.class);
 
     public SubsonicClient client;
-    private final Database db;
+    private final Database db = DB.getDefault();
     private final ExecutorService exec = Executors.newVirtualThreadPerTaskExecutor();
 
     private List<ArtistModel> refreshArtists() {
@@ -225,10 +225,13 @@ public class Subsonic implements AutoCloseable {
         return this.client.ping();
     }
 
-    public Subsonic(SubsonicClient client) {
-        logger.info("Connecting to {}", client.getHost());
+    public void initClient(String baseUrl, String username, String password) {
+        var client = new SubsonicClient(baseUrl, username, password);
+        logger.info("Reinitializing client for connecting to {}", client.getHost());
         this.client = client;
-        this.db = DB.getDefault();
+    }
+
+    public Subsonic() {
     }
 
     @Override

@@ -2,6 +2,7 @@ package io.github.Nyeksenn.grooveboat;
 
 import io.ebean.DatabaseFactory;
 import io.ebean.config.DatabaseConfig;
+import io.github.Nyeksenn.grooveboat.client.SubsonicClient;
 import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
 import io.github.Nyeksenn.grooveboat.ui.*;
 import org.freedesktop.gstreamer.audio.GstAudio;
@@ -43,6 +44,7 @@ public class Main {
 
         // Make sure GstAudio is loaded to avoid getType returning null
         GstAudio.javagi$ensureInitialized();
+        SubsonicClient.ensureInitialized();
 
         try {
             var resource = Resource.load(
