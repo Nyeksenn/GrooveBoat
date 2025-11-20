@@ -21,6 +21,7 @@ dependencies {
     implementation 'io.ebean:ebean-test:17.1.1'
     implementation 'com.h2database:h2:2.4.240'
     implementation 'commons-validator:commons-validator:1.10.0'
+    implementation 'org.semver4j:semver4j:6.0.0'
 
     annotationProcessor 'io.ebean:querybean-generator:17.1.1'
     runtimeOnly 'org.slf4j:slf4j-api:2.0.17'

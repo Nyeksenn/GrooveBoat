@@ -221,6 +221,10 @@ public class Subsonic implements AutoCloseable {
         return this.client.userPing(username);
     }
 
+    public SubsonicResponse ping() throws IOException {
+        return this.client.ping();
+    }
+
     public Subsonic(SubsonicClient client) {
         logger.info("Connecting to {}", client.getHost());
         this.client = client;

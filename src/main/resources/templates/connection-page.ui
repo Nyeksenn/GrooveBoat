@@ -3,49 +3,54 @@
   <template class="ConnectionPage" parent="AdwNavigationPage">
     <property name="title" translatable="yes">Hostname</property>
     <property name="child">
-      <object class="AdwToolbarView">
-        <property name="content">
-          <object class="AdwPreferencesPage">
-            <property name="title" translatable="yes">Connection</property>
-            <child>
-              <object class="AdwPreferencesGroup">
+      <object class="AdwToastOverlay" id="connection-overlay">
+        <child>
+          <object class="AdwToolbarView">
+            <property name="content">
+              <object class="AdwPreferencesPage">
+                <property name="vexpand">true</property>
+                <property name="valign">center</property>
                 <property name="title" translatable="yes">Connection</property>
-                <property name="description" translatable="yes">Enter the hostname of the instance to which you
-                  want to connect to
-                </property>
                 <child>
-                  <object class="AdwEntryRow" id="entry-url">
-                    <property name="title" translatable="yes">URL</property>
-                    <property name="input-purpose">5</property>
+                  <object class="AdwPreferencesGroup" id="connection-group">
+                    <property name="title" translatable="yes">Connection</property>
+                    <property name="description" translatable="yes">Enter the hostname of the instance to which you want to connect to</property>
+                    <child>
+                      <object class="AdwEntryRow" id="entry-url">
+                        <property name="title" translatable="yes">URL</property>
+                        <property name="input-purpose">5</property>
+                        <signal name="changed" handler="host-url-changed"/>
+                      </object>
+                    </child>
                   </object>
                 </child>
               </object>
-            </child>
-          </object>
-        </property>
-        <child type="bottom">
-          <object class="GtkActionBar">
-            <property name="margin-start">30</property>
-            <property name="margin-end">30</property>
-            <property name="margin-bottom">15</property>
-            <property name="margin-top">15</property>
-            <child type="start">
-              <object class="GtkButton">
-                <property name="label" translatable="yes">Back</property>
-                <property name="action-name">navigation.pop</property>
-                <style>
-                  <class name="raised"/>
-                </style>
-              </object>
-            </child>
-            <child type="end">
-              <object class="GtkButton">
-                <property name="label" translatable="yes">Next</property>
-                <property name="action-name">navigation.push</property>
-                <property name="action-target">'credentials-page'</property>
-                <style>
-                  <class name="raised"/>
-                </style>
+            </property>
+            <child type="bottom">
+              <object class="GtkActionBar">
+                <property name="margin-start">30</property>
+                <property name="margin-end">30</property>
+                <property name="margin-bottom">15</property>
+                <property name="margin-top">15</property>
+                <child type="start">
+                  <object class="GtkButton">
+                    <property name="label" translatable="yes">Back</property>
+                    <property name="action-name">navigation.pop</property>
+                    <style>
+                      <class name="raised"/>
+                    </style>
+                  </object>
+                </child>
+                <child type="end">
+                  <object class="GtkButton" id="connection-next-button">
+                    <property name="label" translatable="yes">Next</property>
+                    <property name="visible">false</property>
+                    <signal name="clicked" handler="url-validation"/>
+                    <style>
+                      <class name="raised"/>
+                    </style>
+                  </object>
+                </child>
               </object>
             </child>
           </object>

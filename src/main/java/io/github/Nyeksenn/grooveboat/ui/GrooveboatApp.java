@@ -44,7 +44,10 @@ public class GrooveboatApp extends Application {
     }
 
     public void quitActivated(Variant parameter) {
-        super.quit();
+        var win = getActiveWindow();
+        win.destroy();
+        removeWindow(win);
+        quit();
     }
 
     @Override

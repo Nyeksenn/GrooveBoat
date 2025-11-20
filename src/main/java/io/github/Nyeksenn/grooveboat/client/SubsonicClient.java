@@ -350,6 +350,18 @@ public class SubsonicClient implements AutoCloseable {
         }
     }
 
+    public SubsonicResponse ping() throws IOException {
+        try {
+            var response = executeGetString("/rest/ping", null);
+            var root = om.readTree(response);
+            var subsonicResponse = root.path("subsonic-response");
+            return om.treeToValue(subsonicResponse, SubsonicResponse.class);
+        } catch (JacksonException e) {
+            logger.warn(e.getCause().toString());
+            return null;
+        }
+    }
+
     public void close() {
         if (httpClient != null) {
             httpClient.shutdownNow();
