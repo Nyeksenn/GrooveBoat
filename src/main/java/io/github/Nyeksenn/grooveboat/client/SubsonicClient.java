@@ -17,7 +17,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
-import java.net.http.HttpConnectTimeoutException;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
@@ -29,7 +28,7 @@ import java.util.*;
 
 import static org.gnome.glib.GLib.getHostName;
 
-public class SubsonicClient implements AutoCloseable {
+public class SubsonicClient {
     private static final Logger logger = LoggerFactory.getLogger(SubsonicClient.class);
     private static final JsonMapper om = JsonMapper.builder()
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
@@ -47,9 +46,8 @@ public class SubsonicClient implements AutoCloseable {
 
     private static final HttpClient httpClient = HttpClient.newBuilder()
             .version(HttpClient.Version.HTTP_1_1)
-            .connectTimeout(Duration.ofMillis(500))
             .followRedirects(HttpClient.Redirect.NORMAL)
-            .build();
+            .connectTimeout(Duration.ofSeconds(2)).build();
 
     private final HashMap<String, String> baseQueryParams = new HashMap<>();
 
@@ -58,42 +56,6 @@ public class SubsonicClient implements AutoCloseable {
     private String username;
     private String password;
     private static final SecureRandom rng = new SecureRandom();
-
-    public void setBaseUrl(String baseUrl) {
-        var splitResults = baseUrl.split("://");
-        this.scheme = splitResults[0];
-        this.host = splitResults[1];
-    }
-
-    public String getHost() {
-        return this.host;
-    }
-
-    public String getScheme() {
-        return this.scheme;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-        this.baseQueryParams.replace("u", username);
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public SubsonicClient(String baseUrl, String username, String password) {
-        this.username = username;
-        this.password = password;
-
-        baseQueryParams.put("u", this.username);
-        baseQueryParams.put("f", "json");
-        baseQueryParams.put("v", "1.16.1");
-        baseQueryParams.put("c", "GrooveBoat-" + getHostName());
-        var splitResults = baseUrl.split("://");
-        this.scheme = splitResults[0];
-        this.host = splitResults[1];
-    }
 
     private String generateSalt() {
         final int leftLimit = 48; // numeral '0'
@@ -116,7 +78,7 @@ public class SubsonicClient implements AutoCloseable {
         return querySB.toString();
     }
 
-    private URI getUri(String endpoint, Map<String, String> params) throws URISyntaxException {
+    private URI getUri(String endpoint, Map<String, String> params) {
         if (params != null) {
             params.putAll(baseQueryParams);
         } else {
@@ -140,33 +102,27 @@ public class SubsonicClient implements AutoCloseable {
 
         var queryString = getQueryString(params);
 
-        return new URI(
-                scheme,
-                host,
-                endpoint,
-                queryString,
-                null
-        );
+        try {
+            return new URI(
+                    scheme,
+                    host,
+                    endpoint,
+                    queryString,
+                    null
+            );
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     private String executeGetString(String endpoint, Map<String, String> params) throws IOException {
         try {
             URI uri = getUri(endpoint, params);
+            var request = HttpRequest.newBuilder().GET().timeout(Duration.ofSeconds(30)).uri(uri).build();
 
-            var retryCounter = 5;
-            var request = HttpRequest.newBuilder().GET().uri(uri).build();
-
-            while (retryCounter > 0) {
-                try {
-                    return httpClient.send(request, HttpResponse.BodyHandlers.ofString()).body();
-                } catch (HttpConnectTimeoutException | InterruptedException e) {
-                    logger.warn("Execution of string request failed");
-                    retryCounter--;
-                }
-            }
-            throw new IOException("Couldn't connect after" + retryCounter + "retries");
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Invalid URI: " + e.getMessage(), e);
+            return httpClient.send(request, HttpResponse.BodyHandlers.ofString()).body();
+        } catch (InterruptedException e) {
+            throw new IOException(e);
         }
     }
 
@@ -179,21 +135,10 @@ public class SubsonicClient implements AutoCloseable {
                 case RelativeEndpoint ep -> uri = getUri(ep.url(), params);
             }
 
-            var retryCounter = 5;
-
-            var request = HttpRequest.newBuilder().GET().uri(uri).build();
-            while (retryCounter > 0) {
-                try {
-                    return httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray()).body();
-                } catch (HttpConnectTimeoutException | InterruptedException e) {
-                    logger.warn("Execution of binary request failed");
-                    retryCounter--;
-                }
-            }
-
-            throw new IOException("Couldn't connect after" + retryCounter + "retries");
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Invalid URI: " + e.getMessage(), e);
+            var request = HttpRequest.newBuilder().GET().timeout(Duration.ofSeconds(30)).uri(uri).build();
+            return httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray()).body();
+        } catch (InterruptedException e) {
+            throw new IOException(e);
         }
     }
 
@@ -211,22 +156,12 @@ public class SubsonicClient implements AutoCloseable {
             ));
         }
 
-        var retryCounter = 5;
-
         try {
             URI uri = getUri("/rest/stream", params);
             var request = HttpRequest.newBuilder().GET().timeout(Duration.ofHours(3)).uri(uri).build();
-            while (retryCounter > 0) {
-                try {
-                    return httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
-                } catch (HttpConnectTimeoutException | InterruptedException e) {
-                    logger.warn("Execution of streaming request failed");
-                    retryCounter--;
-                }
-            }
-            throw new IOException("Couldn't connect after" + retryCounter + "retries");
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Invalid URI: " + e.getMessage(), e);
+            return httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+        } catch (InterruptedException e) {
+            throw new IOException(e);
         }
     }
 
@@ -355,9 +290,39 @@ public class SubsonicClient implements AutoCloseable {
     public static void ensureInitialized() {
     }
 
-    public void close() {
-        if (httpClient != null) {
-            httpClient.shutdownNow();
-        }
+    public void setBaseUrl(String baseUrl) {
+        var splitResults = baseUrl.split("://");
+        this.scheme = splitResults[0];
+        this.host = splitResults[1];
+    }
+
+    public String getHost() {
+        return this.host;
+    }
+
+    public String getScheme() {
+        return this.scheme;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+        this.baseQueryParams.replace("u", username);
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public SubsonicClient(String baseUrl, String username, String password) {
+        this.username = username;
+        this.password = password;
+
+        baseQueryParams.put("u", this.username);
+        baseQueryParams.put("f", "json");
+        baseQueryParams.put("v", "1.16.1");
+        baseQueryParams.put("c", "GrooveBoat-" + getHostName());
+        var splitResults = baseUrl.split("://");
+        this.scheme = splitResults[0];
+        this.host = splitResults[1];
     }
 }

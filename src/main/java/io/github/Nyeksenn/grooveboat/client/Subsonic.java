@@ -254,6 +254,5 @@ public class Subsonic implements AutoCloseable {
     @Override
     public void close() {
         exec.close();
-        client.close();
     }
 }

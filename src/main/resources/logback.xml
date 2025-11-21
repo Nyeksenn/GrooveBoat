@@ -26,16 +26,18 @@
   </appender>
 
   <!-- Root logger -->
-  <root level="WARN">
+  <root level="TRACE">
+    <appender-ref ref="CONSOLE"/>
     <appender-ref ref="FILE"/>
   </root>
 
-  <logger name="io.ebean.DDL" level="OFF"/>
-  <logger name="io.ebean.SQL" level="OFF"/>
-  <logger name="io.ebean.TXN" level="OFF"/>
+  <logger name="io.ebean.DDL" level="WARN"/>
+  <logger name="io.ebean.SQL" level="WARN"/>
+  <logger name="io.ebean.TXN" level="WARN"/>
+  <logger name="io.ebean.SUM" level="WARN"/>
 
-  <logger name="io.ebean.cache.QUERY" level="OFF"/>
-  <logger name="io.ebean.cache.BEAN" level="OFF"/>
-  <logger name="io.ebean.cache.COLL" level="OFF"/>
-  <logger name="io.ebean.cache.NATKEY" level="OFF"/>
+  <logger name="io.ebean.cache.QUERY" level="WARN"/>
+  <logger name="io.ebean.cache.BEAN" level="WARN"/>
+  <logger name="io.ebean.cache.COLL" level="WARN"/>
+  <logger name="io.ebean.cache.NATKEY" level="WARN"/>
 </configuration>

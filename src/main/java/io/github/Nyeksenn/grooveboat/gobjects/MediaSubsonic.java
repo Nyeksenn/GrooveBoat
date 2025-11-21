@@ -36,6 +36,7 @@ public final class MediaSubsonic extends MediaStream {
     public InputStream socket;
     private final byte[] buffer = new byte[BUFFER_SIZE];
     private final String contentType;
+    private final Arena instanceArena = Arena.ofConfined();
 
     private final Lock enoughDataLock = new ReentrantLock();
     public volatile boolean enoughData = false;
@@ -106,6 +107,7 @@ public final class MediaSubsonic extends MediaStream {
         var removed = pipeline.removeAppSrc(appSrc);
         pipeline.setState(State.READY);
 
+        instanceArena.close();
         streamUnprepared();
     }
 
@@ -196,9 +198,9 @@ public final class MediaSubsonic extends MediaStream {
         var needDataCallback = (AppSrcCallbacks.NeedDataCallback) this::needDataHandler;
         var seekDataCallback = (AppSrcCallbacks.SeekDataCallback) this::seekDataHandler;
         var callbacks = new AppSrcCallbacks(Arena.global());
-        callbacks.overrideEnoughData(enoughDataCallback, Arena.global());
-        callbacks.overrideNeedData(needDataCallback, Arena.global());
-        callbacks.overrideSeekData(seekDataCallback, Arena.global());
+        callbacks.overrideEnoughData(enoughDataCallback, instanceArena);
+        callbacks.overrideNeedData(needDataCallback, instanceArena);
+        callbacks.overrideSeekData(seekDataCallback, instanceArena);
 
         appSrc = this.pipeline.initNewAppSrc(this.duration * 1000000000, callbacks, null);
     }
