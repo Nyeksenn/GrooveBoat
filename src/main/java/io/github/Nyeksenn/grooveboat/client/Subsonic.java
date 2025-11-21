@@ -28,7 +28,7 @@ import java.util.concurrent.Executors;
 public class Subsonic implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(Subsonic.class);
 
-    public SubsonicClient client;
+    private SubsonicClient client;
     private final Database db = DB.getDefault();
     private final ExecutorService exec = Executors.newVirtualThreadPerTaskExecutor();
 
@@ -225,10 +225,27 @@ public class Subsonic implements AutoCloseable {
         return this.client.ping();
     }
 
-    public void initClient(String baseUrl, String username, String password) {
+    public void setCredentials(String username, String password) {
+        this.client.setUsername(username);
+        this.client.setPassword(password);
+    }
+
+    public void newClient(String baseUrl, String username, String password) {
         var client = new SubsonicClient(baseUrl, username, password);
         logger.info("Reinitializing client for connecting to {}", client.getHost());
         this.client = client;
+    }
+
+    public boolean isClientInitialized() {
+        return client != null;
+    }
+
+    public String getHost() {
+        return client.getHost();
+    }
+
+    public String getScheme() {
+        return client.getScheme();
     }
 
     public Subsonic() {

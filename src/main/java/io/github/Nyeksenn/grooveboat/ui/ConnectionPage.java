@@ -43,6 +43,7 @@ public class ConnectionPage extends NavigationPage {
     @GtkCallback(name = "host-url-changed")
     public void hostUrlChanged() {
         connectionNextButton.setVisible(true);
+        //connectionNextButton.grabFocus();
     }
 
     @GtkCallback(name = "url-validation")
@@ -54,7 +55,7 @@ public class ConnectionPage extends NavigationPage {
 
         var future = exec.submit(() -> {
             if (validator.isValid(url)) {
-                subsonic.initClient(url, "jdoe", "");
+                subsonic.newClient(url, "jdoe", "");
                 try {
                     var resp = subsonic.ping();
                     if (resp.status().equals("failed")) {
@@ -65,7 +66,7 @@ public class ConnectionPage extends NavigationPage {
                         } else {
                             GLib.idleAddOnce(() -> {
                                 connectionOverlay.addToast(new Toast("Incompatible Server"));
-                                entryUrl.setCssClasses(new String[]{"error"});
+                                entryUrl.addCssClass("error");
                             });
                         }
                     } else {
@@ -75,13 +76,13 @@ public class ConnectionPage extends NavigationPage {
                     logger.warn("Couldn't reach server: {}", e.getMessage());
                     GLib.idleAddOnce(() -> {
                         connectionOverlay.addToast(new Toast("Unable to reach server"));
-                        entryUrl.setCssClasses(new String[]{"error"});
+                        entryUrl.addCssClass("error");
                     });
                 }
             } else {
                 GLib.idleAddOnce(() -> {
                     connectionOverlay.addToast(new Toast("URL invalid"));
-                    entryUrl.setCssClasses(new String[]{"error"});
+                    entryUrl.addCssClass("error");
                 });
             }
         });
@@ -93,6 +94,7 @@ public class ConnectionPage extends NavigationPage {
             var win = (GrooveboatWindow) getRoot();
             this.exec = win.executor;
             this.subsonic = win.subsonic;
+            entryUrl.grabFocus();
         });
     }
 

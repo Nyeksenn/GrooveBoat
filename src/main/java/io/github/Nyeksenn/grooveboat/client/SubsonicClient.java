@@ -69,6 +69,10 @@ public class SubsonicClient implements AutoCloseable {
         return this.host;
     }
 
+    public String getScheme() {
+        return this.scheme;
+    }
+
     public void setUsername(String username) {
         this.username = username;
         this.baseQueryParams.replace("u", username);

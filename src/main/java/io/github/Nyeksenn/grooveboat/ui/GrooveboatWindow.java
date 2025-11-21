@@ -38,7 +38,7 @@ public class GrooveboatWindow extends ApplicationWindow {
             var split = url.split("://");
             var password = secrets.lookupPassword(username, split[0], split[1]).join();
 
-            subsonic.initClient(url, username, password);
+            subsonic.newClient(url, username, password);
             try {
                 var response = subsonic.checkCredentials(username);
                 if (response != null && response.status().equals("ok")) {

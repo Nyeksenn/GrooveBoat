@@ -64,9 +64,7 @@ public class GrooveboatPrefs extends PreferencesDialog {
                 prefsButtonGroup.setVisible(false);
                 urlEntry.removeCssClass("error");
 
-                subsonic.client.setUsername(username);
-                subsonic.client.setPassword(pwd);
-                subsonic.client.setBaseUrl(url);
+                subsonic.newClient(url, username, pwd);
             });
         });
     }
@@ -80,9 +78,7 @@ public class GrooveboatPrefs extends PreferencesDialog {
         exec.submit(() -> {
             if (validator.isValid(url)) {
                 var split = url.split("://");
-                subsonic.client.setUsername(username);
-                subsonic.client.setPassword(password);
-                subsonic.client.setBaseUrl(url);
+                subsonic.newClient(url, username, password);
 
                 var serverReachable = false;
                 try {
