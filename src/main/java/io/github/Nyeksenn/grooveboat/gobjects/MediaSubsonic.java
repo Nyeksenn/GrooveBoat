@@ -30,7 +30,7 @@ public final class MediaSubsonic extends MediaStream {
     private final Subsonic subsonic;
     private final String songId;
     private final long duration;
-    public final AppPipeline pipeline = AppPipeline.getInstance();
+    private final AppPipeline pipeline;
     public AppSrc appSrc;
     private final ExecutorService executor;
     public InputStream socket;
@@ -187,10 +187,11 @@ public final class MediaSubsonic extends MediaStream {
 
     // The rest
 
-    public MediaSubsonic(String songId, long duration, Subsonic subsonic, ExecutorService executor, String contentType) {
+    public MediaSubsonic(String songId, long duration, Subsonic subsonic, AppPipeline pipeline, ExecutorService executor, String contentType) {
         this.songId = songId;
         this.subsonic = subsonic;
         this.duration = duration;
+        this.pipeline = pipeline;
         this.executor = executor;
         this.contentType = contentType;
 

@@ -57,11 +57,11 @@ public class MusicPlayer extends Box {
 
     private Subsonic subsonic;
 
+    private AppPipeline appPipeline;
+
     private ExecutorService exec;
 
     private final AlbumTextureLoader loader = AlbumTextureLoader.getInstance();
-
-    private final AppPipeline appPipeline = AppPipeline.getInstance();
 
     private final SongQueue songQueue = new SongQueue();
 
@@ -70,9 +70,11 @@ public class MusicPlayer extends Box {
     public void initPlayer() {
         if (this.subsonic == null && exec == null) {
             var window = (GrooveboatWindow) getRoot();
+            var app = (GrooveboatApp) window.getApplication();
 
             this.exec = window.executor;
             this.subsonic = window.subsonic;
+            this.appPipeline = app.pipeline;
 
             setupActions(window);
 
@@ -179,6 +181,7 @@ public class MusicPlayer extends Box {
                 song.getSongId(),
                 song.getDuration().getSeconds(),
                 subsonic,
+                appPipeline,
                 exec,
                 song.getContentType()
         );

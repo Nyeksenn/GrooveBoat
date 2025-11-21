@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
+import io.github.Nyeksenn.grooveboat.audio.AppPipeline;
 import io.github.Nyeksenn.grooveboat.gobjects.SecretKeeper;
 import org.gnome.adw.Application;
 import org.gnome.gdk.Display;
@@ -12,8 +13,13 @@ import org.gnome.gtk.IconTheme;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class GrooveboatApp extends Application {
     private static final Logger logger = LoggerFactory.getLogger(GrooveboatApp.class);
+    private static final ExecutorService gstExec = Executors.newSingleThreadExecutor();
+    public AppPipeline pipeline;
 
     @Override
     public void activate() {
@@ -54,6 +60,11 @@ public class GrooveboatApp extends Application {
     public void startup() {
         super.startup();
 
+        gstExec.submit(() -> {
+            pipeline = new AppPipeline();
+            pipeline.run();
+        });
+
         var preferences = new SimpleAction("account-settings", null);
         preferences.onActivate(this::preferencesActivated);
         addAction(preferences);
@@ -69,6 +80,9 @@ public class GrooveboatApp extends Application {
     @Override
     protected void shutdown() {
         super.shutdown();
+        assert pipeline != null;
+        pipeline.quit();
+        gstExec.shutdownNow();
         SecretKeeper.getInstance().close();
     }
 
