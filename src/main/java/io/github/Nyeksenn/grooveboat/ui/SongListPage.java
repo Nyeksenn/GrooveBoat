@@ -21,7 +21,6 @@ import org.javagi.gtk.annotations.GtkTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 
 @GtkTemplate(name = "SongListPage", ui = "/io/github/Nyeksenn/grooveboat/song-list.ui")
@@ -46,7 +45,6 @@ public class SongListPage extends NavigationPage {
     @GtkCallback(name = "play-album-clicked")
     public void playAlbumClicked() {
         if (win != null) {
-            logger.info(Arrays.toString(win.listActions()));
             var action = win.lookupAction("play-album");
             if (action != null) {
                 action.activate(Variant.string(albumId));

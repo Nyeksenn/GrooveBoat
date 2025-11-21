@@ -38,7 +38,7 @@ public class AlbumTextureLoader {
             try {
                 return MemoryTexture.fromBytes(album.getCoverArt());
             } catch (GErrorException e) {
-                logger.warn("Couldn't load texture for album {}: {}", album.getTitle(), e.getCause().toString());
+                logger.warn("Couldn't load texture for album {}: {}", album.getTitle(), e.getMessage());
                 return null;
             }
         } else {

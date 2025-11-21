@@ -47,7 +47,7 @@ public class SubsonicClient implements AutoCloseable {
 
     private static final HttpClient httpClient = HttpClient.newBuilder()
             .version(HttpClient.Version.HTTP_1_1)
-            .connectTimeout(Duration.ofMillis(150))
+            .connectTimeout(Duration.ofMillis(500))
             .followRedirects(HttpClient.Redirect.NORMAL)
             .build();
 
@@ -291,14 +291,11 @@ public class SubsonicClient implements AutoCloseable {
 
             return om.treeToValue(subsonicResponse, Artist.class);
         } catch (JacksonException e) {
-            logger.warn(e.getMessage());
-            return null;
+            throw new IOException("Couldn't deserialize artist");
         }
     }
 
-    public List<Artist> getArtists() throws IOException {
-        var artistList = new ArrayList<Artist>(50);
-
+    public List<Artist> getArtists() throws IOException, IllegalArgumentException {
         List<Index> indices;
         try {
             var response = executeGetString("/rest/getArtists", null);
@@ -306,19 +303,14 @@ public class SubsonicClient implements AutoCloseable {
             var index_fragment = root.path("subsonic-response").path("artists").path("index");
 
             indices = indexReader.readValue(index_fragment);
-        } catch (IllegalArgumentException | JacksonException e) {
-            logger.warn(e.getCause().toString());
-            return new ArrayList<>();
+            return indices.stream().flatMap(item -> item.artist().stream()).toList();
+        } catch (JacksonException e) {
+            logger.warn(e.getMessage());
+            throw new IOException("Couldn't deserialize artist list");
         }
-
-        for (var index : indices) {
-            artistList.addAll(index.artist());
-        }
-
-        return artistList;
     }
 
-    public List<Song> getSongsByAlbum(String albumId) throws IOException {
+    public List<Song> getSongsByAlbum(String albumId) throws IOException, IllegalArgumentException {
         var params = new HashMap<>(Map.of(
                 "id", albumId
         ));
@@ -329,9 +321,9 @@ public class SubsonicClient implements AutoCloseable {
             var root = om.readTree(response);
             var child_fragment = root.path("subsonic-response").path("directory").path("child");
             return songReader.readValue(child_fragment);
-        } catch (IllegalArgumentException | JacksonException e) {
-            logger.warn(e.getCause().toString());
-            return new ArrayList<>();
+        } catch (JacksonException e) {
+            logger.warn(e.getMessage());
+            throw new IOException("Couldn't deserialize song list");
         }
     }
 
@@ -345,8 +337,7 @@ public class SubsonicClient implements AutoCloseable {
             var subsonicResponse = root.path("subsonic-response");
             return om.treeToValue(subsonicResponse, SubsonicResponse.class);
         } catch (JacksonException e) {
-            logger.warn(e.getCause().toString());
-            return null;
+            throw new IOException("Couldn't deserialize subsonic response");
         }
     }
 
@@ -357,8 +348,7 @@ public class SubsonicClient implements AutoCloseable {
             var subsonicResponse = root.path("subsonic-response");
             return om.treeToValue(subsonicResponse, SubsonicResponse.class);
         } catch (JacksonException e) {
-            logger.warn(e.getCause().toString());
-            return null;
+            throw new IOException("Couldn't deserialize subsonic response");
         }
     }
 

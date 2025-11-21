@@ -64,10 +64,10 @@ public class Subsonic implements AutoCloseable {
                 db.saveAll(artistModelList);
                 return artistModelList;
             } catch (Exception e) {
-                logger.warn(e.getCause().toString());
+                logger.warn(e.getMessage());
             }
         } catch (IOException e) {
-            logger.warn("Couldn't fetch artist list: {}", e.getCause().toString());
+            logger.warn("Couldn't fetch artist list: {}", e.getMessage());
         }
 
         return null;
@@ -204,7 +204,7 @@ public class Subsonic implements AutoCloseable {
             logger.warn("Couldn't retrieve songs for album: {}", albumId);
             return new ArrayList<>();
         } catch (Exception e) {
-            logger.warn(e.getCause().toString());
+            logger.warn(e.getMessage());
             return new ArrayList<>();
         }
     }

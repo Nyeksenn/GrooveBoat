@@ -105,7 +105,7 @@ public class MusicPlayer extends Box {
         return true;
     }
 
-    private void addSongListBox(int pos, int length) {
+    private void manipulateQueue(int pos, int length) {
         // All textures which will be used here are in the cache already
         assert Thread.currentThread().getName().equals("main") : "Must be called from main thread";
 
@@ -202,9 +202,8 @@ public class MusicPlayer extends Box {
                             var songId = parameter.getString(null);
                             var song = new QSongModel().songId.equalTo(songId).findOne();
                             if (song != null) {
-                                logger.info("{}", song.getTitle());
                                 songQueue.replace(List.of(song));
-                                GLib.idleAddOnce(() -> addSongListBox(0, 0));
+                                GLib.idleAddOnce(() -> manipulateQueue(0, 0));
                             }
                         });
                     }
@@ -223,11 +222,10 @@ public class MusicPlayer extends Box {
                             var songId = parameter.getString(null);
                             var song = new QSongModel().songId.equalTo(songId).findOne();
                             if (song != null) {
-                                logger.info("{}", song.getTitle());
                                 int pos = songQueue.length();
                                 int length = 1;
                                 songQueue.addSongList(List.of(song));
-                                GLib.idleAddOnce(() -> addSongListBox(pos, length));
+                                GLib.idleAddOnce(() -> manipulateQueue(pos, length));
                             }
                         });
                     }
@@ -247,7 +245,7 @@ public class MusicPlayer extends Box {
                             if (album != null) {
                                 var songs = album.getSongs();
                                 songQueue.replace(songs);
-                                GLib.idleAddOnce(() -> addSongListBox(0, 0));
+                                GLib.idleAddOnce(() -> manipulateQueue(0, 0));
                             }
                         });
                     }
@@ -269,7 +267,7 @@ public class MusicPlayer extends Box {
                                 var pos = songQueue.length();
                                 var length = songs.size();
                                 songQueue.addSongList(songs);
-                                GLib.idleAddOnce(() -> addSongListBox(pos, length));
+                                GLib.idleAddOnce(() -> manipulateQueue(pos, length));
                             }
                         });
                     }
