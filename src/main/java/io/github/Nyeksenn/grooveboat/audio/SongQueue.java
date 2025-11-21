@@ -4,39 +4,46 @@ import io.github.Nyeksenn.grooveboat.entities.SongModel;
 import org.gnome.gobject.GObject;
 import org.javagi.gobject.annotations.RegisteredType;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 @RegisteredType(name = "SongQueue")
 public final class SongQueue extends GObject {
-    private final Deque<SongModel> queue = new ArrayDeque<>();
+    private final List<SongModel> list = new LinkedList<>();
 
-    public SongModel peekSong() {
-        return queue.peek();
+
+    public SongModel takeSong() {
+        return list.removeFirst();
     }
 
     public void addSongList(List<SongModel> songs) {
-        queue.addAll(songs);
+        list.addAll(songs);
     }
 
     public boolean isEmpty() {
-        return queue.isEmpty();
+        return list.isEmpty();
+    }
+
+    public boolean lengthOne() {
+        return list.size() == 1;
     }
 
     public void replace(List<SongModel> songs) {
-        queue.clear();
-        queue.addAll(songs);
+        list.clear();
+        list.addAll(songs);
     }
 
-    public SongModel next() {
-        queue.removeFirst();
-        return queue.peek();
+    public SongModel getAt(int idx) {
+        return list.get(idx);
     }
 
     public Iterator<SongModel> iterate() {
-        return queue.iterator();
+        return list.iterator();
+    }
+
+    public int length() {
+        return list.size();
     }
 
     public SongQueue() {
