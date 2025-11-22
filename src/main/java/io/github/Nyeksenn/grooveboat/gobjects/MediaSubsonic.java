@@ -10,7 +10,6 @@ import org.freedesktop.gstreamer.gst.Buffer;
 import org.freedesktop.gstreamer.gst.Caps;
 import org.freedesktop.gstreamer.gst.FlowReturn;
 import org.freedesktop.gstreamer.gst.State;
-import org.gnome.glib.GLib;
 import org.gnome.gtk.MediaStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +18,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.foreign.Arena;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -37,6 +39,8 @@ public final class MediaSubsonic extends MediaStream {
     private final byte[] buffer = new byte[BUFFER_SIZE];
     private final String contentType;
     private final Arena instanceArena = Arena.ofConfined();
+    private final ScheduledExecutorService scheduler;
+    private ScheduledFuture future;
 
     private final Lock enoughDataLock = new ReentrantLock();
     public volatile boolean enoughData = false;
@@ -60,6 +64,9 @@ public final class MediaSubsonic extends MediaStream {
         synchronized (enoughDataLock) {
             enoughData = true;
             var seekSuccess = pipeline.seek(timestamp);
+//            if (seekSuccess) {
+//                GLib.timeoutAdd(200, 10, this::updatePosition);
+//            }
             logger.info("Seek was called with timestamp: {}", timestamp);
         }
     }
@@ -86,13 +93,13 @@ public final class MediaSubsonic extends MediaStream {
             caps = Caps.emptySimple(gstCt);
         }
 
-        //appSrc.setCapabilities(caps);
+        appSrc.setCapabilities(caps);
         pipeline.setState(State.PAUSED);
 
         // This takes microseconds
         streamPrepared(true, false, true, this.duration * 1000000);
         updateAudio(false, 1.0);
-        GLib.timeoutAdd(200, 100, this::updatePosition);
+        this.future = scheduler.scheduleAtFixedRate(this::updatePosition, 0L, 50L, TimeUnit.MILLISECONDS);
     }
 
     // This stops playback and clears pipeline
@@ -108,6 +115,7 @@ public final class MediaSubsonic extends MediaStream {
         pipeline.setState(State.READY);
 
         instanceArena.close();
+        future.cancel(true);
         streamUnprepared();
     }
 
@@ -172,28 +180,27 @@ public final class MediaSubsonic extends MediaStream {
         }
     }
 
-    public boolean updatePosition() {
+    public void updatePosition() {
         var pos = pipeline.queryPosition();
         if (pos >= 0L) {
             if (this.isPrepared()) {
                 update(pos);
-                return true;
-            } else {
-                return false;
             }
+        } else {
+            logger.info("Couldn't read pos");
         }
-        return false;
     }
 
     // The rest
 
-    public MediaSubsonic(String songId, long duration, Subsonic subsonic, AppPipeline pipeline, ExecutorService executor, String contentType) {
+    public MediaSubsonic(String songId, long duration, Subsonic subsonic, AppPipeline pipeline, ExecutorService executor, String contentType, ScheduledExecutorService scheduler) {
         this.songId = songId;
         this.subsonic = subsonic;
         this.duration = duration;
         this.pipeline = pipeline;
         this.executor = executor;
         this.contentType = contentType;
+        this.scheduler = scheduler;
 
         var enoughDataCallback = (AppSrcCallbacks.EnoughDataCallback) this::enoughDataHandler;
         var needDataCallback = (AppSrcCallbacks.NeedDataCallback) this::needDataHandler;

@@ -5,6 +5,7 @@ import org.freedesktop.gstreamer.app.AppSrcCallbacks;
 import org.freedesktop.gstreamer.app.AppStreamType;
 import org.freedesktop.gstreamer.audio.StreamVolume;
 import org.freedesktop.gstreamer.gst.*;
+import org.gnome.glib.MainContext;
 import org.gnome.glib.MainLoop;
 import org.javagi.base.Out;
 import org.slf4j.Logger;
@@ -17,8 +18,8 @@ import static org.freedesktop.gstreamer.gst.Gst.CLOCK_TIME_NONE;
 
 public final class AppPipeline {
     private static final Logger logger = LoggerFactory.getLogger(AppPipeline.class);
-    //private final MainContext ctx = new MainContext();
-    private final MainLoop loop = new MainLoop(null, false);
+    private final MainContext ctx = new MainContext();
+    private final MainLoop loop = new MainLoop(ctx, false);
     private Pipeline pipeline;
     private Bus bus;
     public static final int BUFFER_SIZE = 8192;

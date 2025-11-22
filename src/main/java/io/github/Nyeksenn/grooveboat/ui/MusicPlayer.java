@@ -34,6 +34,8 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/music-player.ui", name = "MusicPlayer")
 @RegisteredType(name = "MusicPlayer")
@@ -60,6 +62,8 @@ public class MusicPlayer extends Box {
     private AppPipeline appPipeline;
 
     private ExecutorService exec;
+
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
 
     private final AlbumTextureLoader loader = AlbumTextureLoader.getInstance();
 
@@ -183,7 +187,8 @@ public class MusicPlayer extends Box {
                 subsonic,
                 appPipeline,
                 exec,
-                song.getContentType()
+                song.getContentType(),
+                scheduler
         );
 
         this.mediaControls.setMediaStream(stream);
@@ -302,5 +307,6 @@ public class MusicPlayer extends Box {
         if (stream != null) {
             stream.destroyStream();
         }
+        scheduler.shutdownNow();
     }
 }
