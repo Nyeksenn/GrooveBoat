@@ -61,13 +61,15 @@ public final class MediaSubsonic extends MediaStream {
 
     @Override
     public void seek(long timestamp) {
+        logger.info("Seek was called with timestamp: {}", timestamp);
         synchronized (enoughDataLock) {
             enoughData = true;
             var seekSuccess = pipeline.seek(timestamp);
-//            if (seekSuccess) {
-//                GLib.timeoutAdd(200, 10, this::updatePosition);
-//            }
-            logger.info("Seek was called with timestamp: {}", timestamp);
+            if (seekSuccess) {
+                seekSuccess();
+            } else {
+                seekFailed();
+            }
         }
     }
 

@@ -131,7 +131,7 @@ public class MusicPlayer extends Box {
         } else {
             // this is the add to queue case
             // TODO: differentiate on initial queue
-            if (songQueue.lengthOne()) {
+            if (songQueue.lengthOne() && stream == null) {
                 var nextSong = songQueue.takeSong();
                 var texture = loader.load(nextSong.getAlbum().getAlbumId());
                 initializeMediaStream(nextSong, texture, false);

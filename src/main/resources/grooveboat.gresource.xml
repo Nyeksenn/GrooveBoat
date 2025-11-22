@@ -16,6 +16,7 @@
     <file compressed="true" alias="welcome-page.ui" preprocess="xml-stripblanks">templates/welcome-page.ui</file>
     <file compressed="true" alias="connection-page.ui" preprocess="xml-stripblanks">templates/connection-page.ui</file>
     <file compressed="true" alias="credentials-page.ui" preprocess="xml-stripblanks">templates/credentials-page.ui</file>
+    <file compressed="true" alias="music-controls.ui" preprocess="xml-stripblanks">templates/music-controls.ui</file>
 
     <file compressed="true" alias="main.css">css/main.css</file>
   </gresource>
@@ -27,5 +28,14 @@
     <file alias="item-missing-symbolic.svg" preprocess="xml-stripblanks">icons/item-missing-symbolic.svg</file>
     <file alias="build-configure-symbolic.svg" preprocess="xml-stripblanks">icons/build-configure-symbolic.svg</file>
     <file alias="sad-computer-symbolic.svg" preprocess="xml-stripblanks">icons/sad-computer-symbolic.svg</file>
+    <file alias="skip-backward-large-symbolic.svg" preprocess="xml-stripblanks">icons/skip-backward-large-symbolic.svg</file>
+    <file alias="skip-forward-large-symbolic.svg" preprocess="xml-stripblanks">icons/skip-forward-large-symbolic.svg</file>
+    <file alias="loop-arrow-symbolic.svg" preprocess="xml-stripblanks">icons/loop-arrow-symbolic.svg</file>
+    <file alias="play-symbolic.svg" preprocess="xml-stripblanks">icons/play-symbolic.svg</file>
+    <file alias="pause-symbolic.svg" preprocess="xml-stripblanks">icons/pause-symbolic.svg</file>
+    <file alias="speaker-3-symbolic.svg" preprocess="xml-stripblanks">icons/speaker-3-symbolic.svg</file>
+    <file alias="speaker-2-symbolic.svg" preprocess="xml-stripblanks">icons/speaker-2-symbolic.svg</file>
+    <file alias="speaker-1-symbolic.svg" preprocess="xml-stripblanks">icons/speaker-1-symbolic.svg</file>
+    <file alias="speaker-0-symbolic.svg" preprocess="xml-stripblanks">icons/speaker-0-symbolic.svg</file>
   </gresource>
 </gresources>

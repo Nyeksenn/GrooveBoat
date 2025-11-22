@@ -26,11 +26,13 @@
         <child>
           <object class="GtkLabel" id="player-song-name">
             <property name="wrap">true</property>
+            <property name="use-markup">false</property>
           </object>
         </child>
         <child>
           <object class="GtkLabel" id="player-album-artist">
             <property name="wrap">true</property>
+            <property name="use-markup">false</property>
             <style>
               <class name="dimmed"/>
             </style>
@@ -40,6 +42,49 @@
     </child>
     <child>
       <object class="GtkMediaControls" id="media-controls"/>
+    </child>
+    <child>
+      <object class="GtkBox">
+        <property name="orientation">horizontal</property>
+        <property name="halign">center</property>
+        <property name="spacing">20</property>
+        <child>
+          <object class="GtkButton">
+            <child>
+              <object class="AdwButtonContent">
+                <property name="icon-name">skip-backward-large-symbolic</property>
+              </object>
+            </child>
+            <style>
+              <class name="flat"/>
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton">
+            <child>
+              <object class="AdwButtonContent">
+                <property name="icon-name">skip-forward-large-symbolic</property>
+              </object>
+            </child>
+            <style>
+              <class name="flat"/>
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton">
+            <child>
+              <object class="AdwButtonContent">
+                <property name="icon-name">loop-arrow-symbolic</property>
+              </object>
+            </child>
+            <style>
+              <class name="flat"/>
+            </style>
+          </object>
+        </child>
+      </object>
     </child>
     <child>
       <object class="GtkSeparator" id="music-player-separator"/>
