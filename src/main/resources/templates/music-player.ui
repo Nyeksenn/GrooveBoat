@@ -16,7 +16,7 @@
         <property name="halign">center</property>
         <property name="radius">10.0</property>
         <style>
-          <class name="shadow" />
+          <class name="shadow"/>
         </style>
       </object>
     </child>
@@ -41,50 +41,7 @@
       </object>
     </child>
     <child>
-      <object class="GtkMediaControls" id="media-controls"/>
-    </child>
-    <child>
-      <object class="GtkBox">
-        <property name="orientation">horizontal</property>
-        <property name="halign">center</property>
-        <property name="spacing">20</property>
-        <child>
-          <object class="GtkButton">
-            <child>
-              <object class="AdwButtonContent">
-                <property name="icon-name">skip-backward-large-symbolic</property>
-              </object>
-            </child>
-            <style>
-              <class name="flat"/>
-            </style>
-          </object>
-        </child>
-        <child>
-          <object class="GtkButton">
-            <child>
-              <object class="AdwButtonContent">
-                <property name="icon-name">skip-forward-large-symbolic</property>
-              </object>
-            </child>
-            <style>
-              <class name="flat"/>
-            </style>
-          </object>
-        </child>
-        <child>
-          <object class="GtkButton">
-            <child>
-              <object class="AdwButtonContent">
-                <property name="icon-name">loop-arrow-symbolic</property>
-              </object>
-            </child>
-            <style>
-              <class name="flat"/>
-            </style>
-          </object>
-        </child>
-      </object>
+      <object class="MusicControls" id="music-controls"/>
     </child>
     <child>
       <object class="GtkSeparator" id="music-player-separator"/>

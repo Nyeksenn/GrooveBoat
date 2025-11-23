@@ -20,7 +20,6 @@ import org.gnome.glib.Variant;
 import org.gnome.gtk.Box;
 import org.gnome.gtk.Label;
 import org.gnome.gtk.ListBox;
-import org.gnome.gtk.MediaControls;
 import org.javagi.base.Out;
 import org.javagi.glib.types.VariantTypes;
 import org.javagi.gobject.annotations.InstanceInit;
@@ -51,8 +50,8 @@ public class MusicPlayer extends Box {
     @GtkChild(name = "player-album-artist")
     public Label playerAlbumArtist;
 
-    @GtkChild(name = "media-controls")
-    public MediaControls mediaControls;
+    @GtkChild(name = "music-controls")
+    public MusicControls mediaControls;
 
     @GtkChild(name = "queue-list-box")
     public ListBox queueListBox;
