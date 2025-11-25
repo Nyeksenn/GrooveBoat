@@ -5,6 +5,7 @@ import io.ebean.config.DatabaseConfig;
 import io.github.Nyeksenn.grooveboat.client.SubsonicClient;
 import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
 import io.github.Nyeksenn.grooveboat.ui.*;
+import io.github.Nyeksenn.grooveboat.utils.Helpers;
 import org.freedesktop.gstreamer.audio.GstAudio;
 import org.gnome.gio.Resource;
 import org.javagi.base.GErrorException;
@@ -28,7 +29,7 @@ public class Main {
         properties.put("datasource.db.password", "");
         properties.put("datasource.db.databaseDriver", "org.h2.Driver");
 
-        var dataDir = Utils.getUserDataPath();
+        var dataDir = Helpers.getUserDataPath();
         var dbPath = Paths.get(dataDir, "grooveboat", "cache");
         var dbBaseUrl = "jdbc:h2:file:%s";
         var dbUrl = String.format(dbBaseUrl, dbPath);

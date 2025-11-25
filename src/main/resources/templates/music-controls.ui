@@ -3,16 +3,44 @@
   <template class="MusicControls" parent="GtkBox">
     <property name="orientation">vertical</property>
     <child>
-      <object class="GtkScale" id="playback-position-scale">
-        <property name="orientation">0</property>
-        <property name="sensitive">false</property>
-        <property name="adjustment">
-          <object class="GtkAdjustment">
-            <property name="lower">0</property>
-            <property name="upper">100</property>
-            <property name="value">0</property>
+      <object class="GtkOverlay">
+        <property name="child">
+          <object class="GtkScale" id="playback-position-scale">
+            <property name="orientation">0</property>
+            <property name="margin-bottom">20</property>
+            <property name="margin-start">0</property>
+            <property name="margin-end">7</property>
+            <property name="sensitive">false</property>
+            <property name="adjustment">
+              <object class="GtkAdjustment">
+                <property name="lower">0</property>
+                <property name="upper">100</property>
+                <property name="value">0</property>
+              </object>
+            </property>
+            <signal name="change-value" handler="change-value"/>
           </object>
         </property>
+        <child type="overlay">
+          <object class="GtkLabel" id="timestamp-label">
+            <property name="halign">start</property>
+            <property name="valign">end</property>
+            <property name="label">-:-</property>
+            <style>
+              <class name="dimmed"/>
+            </style>
+          </object>
+        </child>
+        <child type="overlay">
+          <object class="GtkLabel" id="duration-label">
+            <property name="halign">end</property>
+            <property name="valign">end</property>
+            <property name="label">-:-</property>
+            <style>
+              <class name="dimmed"/>
+            </style>
+          </object>
+        </child>
       </object>
     </child>
     <child>
@@ -21,7 +49,7 @@
         <property name="halign">center</property>
         <property name="spacing">20</property>
         <child>
-          <object class="GtkButton">
+          <object class="GtkButton" id="loop-button">
             <property name="icon-name">loop-arrow-symbolic</property>
             <style>
               <class name="flat"/>
@@ -29,7 +57,7 @@
           </object>
         </child>
         <child>
-          <object class="GtkButton">
+          <object class="GtkButton" id="skip-back-button">
             <property name="icon-name">skip-backward-large-symbolic</property>
             <style>
               <class name="circular"/>
@@ -37,21 +65,16 @@
           </object>
         </child>
         <child>
-          <object class="GtkButton">
-            <property name="height-request">48</property>
-            <property name="child">
-              <object class="GtkImage">
-                <property name="icon-name">play-symbolic</property>
-                <property name="icon-size">large</property>
-              </object>
-            </property>
+          <object class="GtkButton" id="play-button">
+            <property name="icon-name">play-symbolic</property>
+            <signal name="clicked" handler="play-clicked"/>
             <style>
               <class name="circular"/>
             </style>
           </object>
         </child>
         <child>
-          <object class="GtkButton">
+          <object class="GtkButton" id="skip-forward-button">
             <property name="icon-name">skip-forward-large-symbolic</property>
             <style>
               <class name="circular"/>
@@ -59,7 +82,7 @@
           </object>
         </child>
         <child>
-          <object class="GtkButton">
+          <object class="GtkButton" id="volume-button">
             <property name="icon-name">speaker-3-symbolic</property>
             <style>
               <class name="flat"/>

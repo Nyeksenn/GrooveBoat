@@ -105,6 +105,15 @@ public class MusicPlayer extends Box {
 
             appPipeline.setState(State.NULL);
             appPipeline.setState(State.PAUSED);
+        } else if (msg.readType().contains(MessageType.STATE_CHANGED)) {
+            Out<State> prev = new Out<>();
+            Out<State> curr = new Out<>();
+            msg.parseStateChanged(prev, curr, null);
+            if (prev.get().equals(State.PAUSED) && curr.get().equals(State.PLAYING)) {
+                stream.startTimestampUpdate();
+            } else if (curr.get().equals(State.PAUSED) && prev.get().equals(State.PLAYING)) {
+                stream.cancelTimestampUpdate();
+            }
         }
 
         return true;
@@ -182,7 +191,7 @@ public class MusicPlayer extends Box {
 
         stream = new MediaSubsonic(
                 song.getSongId(),
-                song.getDuration().getSeconds(),
+                song.getDuration().getSeconds() * 1000000L,
                 subsonic,
                 appPipeline,
                 exec,
@@ -190,8 +199,8 @@ public class MusicPlayer extends Box {
                 scheduler
         );
 
-        this.mediaControls.setMediaStream(stream);
         stream.initializeStream();
+        this.mediaControls.setMediaStream(stream);
         stream.setPlaying(shouldPlay);
         this.playerAlbumArtist.setLabel(song.getDisplayArtist());
         this.playerSongName.setLabel(song.getTitle());
@@ -302,7 +311,6 @@ public class MusicPlayer extends Box {
 
     public void destroy() {
         logger.info("Closing Music Player");
-        var stream = (MediaSubsonic) this.mediaControls.getMediaStream();
         if (stream != null) {
             stream.destroyStream();
         }

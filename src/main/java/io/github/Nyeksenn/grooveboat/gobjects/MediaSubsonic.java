@@ -1,8 +1,8 @@
 package io.github.Nyeksenn.grooveboat.gobjects;
 
-import io.github.Nyeksenn.grooveboat.Utils;
 import io.github.Nyeksenn.grooveboat.audio.AppPipeline;
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
+import io.github.Nyeksenn.grooveboat.utils.Helpers;
 import org.freedesktop.gstreamer.app.AppSrc;
 import org.freedesktop.gstreamer.app.AppSrcCallbacks;
 import org.freedesktop.gstreamer.audio.StreamVolumeFormat;
@@ -10,6 +10,7 @@ import org.freedesktop.gstreamer.gst.Buffer;
 import org.freedesktop.gstreamer.gst.Caps;
 import org.freedesktop.gstreamer.gst.FlowReturn;
 import org.freedesktop.gstreamer.gst.State;
+import org.gnome.glib.GLib;
 import org.gnome.gtk.MediaStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,7 @@ public final class MediaSubsonic extends MediaStream {
 
     private final Subsonic subsonic;
     private final String songId;
+    // microseconds
     private final long duration;
     private final AppPipeline pipeline;
     public AppSrc appSrc;
@@ -67,6 +69,7 @@ public final class MediaSubsonic extends MediaStream {
             var seekSuccess = pipeline.seek(timestamp);
             if (seekSuccess) {
                 seekSuccess();
+                setPlaying(true);
             } else {
                 seekFailed();
             }
@@ -90,8 +93,8 @@ public final class MediaSubsonic extends MediaStream {
     public void initializeStream() {
         logger.info("Initializing stream");
         Caps caps = null;
-        if (Utils.hasMapping(contentType)) {
-            var gstCt = Utils.toGStreamerType(contentType);
+        if (Helpers.hasMapping(contentType)) {
+            var gstCt = Helpers.toGStreamerType(contentType);
             caps = Caps.emptySimple(gstCt);
         }
 
@@ -99,9 +102,9 @@ public final class MediaSubsonic extends MediaStream {
         pipeline.setState(State.PAUSED);
 
         // This takes microseconds
-        streamPrepared(true, false, true, this.duration * 1000000);
-        updateAudio(false, 1.0);
-        this.future = scheduler.scheduleAtFixedRate(this::updatePosition, 0L, 50L, TimeUnit.MILLISECONDS);
+        streamPrepared(true, false, true, this.duration);
+        setMuted(false);
+        setVolume(1.0);
     }
 
     // This stops playback and clears pipeline
@@ -117,7 +120,7 @@ public final class MediaSubsonic extends MediaStream {
         pipeline.setState(State.READY);
 
         instanceArena.close();
-        future.cancel(true);
+        cancelTimestampUpdate();
         streamUnprepared();
     }
 
@@ -184,12 +187,18 @@ public final class MediaSubsonic extends MediaStream {
 
     public void updatePosition() {
         var pos = pipeline.queryPosition();
-        if (pos >= 0L) {
-            if (this.isPrepared()) {
-                update(pos);
-            }
-        } else {
-            logger.info("Couldn't read pos");
+        if (pos >= 0L && isPrepared()) {
+            GLib.idleAddOnce(() -> update(pos));
+        }
+    }
+
+    public void startTimestampUpdate() {
+        future = scheduler.scheduleAtFixedRate(this::updatePosition, 0L, 100L, TimeUnit.MILLISECONDS);
+    }
+
+    public void cancelTimestampUpdate() {
+        if (future != null) {
+            future.cancel(true);
         }
     }
 
@@ -212,6 +221,6 @@ public final class MediaSubsonic extends MediaStream {
         callbacks.overrideNeedData(needDataCallback, instanceArena);
         callbacks.overrideSeekData(seekDataCallback, instanceArena);
 
-        appSrc = this.pipeline.initNewAppSrc(this.duration * 1000000000, callbacks, null);
+        appSrc = this.pipeline.initNewAppSrc(this.duration * 1000, callbacks, null);
     }
 }

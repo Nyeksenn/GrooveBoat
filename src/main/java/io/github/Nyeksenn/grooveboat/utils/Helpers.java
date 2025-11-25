@@ -1,9 +1,9 @@
-package io.github.Nyeksenn.grooveboat;
+package io.github.Nyeksenn.grooveboat.utils;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public final class Utils {
+public final class Helpers {
     public static String getUserDataPath() {
         String os = System.getProperty("os.name").toLowerCase();
         String userHome = System.getProperty("user.home");
