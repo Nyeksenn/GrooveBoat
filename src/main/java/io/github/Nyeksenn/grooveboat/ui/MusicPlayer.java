@@ -17,9 +17,8 @@ import org.gnome.gio.ActionEntry;
 import org.gnome.glib.GError;
 import org.gnome.glib.GLib;
 import org.gnome.glib.Variant;
-import org.gnome.gtk.Box;
-import org.gnome.gtk.Label;
-import org.gnome.gtk.ListBox;
+import org.gnome.graphene.Rect;
+import org.gnome.gtk.*;
 import org.javagi.base.Out;
 import org.javagi.glib.types.VariantTypes;
 import org.javagi.gobject.annotations.InstanceInit;
@@ -40,6 +39,7 @@ import java.util.concurrent.ScheduledExecutorService;
 @RegisteredType(name = "MusicPlayer")
 public class MusicPlayer extends Box {
     private static final Logger logger = LoggerFactory.getLogger(MusicPlayer.class);
+    private int currQueuePos = 0;
 
     @GtkChild(name = "player-album-picture")
     public RoundedImage playerAlbumPicture;
@@ -55,6 +55,9 @@ public class MusicPlayer extends Box {
 
     @GtkChild(name = "queue-list-box")
     public ListBox queueListBox;
+
+    @GtkChild(name = "queue-scroll-window")
+    public ScrolledWindow queueScrollWindow;
 
     private Subsonic subsonic;
 
@@ -95,7 +98,7 @@ public class MusicPlayer extends Box {
     public boolean handleBusMessage(Bus bus, Message msg) {
         if (msg.readType().contains(MessageType.EOS)) {
             logger.info("End of Stream");
-            exec.submit(this::playNext);
+            activateActionIfExists("win.play-next", null);
         } else if (msg.readType().contains(MessageType.ERROR)) {
             Out<GError> error = new Out<>();
             Out<String> debug = new Out<>();
@@ -119,38 +122,56 @@ public class MusicPlayer extends Box {
         return true;
     }
 
-    private void manipulateQueue(int pos, int length) {
+    private void changeListBox(int insertPosition, int length) {
         // All textures which will be used here are in the cache already
         assert Thread.currentThread().getName().equals("main") : "Must be called from main thread";
 
         if (length == 0) {
             // this is the replacement case
             queueListBox.removeAll();
-            var nextSong = songQueue.takeSong();
-            var texture = loader.load(nextSong.getAlbum().getAlbumId());
+            var firstSong = songQueue.getAt(0);
+            var texture = loader.load(firstSong.getAlbum().getAlbumId());
 
             for (var it = songQueue.iterate(); it.hasNext(); ) {
                 var song = it.next();
                 var card = getQueueCard(texture, song);
                 queueListBox.append(card);
             }
-
-            initializeMediaStream(nextSong, texture, true);
+            repositionPlayHead(0, true);
         } else {
             // this is the add to queue case
-            // TODO: differentiate on initial queue
             if (songQueue.lengthOne() && stream == null) {
-                var nextSong = songQueue.takeSong();
-                var texture = loader.load(nextSong.getAlbum().getAlbumId());
-                initializeMediaStream(nextSong, texture, false);
+                var song = songQueue.getAt(0);
+                var texture = loader.load(song.getAlbum().getAlbumId());
+                var card = getQueueCard(texture, song);
+                this.queueListBox.append(card);
+                repositionPlayHead(0, false);
             } else {
-                for (var i = pos; i < (pos + length); i++) {
+                for (var i = insertPosition; i < (insertPosition + length); i++) {
                     var song = songQueue.getAt(i);
                     var texture = loader.load(song.getAlbum().getAlbumId());
                     var card = getQueueCard(texture, song);
                     this.queueListBox.append(card);
                 }
             }
+        }
+    }
+
+    private void repositionPlayHead(int pos, boolean shouldPlay) {
+        var song = songQueue.getAt(pos);
+        var queueCard = queueListBox.getRowAtIndex(pos);
+        scrollToCard(queueCard);
+        var texture = loader.load(song.getAlbum().getAlbumId());
+        initializeMediaStream(song, texture, shouldPlay);
+    }
+
+    private void scrollToCard(ListBoxRow card) {
+        var vadj = queueScrollWindow.getVadjustment();
+        var bounds = new Rect();
+        if (card.computeBounds(queueListBox, bounds)) {
+            vadj.setValue(bounds.getY());
+        } else {
+            logger.warn("Unable to compute bounds for queue row item");
         }
     }
 
@@ -164,20 +185,6 @@ public class MusicPlayer extends Box {
         card.addPrefix(coverArt);
         card.setSongId(song.getSongId());
         return card;
-    }
-
-    private void playNext() {
-        assert !Thread.currentThread().getName().equals("main") : "Must not be called from main thread";
-        var newSong = songQueue.takeSong();
-        if (newSong != null) {
-            var texture = loader.load(newSong.getAlbum().getAlbumId());
-
-            GLib.idleAddOnce(() -> {
-                var oldSong = queueListBox.getFirstChild();
-                queueListBox.remove(oldSong);
-                initializeMediaStream(newSong, texture, true);
-            });
-        }
     }
 
     private void initializeMediaStream(SongModel song, Texture albumCover, boolean shouldPlay) {
@@ -208,10 +215,11 @@ public class MusicPlayer extends Box {
     }
 
     private void setupActions(GrooveboatWindow win) {
-        var entries = new ActionEntry[4];
+        var entries = new ActionEntry[6];
         entries[0] = new ActionEntry(
                 "play-song",
                 (action, parameter) -> {
+                    currQueuePos = 0;
                     if (parameter != null) {
                         exec.submit(() -> {
                             logger.info("Playing this song:");
@@ -219,7 +227,7 @@ public class MusicPlayer extends Box {
                             var song = new QSongModel().songId.equalTo(songId).findOne();
                             if (song != null) {
                                 songQueue.replace(List.of(song));
-                                GLib.idleAddOnce(() -> manipulateQueue(0, 0));
+                                GLib.idleAddOnce(() -> changeListBox(0, 0));
                             }
                         });
                     }
@@ -241,7 +249,7 @@ public class MusicPlayer extends Box {
                                 int pos = songQueue.length();
                                 int length = 1;
                                 songQueue.addSongList(List.of(song));
-                                GLib.idleAddOnce(() -> manipulateQueue(pos, length));
+                                GLib.idleAddOnce(() -> changeListBox(pos, length));
                             }
                         });
                     }
@@ -254,6 +262,7 @@ public class MusicPlayer extends Box {
         entries[2] = new ActionEntry(
                 "play-album",
                 (action, parameter) -> {
+                    currQueuePos = 0;
                     if (parameter != null) {
                         exec.submit(() -> {
                             var albumId = parameter.getString(null);
@@ -261,7 +270,7 @@ public class MusicPlayer extends Box {
                             if (album != null) {
                                 var songs = album.getSongs();
                                 songQueue.replace(songs);
-                                GLib.idleAddOnce(() -> manipulateQueue(0, 0));
+                                GLib.idleAddOnce(() -> changeListBox(0, 0));
                             }
                         });
                     }
@@ -283,12 +292,34 @@ public class MusicPlayer extends Box {
                                 var pos = songQueue.length();
                                 var length = songs.size();
                                 songQueue.addSongList(songs);
-                                GLib.idleAddOnce(() -> manipulateQueue(pos, length));
+                                GLib.idleAddOnce(() -> changeListBox(pos, length));
                             }
                         });
                     }
                 },
                 VariantTypes.STRING.dupString(),
+                null,
+                null,
+                Arena.global()
+        );
+        entries[4] = new ActionEntry(
+                "play-next",
+                (action, parameter) -> {
+                    currQueuePos += 1;
+                    repositionPlayHead(currQueuePos, true);
+                },
+                null,
+                null,
+                null,
+                Arena.global()
+        );
+        entries[5] = new ActionEntry(
+                "play-previous",
+                (action, parameter) -> {
+                    currQueuePos -= 1;
+                    repositionPlayHead(currQueuePos, true);
+                },
+                null,
                 null,
                 null,
                 Arena.global()

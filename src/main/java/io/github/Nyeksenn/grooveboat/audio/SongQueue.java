@@ -12,11 +12,6 @@ import java.util.List;
 public final class SongQueue extends GObject {
     private final List<SongModel> list = new LinkedList<>();
 
-
-    public SongModel takeSong() {
-        return list.removeFirst();
-    }
-
     public void addSongList(List<SongModel> songs) {
         list.addAll(songs);
     }

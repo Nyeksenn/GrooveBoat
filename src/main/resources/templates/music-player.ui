@@ -47,7 +47,7 @@
       <object class="GtkSeparator" id="music-player-separator"/>
     </child>
     <child>
-      <object class="GtkScrolledWindow">
+      <object class="GtkScrolledWindow" id="queue-scroll-window">
         <property name="propagate-natural-height">true</property>
         <property name="child">
           <object class="GtkListBox" id="queue-list-box">

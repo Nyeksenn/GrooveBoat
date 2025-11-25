@@ -59,6 +59,7 @@
         <child>
           <object class="GtkButton" id="skip-back-button">
             <property name="icon-name">skip-backward-large-symbolic</property>
+            <property name="action-name">win.play-previous</property>
             <style>
               <class name="circular"/>
             </style>
@@ -76,6 +77,7 @@
         <child>
           <object class="GtkButton" id="skip-forward-button">
             <property name="icon-name">skip-forward-large-symbolic</property>
+            <property name="action-name">win.play-next</property>
             <style>
               <class name="circular"/>
             </style>
