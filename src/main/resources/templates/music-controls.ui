@@ -18,7 +18,7 @@
                 <property name="value">0</property>
               </object>
             </property>
-            <signal name="change-value" handler="change-value"/>
+            <signal name="change-value" handler="position-scale-change-value"/>
           </object>
         </property>
         <child type="overlay">
@@ -84,8 +84,15 @@
           </object>
         </child>
         <child>
-          <object class="GtkButton" id="volume-button">
-            <property name="icon-name">speaker-3-symbolic</property>
+          <object class="GtkScaleButton" id="volume-button">
+            <property name="adjustment">
+              <object class="GtkAdjustment">
+                <property name="lower">0.0</property>
+                <property name="upper">1.0</property>
+                <property name="value">1.00</property>
+              </object>
+            </property>
+            <signal name="value-changed" handler="volume-changed"/>
             <style>
               <class name="flat"/>
             </style>

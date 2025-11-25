@@ -21,6 +21,7 @@ public class MusicControls extends Box {
     private static final Logger logger = LoggerFactory.getLogger(MusicControls.class);
     private MediaStream ms;
     private Adjustment adjustment;
+    private final static String[] volumeIcons = new String[]{"speaker-0-symbolic", "speaker-3-symbolic", "speaker-1-symbolic", "speaker-2-symbolic"};
 
     // Debounce
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
@@ -43,7 +44,7 @@ public class MusicControls extends Box {
     public Button skipForwardButton;
 
     @GtkChild(name = "volume-button")
-    public Button volumeButton;
+    public ScaleButton volumeButton;
 
     @GtkChild(name = "timestamp-label")
     public Label timestampLabel;
@@ -74,8 +75,8 @@ public class MusicControls extends Box {
         ms.setPlaying(!ms.getPlaying());
     }
 
-    @GtkCallback(name = "change-value")
-    public boolean changeValue(ScrollType scroll, double value) {
+    @GtkCallback(name = "position-scale-change-value")
+    public boolean positionScaleChangeValue(ScrollType scroll, double value) {
         ms.pause();
         if (scheduledTask != null && !scheduledTask.isDone()) {
             scheduledTask.cancel(false);
@@ -85,6 +86,12 @@ public class MusicControls extends Box {
         }, DEBOUNCE_DELAY, TimeUnit.MILLISECONDS);
 
         return false;
+    }
+
+    @GtkCallback(name = "volume-changed")
+    public void volumeChanged(double value) {
+        ms.setMuted(value == 0.0);
+        ms.setVolume(value);
     }
 
     private void setupBindings() {
@@ -118,6 +125,7 @@ public class MusicControls extends Box {
 
     @InstanceInit
     public void init() {
+        onRealize(() -> this.volumeButton.setIcons(volumeIcons));
         onUnrealize(this.scheduler::shutdownNow);
     }
 

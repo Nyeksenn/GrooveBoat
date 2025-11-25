@@ -82,7 +82,7 @@ public final class MediaSubsonic extends MediaStream {
         if (streamVolume != null) {
             try {
                 // I need this because Element is constructed in native code
-                streamVolume.setVolume(StreamVolumeFormat.LINEAR, volume);
+                streamVolume.setVolume(StreamVolumeFormat.CUBIC, volume);
                 streamVolume.setMute(muted);
             } catch (Exception e) {
                 logger.warn(e.getMessage());
