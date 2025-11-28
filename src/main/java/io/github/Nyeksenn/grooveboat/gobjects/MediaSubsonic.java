@@ -130,24 +130,28 @@ public final class MediaSubsonic extends MediaStream {
             executor.submit(() -> {
                 while (true) {
                     synchronized (enoughDataLock) {
-                        pushingData = true;
-                        if (enoughData) {
-                            pushingData = false;
-                            return;
-                        }
                         try {
-                            var len = socket.readNBytes(buffer, 0, BUFFER_SIZE);
-                            var flowReturn = src.pushBuffer(Buffer.memdup(buffer));
-                            if (flowReturn == FlowReturn.FLUSHING) return;
-                            if ((flowReturn == FlowReturn.OK) && (len < BUFFER_SIZE)) {
-                                src.endOfStream();
+                            pushingData = true;
+                            if (enoughData) {
                                 pushingData = false;
                                 return;
                             }
-                        } catch (IOException e) {
-                            logger.warn("Couldn't read from socket");
-                            pushingData = false;
-                            return;
+                            try {
+                                var len = socket.readNBytes(buffer, 0, BUFFER_SIZE);
+                                var flowReturn = src.pushBuffer(Buffer.memdup(buffer));
+                                if (flowReturn == FlowReturn.FLUSHING) return;
+                                if ((flowReturn == FlowReturn.OK) && (len < BUFFER_SIZE)) {
+                                    src.endOfStream();
+                                    pushingData = false;
+                                    return;
+                                }
+                            } catch (IOException e) {
+                                logger.warn("Couldn't read from socket");
+                                pushingData = false;
+                                return;
+                            }
+                        } catch (Exception e) {
+                            logger.warn(e.getMessage());
                         }
                     }
                 }
@@ -186,14 +190,16 @@ public final class MediaSubsonic extends MediaStream {
     }
 
     public void updatePosition() {
-        var pos = pipeline.queryPosition();
-        if (pos >= 0L && isPrepared()) {
-            GLib.idleAddOnce(() -> update(pos));
+        if (isPrepared()) {
+            var pos = pipeline.queryPosition();
+            if (pos >= 0L && isPrepared()) {
+                GLib.idleAddOnce(() -> update(pos));
+            }
         }
     }
 
     public void startTimestampUpdate() {
-        future = scheduler.scheduleAtFixedRate(this::updatePosition, 0L, 100L, TimeUnit.MILLISECONDS);
+        future = scheduler.scheduleAtFixedRate(this::updatePosition, 0L, 30L, TimeUnit.MILLISECONDS);
     }
 
     public void cancelTimestampUpdate() {

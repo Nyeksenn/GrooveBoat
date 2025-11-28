@@ -44,10 +44,11 @@
             <property name="hexpand">true</property>
             <property name="child">
               <object class="GtkImage">
-                <property name="icon-name">cross-small-symbolic</property>
+                <property name="icon-name">minus-symbolic</property>
                 <property name="pixel-size">20</property>
               </object>
             </property>
+            <signal name="clicked" handler="remove-from-queue"/>
             <style>
               <class name="flat"/>
             </style>

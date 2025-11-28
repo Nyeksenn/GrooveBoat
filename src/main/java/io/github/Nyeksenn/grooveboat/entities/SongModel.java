@@ -130,7 +130,7 @@ public class SongModel extends BaseModel {
         for (int i = 0; i < numSongArtists; i++) {
             sb.append(songArtists.get(i).getName());
             if (!(i == (numSongArtists - 1))) {
-                sb.append("; ");
+                sb.append(" & ");
             }
         }
 

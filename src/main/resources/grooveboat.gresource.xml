@@ -38,6 +38,6 @@
     <file alias="speaker-2-symbolic.svg" preprocess="xml-stripblanks">icons/speaker-2-symbolic.svg</file>
     <file alias="speaker-1-symbolic.svg" preprocess="xml-stripblanks">icons/speaker-1-symbolic.svg</file>
     <file alias="speaker-0-symbolic.svg" preprocess="xml-stripblanks">icons/speaker-0-symbolic.svg</file>
-    <file alias="cross-small-symbolic.svg" preprocess="xml-stripblanks">icons/cross-small-symbolic.svg</file>
+    <file alias="minus-symbolic.svg" preprocess="xml-stripblanks">icons/minus-symbolic.svg</file>
   </gresource>
 </gresources>

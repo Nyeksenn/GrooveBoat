@@ -98,28 +98,30 @@ public class MusicPlayer extends Box {
     }
 
     private void initializeMediaStream(SongListItem songItem) {
-        this.mediaControls.setMediaStream(null);
+        if (songItem != null) {
+            this.mediaControls.setMediaStream(null);
 
-        if (stream != null) {
-            stream.destroyStream();
-            stream = null;
+            if (stream != null) {
+                stream.destroyStream();
+                stream = null;
+            }
+
+            stream = new MediaSubsonic(
+                    songItem.getSongId(),
+                    songItem.getDuration().getSeconds() * 1000000L,
+                    subsonic,
+                    appPipeline,
+                    exec,
+                    songItem.getContentType(),
+                    scheduler
+            );
+
+            stream.initializeStream();
+            this.mediaControls.setMediaStream(stream);
+            this.playerAlbumArtist.setLabel(songItem.getArtistName());
+            this.playerSongName.setLabel(songItem.getSongName());
+            this.playerAlbumPicture.setTexture(songItem.getCoverArt());
         }
-
-        stream = new MediaSubsonic(
-                songItem.getSongId(),
-                songItem.getDuration().getSeconds() * 1000000L,
-                subsonic,
-                appPipeline,
-                exec,
-                songItem.getContentType(),
-                scheduler
-        );
-
-        stream.initializeStream();
-        this.mediaControls.setMediaStream(stream);
-        this.playerAlbumArtist.setLabel(songItem.getArtistName());
-        this.playerSongName.setLabel(songItem.getSongName());
-        this.playerAlbumPicture.setTexture(songItem.getCoverArt());
     }
 
     @InstanceInit

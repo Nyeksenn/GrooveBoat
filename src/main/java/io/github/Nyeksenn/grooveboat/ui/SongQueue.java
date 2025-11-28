@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
+import java.util.Set;
 
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/song-queue.ui", name = "SongQueue")
 public final class SongQueue extends Bin {
@@ -58,11 +59,12 @@ public final class SongQueue extends Bin {
         queueCard.albumCover.setTexture(songItem.getCoverArt());
         queueCard.albumArtistLabel.setLabel(songItem.getArtistName());
         queueCard.songTitleLabel.setLabel(songItem.getSongName());
+        listItem.bindProperty("position", queueCard, "index").syncCreate().build();
     }
 
     public void itemSelectionChanged(ParamSpec pspec) {
         var selectedItem = model.getItem(selection.getSelected());
-        queueListView.scrollTo(selection.getSelected(), ListScrollFlags.NONE, null);
+        queueListView.scrollTo(selection.getSelected(), Set.of(ListScrollFlags.FOCUS), null);
         emit("initialize-song", selectedItem);
         if (!initialized) {
             initialized = true;
