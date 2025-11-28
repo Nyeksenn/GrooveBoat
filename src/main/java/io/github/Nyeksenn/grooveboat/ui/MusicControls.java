@@ -70,11 +70,6 @@ public class MusicControls extends Box {
         }
     }
 
-    @GtkCallback(name = "play-clicked")
-    public void playClicked() {
-        ms.setPlaying(!ms.getPlaying());
-    }
-
     @GtkCallback(name = "position-scale-change-value")
     public boolean positionScaleChangeValue(ScrollType scroll, double value) {
         ms.pause();

@@ -31,9 +31,9 @@ public class AlbumTextureLoader {
         return Holder.INSTANCE;
     }
 
-    private Texture fetchTexture(String key) {
+    private Texture fetchTexture(String albumId) {
         var alb = QAlbumModel.alias();
-        var album = new QAlbumModel().select(alb.albumId, alb.coverArt).albumId.equalTo(key).findOne();
+        var album = new QAlbumModel().select(alb.albumId, alb.coverArt).albumId.equalTo(albumId).findOne();
         if (album != null) {
             try {
                 return MemoryTexture.fromBytes(album.getCoverArt());
@@ -46,8 +46,8 @@ public class AlbumTextureLoader {
         }
     }
 
-    public Texture load(String key) {
-        return map.computeIfAbsent(key, this::fetchTexture);
+    public Texture load(String albumId) {
+        return map.computeIfAbsent(albumId, this::fetchTexture);
     }
 
     public Map<String, Texture> getMap() {

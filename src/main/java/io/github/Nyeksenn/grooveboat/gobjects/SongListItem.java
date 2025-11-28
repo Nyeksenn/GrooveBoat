@@ -11,6 +11,7 @@ public final class SongListItem extends GObject {
     private final String artistName;
     private final String albumTitle;
     private final Duration duration;
+    private final String contentType;
     private final Texture coverArt;
 
     public String getSongName() {
@@ -42,12 +43,17 @@ public final class SongListItem extends GObject {
         return String.format("%02d:%02d", seconds / 60, seconds % 60);
     }
 
-    public SongListItem(String songName, String songId ,String artistName, String albumTitle, Duration duration, Texture coverArt) {
+    public String getContentType() {
+        return contentType;
+    }
+
+    public SongListItem(String songName, String songId, String artistName, String albumTitle, Duration duration, String contentType, Texture coverArt) {
         this.songName = songName;
         this.songId = songId;
         this.artistName = artistName;
         this.albumTitle = albumTitle;
         this.duration = duration;
+        this.contentType = contentType;
         this.coverArt = coverArt;
     }
 }

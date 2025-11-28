@@ -1,27 +1,25 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
-import org.gnome.adw.ActionRow;
-import org.javagi.gobject.annotations.RegisteredType;
+import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
+import org.gnome.gtk.Box;
+import org.gnome.gtk.Label;
+import org.javagi.gtk.annotations.GtkChild;
 import org.javagi.gtk.annotations.GtkTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.foreign.MemorySegment;
-
-@GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/queue-card.ui")
-@RegisteredType(name = "QueueCard")
-public class QueueCard extends ActionRow {
+@GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/queue-item.ui", name = "QueueItem")
+public class QueueCard extends Box {
     private static final Logger logger = LoggerFactory.getLogger(QueueCard.class);
 
-    private String songId;
+    @GtkChild(name = "album-cover")
+    public RoundedImage albumCover;
 
-    public void setSongId(String songId) {
-        this.songId = songId;
-    }
+    @GtkChild(name = "song-title-label")
+    public Label songTitleLabel;
 
-    public QueueCard(MemorySegment address) {
-        super(address);
-    }
+    @GtkChild(name = "album-artist-label")
+    public Label albumArtistLabel;
 
     public QueueCard() {
     }

@@ -25,3 +25,11 @@
 .avatar-button:focus {
   outline: none;
 }
+
+.highlighted {
+  background-color: color-mix(in srgb, var(--accent-color) 13%, transparent);
+}
+
+.padded {
+  padding: 8px 12px 8px 12px;
+}

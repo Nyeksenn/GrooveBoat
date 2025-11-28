@@ -68,7 +68,7 @@
         <child>
           <object class="GtkButton" id="play-button">
             <property name="icon-name">play-symbolic</property>
-            <signal name="clicked" handler="play-clicked"/>
+            <property name="action-name">win.toggle-play</property>
             <style>
               <class name="circular"/>
             </style>

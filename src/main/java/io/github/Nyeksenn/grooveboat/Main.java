@@ -60,6 +60,7 @@ public class Main {
             TemplateTypes.register(ConnectionPage.class);
             TemplateTypes.register(CredentialsPage.class);
             TemplateTypes.register(MusicControls.class);
+            TemplateTypes.register(SongQueue.class);
             Types.register(RoundedImage.class);
         } catch (GErrorException e) {
             logger.error("Couldn't load resources. Exiting");
