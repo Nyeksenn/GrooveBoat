@@ -53,12 +53,11 @@ public class Subsonic implements AutoCloseable {
                         artistModelList.add(newArtistModel);
                     } else if (!newArtistModel.equals(savedArtistModel)) {
                         // Update
-                        newArtistModel.setId(savedArtistModel.getId());
-                        artistModelList.add(newArtistModel);
+                        savedArtistModel.setAllFields(newArtistModel);
+                        artistModelList.add(savedArtistModel);
                     } else {
                         artistModelList.add(savedArtistModel);
                     }
-
                 }
 
                 db.saveAll(artistModelList);
@@ -90,7 +89,7 @@ public class Subsonic implements AutoCloseable {
                     var albumArtists = resolveArtists(album.artists());
                     byte[] albumCover;
                     try {
-                        albumCover = client.getCoverArt(album.coverArt(), 500);
+                        albumCover = client.getCoverArt(album.coverArt(), 1000);
                     } catch (IOException e) {
                         albumCover = null;
                     }
@@ -102,8 +101,8 @@ public class Subsonic implements AutoCloseable {
                         return newAlbumModel;
                     } else if (!newAlbumModel.equals(savedAlbumModel)) {
                         // Update
-                        newAlbumModel.setId(savedAlbumModel.getId());
-                        return newAlbumModel;
+                        savedAlbumModel.setAllFields(newAlbumModel);
+                        return savedAlbumModel;
                     } else {
                         return savedAlbumModel;
                     }

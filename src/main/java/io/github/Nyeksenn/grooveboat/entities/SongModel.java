@@ -155,6 +155,18 @@ public class SongModel extends BaseModel {
         this.album = album;
     }
 
+    public void setAllFields(SongModel src) {
+        this.setTitle(src.getTitle());
+        this.setTrack(src.getTrack());
+        this.setReleaseYear(src.getReleaseYear());
+        this.setDuration(src.getDuration());
+        this.setBitRate(src.getBitRate());
+        this.setContentType(src.getContentType());
+        this.setDiscNumber(src.getDiscNumber());
+        this.setSongArtists(src.getSongArtists());
+        this.setAlbum(src.getAlbum());
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
