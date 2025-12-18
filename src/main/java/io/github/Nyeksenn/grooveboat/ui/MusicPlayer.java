@@ -11,6 +11,7 @@ import org.freedesktop.gstreamer.gst.MessageType;
 import org.freedesktop.gstreamer.gst.State;
 import org.gnome.gio.SimpleAction;
 import org.gnome.glib.GError;
+import org.gnome.glib.Variant;
 import org.gnome.gtk.Box;
 import org.gnome.gtk.Label;
 import org.javagi.base.Out;
@@ -73,7 +74,7 @@ public class MusicPlayer extends Box {
     public boolean handleBusMessage(Bus bus, Message msg) {
         if (msg.readType().contains(MessageType.EOS)) {
             logger.info("End of Stream");
-            activateActionIfExists("win.play-next", null);
+            activateActionIfExists("win.play-next", Variant.boolean_(mediaControls.loopButton.getActive()));
         } else if (msg.readType().contains(MessageType.ERROR)) {
             Out<GError> error = new Out<>();
             Out<String> debug = new Out<>();

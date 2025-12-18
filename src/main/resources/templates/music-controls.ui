@@ -49,8 +49,10 @@
         <property name="halign">center</property>
         <property name="spacing">20</property>
         <child>
-          <object class="GtkButton" id="loop-button">
-            <property name="icon-name">loop-arrow-symbolic</property>
+          <object class="GtkToggleButton" id="loop-button">
+            <property name="active">false</property>
+            <property name="icon-name">arrows-loop-tall-disabled-symbolic</property>
+            <signal name="toggled" handler="loop-toggled"/>
             <style>
               <class name="flat"/>
             </style>

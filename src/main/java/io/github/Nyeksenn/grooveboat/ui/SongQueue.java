@@ -226,12 +226,17 @@ public final class SongQueue extends Bin {
         entries[5] = new ActionEntry(
                 "play-next",
                 (action, parameter) -> {
+                    var isLooping = parameter.getBoolean();
                     var selectedIdx = selection.getSelected();
-                    if (selectedIdx < (model.size() - 1)) {
-                        selection.selectItem(selectedIdx + 1, true);
+                    if (isLooping) {
+                        selection.emitNotify("selected", null);
+                    } else {
+                        if (selectedIdx < (model.size() - 1)) {
+                            selection.selectItem(selectedIdx + 1, true);
+                        }
                     }
                 },
-                null,
+                VariantTypes.BOOLEAN.dupString(),
                 null,
                 null,
                 Arena.global()

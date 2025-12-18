@@ -32,7 +32,7 @@ public class MusicControls extends Box {
     public Scale playbackPositionScale;
 
     @GtkChild(name = "loop-button")
-    public Button loopButton;
+    public ToggleButton loopButton;
 
     @GtkChild(name = "skip-back-button")
     public Button skipBackButton;
@@ -87,6 +87,16 @@ public class MusicControls extends Box {
     public void volumeChanged(double value) {
         ms.setMuted(value == 0.0);
         ms.setVolume(value);
+    }
+
+    @GtkCallback(name = "loop-toggled")
+    public void loopToggled() {
+        var isLooping = loopButton.getActive();
+        if (isLooping) {
+            loopButton.setIconName("arrows-loop-tall-symbolic");
+        } else {
+            loopButton.setIconName("arrows-loop-tall-disabled-symbolic");
+        }
     }
 
     private void setupBindings() {
