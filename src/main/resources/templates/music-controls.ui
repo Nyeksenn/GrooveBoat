@@ -80,6 +80,7 @@
           <object class="GtkButton" id="skip-forward-button">
             <property name="icon-name">skip-forward-large-symbolic</property>
             <property name="action-name">win.play-next</property>
+            <property name="action-target">false</property>
             <style>
               <class name="circular"/>
             </style>
