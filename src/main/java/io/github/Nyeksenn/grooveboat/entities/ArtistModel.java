@@ -76,6 +76,11 @@ public class ArtistModel extends BaseModel {
         this.image = image;
     }
 
+    public void setAllFields(ArtistModel src) {
+        this.setName(src.getName());
+        this.setImage(src.getImage());
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;

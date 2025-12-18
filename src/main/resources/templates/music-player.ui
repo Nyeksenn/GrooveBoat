@@ -16,7 +16,7 @@
         <property name="halign">center</property>
         <property name="radius">10.0</property>
         <style>
-          <class name="shadow" />
+          <class name="shadow"/>
         </style>
       </object>
     </child>
@@ -26,11 +26,13 @@
         <child>
           <object class="GtkLabel" id="player-song-name">
             <property name="wrap">true</property>
+            <property name="use-markup">false</property>
           </object>
         </child>
         <child>
           <object class="GtkLabel" id="player-album-artist">
             <property name="wrap">true</property>
+            <property name="use-markup">false</property>
             <style>
               <class name="dimmed"/>
             </style>
@@ -39,23 +41,13 @@
       </object>
     </child>
     <child>
-      <object class="GtkMediaControls" id="media-controls"/>
+      <object class="MusicControls" id="music-controls"/>
     </child>
     <child>
       <object class="GtkSeparator" id="music-player-separator"/>
     </child>
     <child>
-      <object class="GtkScrolledWindow">
-        <property name="propagate-natural-height">true</property>
-        <property name="child">
-          <object class="GtkListBox" id="queue-list-box">
-            <property name="selection-mode">none</property>
-            <style>
-              <class name="boxed-list"/>
-            </style>
-          </object>
-        </property>
-      </object>
+      <object class="SongQueue" id="song-queue"/>
     </child>
   </template>
 </interface>

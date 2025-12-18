@@ -130,11 +130,16 @@ public class SongModel extends BaseModel {
         for (int i = 0; i < numSongArtists; i++) {
             sb.append(songArtists.get(i).getName());
             if (!(i == (numSongArtists - 1))) {
-                sb.append("; ");
+                sb.append(" & ");
             }
         }
 
         return sb.toString();
+    }
+
+    public String getDisplayArtistPango() {
+        var artist = getDisplayArtist();
+        return artist.replace("&", "&amp;");
     }
 
     public SongModel(String songId, String title, int track, int year, Duration duration, int bitRate, String contentType, int discNumber, List<ArtistModel> songArtists, AlbumModel album) {
@@ -148,6 +153,18 @@ public class SongModel extends BaseModel {
         this.discNumber = discNumber;
         this.songArtists = songArtists;
         this.album = album;
+    }
+
+    public void setAllFields(SongModel src) {
+        this.setTitle(src.getTitle());
+        this.setTrack(src.getTrack());
+        this.setReleaseYear(src.getReleaseYear());
+        this.setDuration(src.getDuration());
+        this.setBitRate(src.getBitRate());
+        this.setContentType(src.getContentType());
+        this.setDiscNumber(src.getDiscNumber());
+        this.setSongArtists(src.getSongArtists());
+        this.setAlbum(src.getAlbum());
     }
 
     @Override

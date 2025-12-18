@@ -1,8 +1,8 @@
 package io.github.Nyeksenn.grooveboat.gobjects;
 
-import io.github.Nyeksenn.grooveboat.Utils;
 import io.github.Nyeksenn.grooveboat.audio.AppPipeline;
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
+import io.github.Nyeksenn.grooveboat.utils.Helpers;
 import org.freedesktop.gstreamer.app.AppSrc;
 import org.freedesktop.gstreamer.app.AppSrcCallbacks;
 import org.freedesktop.gstreamer.audio.StreamVolumeFormat;
@@ -19,6 +19,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.foreign.Arena;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -29,6 +32,7 @@ public final class MediaSubsonic extends MediaStream {
 
     private final Subsonic subsonic;
     private final String songId;
+    // microseconds
     private final long duration;
     private final AppPipeline pipeline;
     public AppSrc appSrc;
@@ -37,6 +41,8 @@ public final class MediaSubsonic extends MediaStream {
     private final byte[] buffer = new byte[BUFFER_SIZE];
     private final String contentType;
     private final Arena instanceArena = Arena.ofConfined();
+    private final ScheduledExecutorService scheduler;
+    private ScheduledFuture future;
 
     private final Lock enoughDataLock = new ReentrantLock();
     public volatile boolean enoughData = false;
@@ -57,10 +63,16 @@ public final class MediaSubsonic extends MediaStream {
 
     @Override
     public void seek(long timestamp) {
+        logger.info("Seek was called with timestamp: {}", timestamp);
         synchronized (enoughDataLock) {
             enoughData = true;
             var seekSuccess = pipeline.seek(timestamp);
-            logger.info("Seek was called with timestamp: {}", timestamp);
+            if (seekSuccess) {
+                seekSuccess();
+                setPlaying(true);
+            } else {
+                seekFailed();
+            }
         }
     }
 
@@ -70,7 +82,7 @@ public final class MediaSubsonic extends MediaStream {
         if (streamVolume != null) {
             try {
                 // I need this because Element is constructed in native code
-                streamVolume.setVolume(StreamVolumeFormat.LINEAR, volume);
+                streamVolume.setVolume(StreamVolumeFormat.CUBIC, volume);
                 streamVolume.setMute(muted);
             } catch (Exception e) {
                 logger.warn(e.getMessage());
@@ -81,18 +93,18 @@ public final class MediaSubsonic extends MediaStream {
     public void initializeStream() {
         logger.info("Initializing stream");
         Caps caps = null;
-        if (Utils.hasMapping(contentType)) {
-            var gstCt = Utils.toGStreamerType(contentType);
+        if (Helpers.hasMapping(contentType)) {
+            var gstCt = Helpers.toGStreamerType(contentType);
             caps = Caps.emptySimple(gstCt);
         }
 
-        //appSrc.setCapabilities(caps);
+        appSrc.setCapabilities(caps);
         pipeline.setState(State.PAUSED);
 
         // This takes microseconds
-        streamPrepared(true, false, true, this.duration * 1000000);
-        updateAudio(false, 1.0);
-        GLib.timeoutAdd(200, 100, this::updatePosition);
+        streamPrepared(true, false, true, this.duration);
+        setMuted(false);
+        setVolume(1.0);
     }
 
     // This stops playback and clears pipeline
@@ -108,6 +120,7 @@ public final class MediaSubsonic extends MediaStream {
         pipeline.setState(State.READY);
 
         instanceArena.close();
+        cancelTimestampUpdate();
         streamUnprepared();
     }
 
@@ -117,24 +130,28 @@ public final class MediaSubsonic extends MediaStream {
             executor.submit(() -> {
                 while (true) {
                     synchronized (enoughDataLock) {
-                        pushingData = true;
-                        if (enoughData) {
-                            pushingData = false;
-                            return;
-                        }
                         try {
-                            var len = socket.readNBytes(buffer, 0, BUFFER_SIZE);
-                            var flowReturn = src.pushBuffer(Buffer.memdup(buffer));
-                            if (flowReturn == FlowReturn.FLUSHING) return;
-                            if ((flowReturn == FlowReturn.OK) && (len < BUFFER_SIZE)) {
-                                src.endOfStream();
+                            pushingData = true;
+                            if (enoughData) {
                                 pushingData = false;
                                 return;
                             }
-                        } catch (IOException e) {
-                            logger.warn("Couldn't read from socket");
-                            pushingData = false;
-                            return;
+                            try {
+                                var len = socket.readNBytes(buffer, 0, BUFFER_SIZE);
+                                var flowReturn = src.pushBuffer(Buffer.memdup(buffer));
+                                if (flowReturn == FlowReturn.FLUSHING) return;
+                                if ((flowReturn == FlowReturn.OK) && (len < BUFFER_SIZE)) {
+                                    src.endOfStream();
+                                    pushingData = false;
+                                    return;
+                                }
+                            } catch (IOException e) {
+                                logger.warn("Couldn't read from socket");
+                                pushingData = false;
+                                return;
+                            }
+                        } catch (Exception e) {
+                            logger.warn(e.getMessage());
                         }
                     }
                 }
@@ -172,28 +189,35 @@ public final class MediaSubsonic extends MediaStream {
         }
     }
 
-    public boolean updatePosition() {
-        var pos = pipeline.queryPosition();
-        if (pos >= 0L) {
-            if (this.isPrepared()) {
-                update(pos);
-                return true;
-            } else {
-                return false;
+    public void updatePosition() {
+        if (isPrepared()) {
+            var pos = pipeline.queryPosition();
+            if (pos >= 0L && isPrepared()) {
+                GLib.idleAddOnce(() -> update(pos));
             }
         }
-        return false;
+    }
+
+    public void startTimestampUpdate() {
+        future = scheduler.scheduleAtFixedRate(this::updatePosition, 0L, 30L, TimeUnit.MILLISECONDS);
+    }
+
+    public void cancelTimestampUpdate() {
+        if (future != null) {
+            future.cancel(true);
+        }
     }
 
     // The rest
 
-    public MediaSubsonic(String songId, long duration, Subsonic subsonic, AppPipeline pipeline, ExecutorService executor, String contentType) {
+    public MediaSubsonic(String songId, long duration, Subsonic subsonic, AppPipeline pipeline, ExecutorService executor, String contentType, ScheduledExecutorService scheduler) {
         this.songId = songId;
         this.subsonic = subsonic;
         this.duration = duration;
         this.pipeline = pipeline;
         this.executor = executor;
         this.contentType = contentType;
+        this.scheduler = scheduler;
 
         var enoughDataCallback = (AppSrcCallbacks.EnoughDataCallback) this::enoughDataHandler;
         var needDataCallback = (AppSrcCallbacks.NeedDataCallback) this::needDataHandler;
@@ -203,6 +227,6 @@ public final class MediaSubsonic extends MediaStream {
         callbacks.overrideNeedData(needDataCallback, instanceArena);
         callbacks.overrideSeekData(seekDataCallback, instanceArena);
 
-        appSrc = this.pipeline.initNewAppSrc(this.duration * 1000000000, callbacks, null);
+        appSrc = this.pipeline.initNewAppSrc(this.duration * 1000, callbacks, null);
     }
 }

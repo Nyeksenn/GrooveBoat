@@ -123,6 +123,15 @@ public class AlbumModel extends BaseModel {
         this.albumArtists = albumArtists;
     }
 
+    public void setAllFields(AlbumModel src) {
+        this.setTitle(src.getTitle());
+        this.setSongCount(src.getSongCount());
+        this.setRelease_year(src.getRelease_year());
+        this.setDuration(src.getDuration());
+        this.setCoverArt(src.getCoverArt());
+        this.setAlbumArtists(src.getAlbumArtists());
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;

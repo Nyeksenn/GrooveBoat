@@ -97,6 +97,7 @@ public class SongListPage extends NavigationPage {
                                 song.getDisplayArtist(),
                                 song.getAlbum().getTitle(),
                                 song.getDuration(),
+                                song.getContentType(),
                                 texture);
                         GLib.idleAddOnce(() -> this.store.append(songListItem));
                     }

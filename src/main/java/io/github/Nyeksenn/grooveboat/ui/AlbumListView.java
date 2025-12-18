@@ -66,17 +66,19 @@ public class AlbumListView extends Box {
 
             this.executor.submit(() -> {
                 var albums = subsonic.getAlbums();
-                for (var album : albums) {
-                    try (var localExec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())) {
-                        localExec.submit(() -> {
-                            try {
-                                var texture = albumTextureLoader.load(album.getAlbumId());
-                                var albumListItem = new AlbumListItem(texture, album.getTitle(), album.getDisplayArtist(), album.getAlbumId());
-                                GLib.idleAddOnce(() -> this.store.append(albumListItem));
-                            } catch (NullPointerException e) {
-                                logger.warn("Didn't find texture for album {}", album.getTitle());
-                            }
-                        });
+                if (albums != null) {
+                    for (var album : albums) {
+                        try (var localExec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())) {
+                            localExec.submit(() -> {
+                                try {
+                                    var texture = albumTextureLoader.load(album.getAlbumId());
+                                    var albumListItem = new AlbumListItem(texture, album.getTitle(), album.getDisplayArtist(), album.getAlbumId());
+                                    GLib.idleAddOnce(() -> this.store.append(albumListItem));
+                                } catch (NullPointerException e) {
+                                    logger.warn("Didn't find texture for album {}", album.getTitle());
+                                }
+                            });
+                        }
                     }
                 }
             });

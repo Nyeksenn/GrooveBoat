@@ -1,26 +1,40 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
-import org.gnome.adw.ActionRow;
-import org.javagi.gobject.annotations.RegisteredType;
+import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
+import org.gnome.glib.Variant;
+import org.gnome.gtk.Box;
+import org.gnome.gtk.Label;
+import org.javagi.gtk.annotations.GtkCallback;
+import org.javagi.gtk.annotations.GtkChild;
 import org.javagi.gtk.annotations.GtkTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.foreign.MemorySegment;
-
-@GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/queue-card.ui")
-@RegisteredType(name = "QueueCard")
-public class QueueCard extends ActionRow {
+@GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/queue-item.ui", name = "QueueItem")
+public class QueueCard extends Box {
     private static final Logger logger = LoggerFactory.getLogger(QueueCard.class);
+    private int index;
 
-    private String songId;
-
-    public void setSongId(String songId) {
-        this.songId = songId;
+    public int getIndex() {
+        return index;
     }
 
-    public QueueCard(MemorySegment address) {
-        super(address);
+    public void setIndex(int index) {
+        this.index = index;
+    }
+
+    @GtkChild(name = "album-cover")
+    public RoundedImage albumCover;
+
+    @GtkChild(name = "song-title-label")
+    public Label songTitleLabel;
+
+    @GtkChild(name = "album-artist-label")
+    public Label albumArtistLabel;
+
+    @GtkCallback(name = "remove-from-queue")
+    public void removeFromQueue() {
+        activateActionIfExists("win.remove-song", Variant.int32(index));
     }
 
     public QueueCard() {
