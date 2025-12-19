@@ -25,15 +25,19 @@ public class QueueStore extends GObject {
     private static final AlbumTextureLoader loader = AlbumTextureLoader.getInstance();
     private boolean initialized;
     private final ListStore<SongListItem> model = new ListStore<>();
-    private final SingleSelection<ListStore<SongListItem>> selection = new SingleSelection<>(model);
+    private final SingleSelection<SongListItem> selection = new SingleSelection<>(model);
 
     @Signal
     public interface InitializeSong {
         void run(SongListItem item);
     }
 
-    public SingleSelection<ListStore<SongListItem>> getSelection() {
+    public SingleSelection<SongListItem> getSelection() {
         return this.selection;
+    }
+
+    public boolean isInitialized() {
+        return initialized;
     }
 
     public void itemSelectionChanged(ParamSpec pspec) {

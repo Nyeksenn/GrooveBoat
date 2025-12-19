@@ -1,6 +1,5 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
-import io.github.Nyeksenn.grooveboat.audio.AppPipeline;
 import io.github.Nyeksenn.grooveboat.audio.QueueStore;
 import io.github.Nyeksenn.grooveboat.gobjects.MediaSubsonic;
 import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
@@ -36,8 +35,6 @@ public class MusicPlayer extends Box {
     @GtkChild(name = "song-queue")
     public SongQueue songQueue;
 
-    private AppPipeline appPipeline;
-
     private GrooveboatApp app;
 
     private MediaSubsonic stream;
@@ -48,10 +45,22 @@ public class MusicPlayer extends Box {
 
             app.closeStream();
             this.stream = app.createStream(songItem.getSongId(), songItem.getDuration().getSeconds() * 1000000L, songItem.getContentType());
-            this.mediaControls.setMediaStream(stream);
             this.playerAlbumArtist.setLabel(songItem.getArtistName());
             this.playerSongName.setLabel(songItem.getSongName());
             this.playerAlbumPicture.setTexture(songItem.getCoverArt());
+            this.mediaControls.setMediaStream(stream);
+        }
+    }
+
+    private void initializePlayer(SongListItem songItem) {
+        if (songItem != null) {
+            if (this.stream == null) {
+                this.stream = app.createStream(songItem.getSongId(), songItem.getDuration().getSeconds() * 1000000L, songItem.getContentType());
+            }
+            this.playerAlbumArtist.setLabel(songItem.getArtistName());
+            this.playerSongName.setLabel(songItem.getSongName());
+            this.playerAlbumPicture.setTexture(songItem.getCoverArt());
+            this.mediaControls.setMediaStream(stream);
         }
     }
 
@@ -68,9 +77,11 @@ public class MusicPlayer extends Box {
                 this.stream = app.getStream();
             }
 
-            app.queueStore.connect("initialize-song", (QueueStore.InitializeSong) this::initializeMediaStream);
+            if (!app.queueStore.getSelection().isEmpty()) {
+                initializePlayer(app.queueStore.getSelection().getSelectedItem());
+            }
 
-            this.appPipeline = app.pipeline;
+            app.queueStore.connect("initialize-song", (QueueStore.InitializeSong) this::initializeMediaStream);
         });
     }
 

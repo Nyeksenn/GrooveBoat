@@ -2,7 +2,6 @@ package io.github.Nyeksenn.grooveboat.ui;
 
 import io.github.Nyeksenn.grooveboat.gobjects.SongListItem;
 import org.gnome.adw.Bin;
-import org.gnome.gio.ListStore;
 import org.gnome.gobject.GObject;
 import org.gnome.gobject.ParamSpec;
 import org.gnome.gtk.*;
@@ -19,7 +18,7 @@ import java.util.Set;
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/song-queue.ui", name = "SongQueue")
 public final class SongQueue extends Bin {
     private static final Logger logger = LoggerFactory.getLogger(SongQueue.class);
-    private SingleSelection<ListStore<SongListItem>> currentSelection;
+    private SingleSelection<SongListItem> currentSelection;
 
     @GtkChild(name = "queue-scroll-window")
     public ScrolledWindow queueScrollWindow;

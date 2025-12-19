@@ -2,8 +2,10 @@
 <interface>
   <template class="QueueItem" parent="GtkBox">
     <property name="halign">center</property>
-    <property name="width-request">350</property>
     <property name="valign">center</property>
+    <style>
+      <class name="queue-item"/>
+    </style>
     <child>
       <object class="GtkBox">
         <property name="orientation">horizontal</property>

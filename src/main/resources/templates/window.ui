@@ -5,7 +5,7 @@
     <property name="default-height">600</property>
     <child>
       <object class="AdwBreakpoint">
-        <condition>max-width: 400sp</condition>
+        <condition>max-width: 625sp</condition>
         <setter object="split-view" property="collapsed">True</setter>
         <signal name="apply" handler="breakpoint-apply"/>
         <signal name="unapply" handler="breakpoint-unapply"/>

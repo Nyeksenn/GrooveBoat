@@ -26,11 +26,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-public class GrooveboatApp extends Application {
+public final class GrooveboatApp extends Application {
     private static final Logger logger = LoggerFactory.getLogger(GrooveboatApp.class);
     private static final ExecutorService gstExec = Executors.newSingleThreadExecutor();
     public final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-    private final ScheduledExecutorService streamScheduler = Executors.newScheduledThreadPool(2);
+    public final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(3);
 
     public AppPipeline pipeline;
     public final Subsonic subsonic = new Subsonic();
@@ -57,7 +57,9 @@ public class GrooveboatApp extends Application {
             Out<State> curr = new Out<>();
             msg.parseStateChanged(prev, curr, null);
             if (prev.get().equals(State.PAUSED) && curr.get().equals(State.PLAYING)) {
-                stream.startTimestampUpdate();
+                if (!stream.timestampUpdateRunning()) {
+                    stream.startTimestampUpdate();
+                }
             } else if (curr.get().equals(State.PAUSED) && prev.get().equals(State.PLAYING)) {
                 stream.cancelTimestampUpdate();
             }
@@ -79,9 +81,10 @@ public class GrooveboatApp extends Application {
                     pipeline,
                     executor,
                     contentType,
-                    streamScheduler
+                    scheduler
             );
 
+            stream.initializeStream();
             return this.stream;
         } else {
             throw new IllegalArgumentException("Subsonic client not initialized. Stream creation impossible.");
@@ -175,7 +178,7 @@ public class GrooveboatApp extends Application {
         }
         closeStream();
         executor.shutdownNow();
-        streamScheduler.shutdownNow();
+        scheduler.shutdownNow();
         assert pipeline != null;
         pipeline.quit();
         gstExec.shutdownNow();
