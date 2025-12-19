@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.foreign.MemorySegment;
-import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -20,11 +20,12 @@ import java.util.concurrent.TimeUnit;
 public class MusicControls extends Box {
     private static final Logger logger = LoggerFactory.getLogger(MusicControls.class);
     private MediaStream ms;
+    private GrooveboatApp app;
     private Adjustment adjustment;
     private final static String[] volumeIcons = new String[]{"speaker-0-symbolic", "speaker-3-symbolic", "speaker-1-symbolic", "speaker-2-symbolic"};
 
     // Debounce
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private ScheduledExecutorService scheduler;
     private ScheduledFuture<?> scheduledTask;
     private final long DEBOUNCE_DELAY = 1000; // milliseconds
 
@@ -73,12 +74,16 @@ public class MusicControls extends Box {
     @GtkCallback(name = "position-scale-change-value")
     public boolean positionScaleChangeValue(ScrollType scroll, double value) {
         ms.pause();
-        if (scheduledTask != null && !scheduledTask.isDone()) {
+        if (scheduledTask != null) {
             scheduledTask.cancel(false);
         }
-        scheduledTask = scheduler.schedule(() -> {
-            GLib.idleAddOnce(() -> ms.seek((long) value));
-        }, DEBOUNCE_DELAY, TimeUnit.MILLISECONDS);
+        try {
+            scheduledTask = scheduler.schedule(() -> {
+                GLib.idleAddOnce(() -> ms.seek((long) value));
+            }, DEBOUNCE_DELAY, TimeUnit.MILLISECONDS);
+        } catch (RejectedExecutionException e) {
+            logger.warn(e.getMessage());
+        }
 
         return false;
     }
@@ -91,8 +96,11 @@ public class MusicControls extends Box {
 
     @GtkCallback(name = "loop-toggled")
     public void loopToggled() {
-        var isLooping = loopButton.getActive();
-        if (isLooping) {
+        var shouldLoop = loopButton.getActive();
+        assert app != null;
+
+        app.shouldLoop = shouldLoop;
+        if (shouldLoop) {
             loopButton.setIconName("arrows-loop-tall-symbolic");
         } else {
             loopButton.setIconName("arrows-loop-tall-disabled-symbolic");
@@ -130,8 +138,12 @@ public class MusicControls extends Box {
 
     @InstanceInit
     public void init() {
-        onRealize(() -> this.volumeButton.setIcons(volumeIcons));
-        onUnrealize(this.scheduler::shutdownNow);
+        onRealize(() -> {
+            var win = (GrooveboatWindow) getRoot();
+            this.app = (GrooveboatApp) win.getApplication();
+            this.scheduler = app.scheduler;
+            this.volumeButton.setIcons(volumeIcons);
+        });
     }
 
     public MusicControls() {

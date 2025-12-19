@@ -39,7 +39,7 @@ public class SongCard extends Box {
 
     @GtkCallback(name = "song-clicked")
     public void songClicked(int n_press, double x, double y) {
-        activateActionIfExists("win.play-song", Variant.string(songId));
+        activateActionIfExists("app.play-song", Variant.string(songId));
     }
 
     @GtkCallback(name = "song-right-clicked")
@@ -52,7 +52,7 @@ public class SongCard extends Box {
     public void setSongId(String songId) {
         var item = new MenuItem();
         item.setLabel("Add to queue");
-        item.setActionAndTargetValue("win.queue-song", Variant.string(songId));
+        item.setActionAndTargetValue("app.queue-song", Variant.string(songId));
         songContextMenu.appendItem(item);
         this.songId = songId;
     }

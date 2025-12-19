@@ -205,7 +205,12 @@ public final class MediaSubsonic extends MediaStream {
     public void cancelTimestampUpdate() {
         if (future != null) {
             future.cancel(true);
+            future = null;
         }
+    }
+
+    public boolean timestampUpdateRunning() {
+        return future != null;
     }
 
     // The rest

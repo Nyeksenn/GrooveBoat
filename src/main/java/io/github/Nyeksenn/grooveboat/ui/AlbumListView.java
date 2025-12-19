@@ -60,9 +60,10 @@ public class AlbumListView extends Box {
         if (this.subsonic == null && this.executor == null) {
             var window = (GrooveboatWindow) getRoot();
             var albumTextureLoader = AlbumTextureLoader.getInstance();
+            var app = (GrooveboatApp) window.getApplication();
 
-            this.subsonic = window.subsonic;
-            this.executor = window.executor;
+            this.subsonic = app.subsonic;
+            this.executor = app.executor;
 
             this.executor.submit(() -> {
                 var albums = subsonic.getAlbums();

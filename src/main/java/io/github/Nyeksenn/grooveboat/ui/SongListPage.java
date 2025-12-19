@@ -45,7 +45,8 @@ public class SongListPage extends NavigationPage {
     @GtkCallback(name = "play-album-clicked")
     public void playAlbumClicked() {
         if (win != null) {
-            var action = win.lookupAction("play-album");
+            var app = (GrooveboatApp) win.getApplication();
+            var action = app.lookupAction("play-album");
             if (action != null) {
                 action.activate(Variant.string(albumId));
             }
@@ -75,15 +76,16 @@ public class SongListPage extends NavigationPage {
     public void loadItems() {
         if (this.subsonic == null && this.executor == null) {
             var window = (GrooveboatWindow) getRoot();
+            var app = (GrooveboatApp) window.getApplication();
             var albumTextureLoader = AlbumTextureLoader.getInstance();
 
-            this.subsonic = window.subsonic;
-            this.executor = window.executor;
+            this.subsonic = app.subsonic;
+            this.executor = app.executor;
             this.win = window;
 
             var menuItem = new MenuItem();
             menuItem.setLabel("Queue album");
-            menuItem.setActionAndTargetValue("win.queue-album", Variant.string(albumId));
+            menuItem.setActionAndTargetValue("app.queue-album", Variant.string(albumId));
             this.albumQueueMenu.appendItem(menuItem);
 
             this.executor.submit(() -> {
