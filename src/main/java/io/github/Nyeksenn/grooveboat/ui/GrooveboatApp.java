@@ -1,17 +1,24 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
 import io.github.Nyeksenn.grooveboat.audio.AppPipeline;
+import io.github.Nyeksenn.grooveboat.audio.QueueStore;
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import io.github.Nyeksenn.grooveboat.gobjects.MediaSubsonic;
 import io.github.Nyeksenn.grooveboat.gobjects.SecretKeeper;
+import org.freedesktop.gstreamer.gst.Bus;
+import org.freedesktop.gstreamer.gst.Message;
+import org.freedesktop.gstreamer.gst.MessageType;
+import org.freedesktop.gstreamer.gst.State;
 import org.gnome.adw.Application;
 import org.gnome.gdk.Display;
 import org.gnome.gio.ApplicationFlags;
 import org.gnome.gio.SimpleAction;
+import org.gnome.glib.GError;
 import org.gnome.glib.Variant;
 import org.gnome.gtk.CssProvider;
 import org.gnome.gtk.Gtk;
 import org.gnome.gtk.IconTheme;
+import org.javagi.base.Out;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +34,37 @@ public class GrooveboatApp extends Application {
 
     public AppPipeline pipeline;
     public final Subsonic subsonic = new Subsonic();
+    public final QueueStore queueStore = new QueueStore(this);
     private MediaSubsonic stream;
+    public boolean shouldLoop = false;
+
+    public boolean handleBusMessage(Bus bus, Message msg) {
+        if (msg.readType().contains(MessageType.EOS)) {
+            logger.info("End of Stream");
+            var action = lookupAction("play-next");
+            action.activate(Variant.boolean_(shouldLoop));
+        } else if (msg.readType().contains(MessageType.ERROR)) {
+            Out<GError> error = new Out<>();
+            Out<String> debug = new Out<>();
+            msg.parseError(error, debug);
+
+            logger.warn("Error: {}", error.get().readMessage());
+
+            pipeline.setState(State.NULL);
+            pipeline.setState(State.PAUSED);
+        } else if (msg.readType().contains(MessageType.STATE_CHANGED)) {
+            Out<State> prev = new Out<>();
+            Out<State> curr = new Out<>();
+            msg.parseStateChanged(prev, curr, null);
+            if (prev.get().equals(State.PAUSED) && curr.get().equals(State.PLAYING)) {
+                stream.startTimestampUpdate();
+            } else if (curr.get().equals(State.PAUSED) && prev.get().equals(State.PLAYING)) {
+                stream.cancelTimestampUpdate();
+            }
+        }
+
+        return true;
+    }
 
     public MediaSubsonic getStream() {
         return stream;
@@ -72,6 +109,18 @@ public class GrooveboatApp extends Application {
         loadStyles(display);
 
         var win = new GrooveboatWindow(this);
+
+        var togglePlayingAction = new SimpleAction("toggle-play", null);
+        togglePlayingAction.onActivate((_) -> {
+            if (stream != null) {
+                stream.setPlaying(!stream.getPlaying());
+            }
+        });
+        addAction(togglePlayingAction);
+
+        var bus = pipeline.getBus();
+        bus.addWatch(0, this::handleBusMessage);
+
         win.present();
     }
 

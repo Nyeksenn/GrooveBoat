@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 public class MusicControls extends Box {
     private static final Logger logger = LoggerFactory.getLogger(MusicControls.class);
     private MediaStream ms;
+    private GrooveboatApp app;
     private Adjustment adjustment;
     private final static String[] volumeIcons = new String[]{"speaker-0-symbolic", "speaker-3-symbolic", "speaker-1-symbolic", "speaker-2-symbolic"};
 
@@ -91,8 +92,11 @@ public class MusicControls extends Box {
 
     @GtkCallback(name = "loop-toggled")
     public void loopToggled() {
-        var isLooping = loopButton.getActive();
-        if (isLooping) {
+        var shouldLoop = loopButton.getActive();
+        assert app != null;
+
+        app.shouldLoop = shouldLoop;
+        if (shouldLoop) {
             loopButton.setIconName("arrows-loop-tall-symbolic");
         } else {
             loopButton.setIconName("arrows-loop-tall-disabled-symbolic");
@@ -130,7 +134,11 @@ public class MusicControls extends Box {
 
     @InstanceInit
     public void init() {
-        onRealize(() -> this.volumeButton.setIcons(volumeIcons));
+        onRealize(() -> {
+            var win = (GrooveboatWindow) getRoot();
+            this.app = (GrooveboatApp) win.getApplication();
+            this.volumeButton.setIcons(volumeIcons);
+        });
         onUnrealize(this.scheduler::shutdownNow);
     }
 

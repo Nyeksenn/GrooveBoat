@@ -45,7 +45,8 @@ public class SongListPage extends NavigationPage {
     @GtkCallback(name = "play-album-clicked")
     public void playAlbumClicked() {
         if (win != null) {
-            var action = win.lookupAction("play-album");
+            var app = (GrooveboatApp) win.getApplication();
+            var action = app.lookupAction("play-album");
             if (action != null) {
                 action.activate(Variant.string(albumId));
             }
@@ -84,7 +85,7 @@ public class SongListPage extends NavigationPage {
 
             var menuItem = new MenuItem();
             menuItem.setLabel("Queue album");
-            menuItem.setActionAndTargetValue("win.queue-album", Variant.string(albumId));
+            menuItem.setActionAndTargetValue("app.queue-album", Variant.string(albumId));
             this.albumQueueMenu.appendItem(menuItem);
 
             this.executor.submit(() -> {

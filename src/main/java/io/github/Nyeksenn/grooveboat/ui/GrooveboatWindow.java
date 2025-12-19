@@ -79,9 +79,12 @@ public class GrooveboatWindow extends ApplicationWindow {
 
     @InstanceInit
     public void init() {
-        onRealize(this::initializeClient);
+        onRealize(() -> {
+            var app = (GrooveboatApp) getApplication();
+            this.initializeClient();
+            app.queueStore.loadState();
+        });
     }
-
 
     public GrooveboatWindow(GrooveboatApp app) {
         setApplication(app);

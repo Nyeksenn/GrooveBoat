@@ -2,6 +2,7 @@ package io.github.Nyeksenn.grooveboat;
 
 import io.ebean.DatabaseFactory;
 import io.ebean.config.DatabaseConfig;
+import io.github.Nyeksenn.grooveboat.audio.QueueStore;
 import io.github.Nyeksenn.grooveboat.client.SubsonicClient;
 import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
 import io.github.Nyeksenn.grooveboat.ui.*;
@@ -62,6 +63,7 @@ public class Main {
             TemplateTypes.register(MusicControls.class);
             TemplateTypes.register(SongQueue.class);
             Types.register(RoundedImage.class);
+            Types.register(QueueStore.class);
         } catch (GErrorException e) {
             logger.error("Couldn't load resources. Exiting");
             return;
