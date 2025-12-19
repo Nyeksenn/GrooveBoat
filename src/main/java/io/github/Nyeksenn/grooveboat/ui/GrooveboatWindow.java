@@ -16,13 +16,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/window.ui", name = "GrooveboatWindow")
 public class GrooveboatWindow extends ApplicationWindow {
     private static final Logger logger = LoggerFactory.getLogger(GrooveboatWindow.class);
     private final SecretKeeper secrets = SecretKeeper.getInstance();
-    public final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    private final ExecutorService executor;
+    private final Subsonic subsonic;
+
     private final Settings settings = new Settings("io.github.Nyeksenn.grooveboat");
 
     @GtkChild(name = "music-chooser")
@@ -30,8 +31,6 @@ public class GrooveboatWindow extends ApplicationWindow {
 
     @GtkChild(name = "main-stack")
     public Stack mainStack;
-
-    public final Subsonic subsonic = new Subsonic();
 
     private boolean checkConnection(String url, String username) {
         if (username != null && url != null) {
@@ -78,24 +77,16 @@ public class GrooveboatWindow extends ApplicationWindow {
         }
     }
 
-    public void unrealizeHandler() {
-        try {
-            subsonic.close();
-        } catch (Exception e) {
-            logger.warn("Unable to cleanup client");
-        }
-        executor.shutdown();
-    }
-
     @InstanceInit
     public void init() {
         onRealize(this::initializeClient);
-        onUnrealize(this::unrealizeHandler);
     }
 
 
     public GrooveboatWindow(GrooveboatApp app) {
         setApplication(app);
+        this.executor = app.executor;
+        this.subsonic = app.subsonic;
     }
 
     @GtkCallback(name = "breakpoint-apply")

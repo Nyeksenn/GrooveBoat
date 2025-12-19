@@ -92,8 +92,9 @@ public class ConnectionPage extends NavigationPage {
     public void init() {
         onRealize(() -> {
             var win = (GrooveboatWindow) getRoot();
-            this.exec = win.executor;
-            this.subsonic = win.subsonic;
+            var app = (GrooveboatApp) win.getApplication();
+            this.exec = app.executor;
+            this.subsonic = app.subsonic;
             entryUrl.grabFocus();
         });
     }

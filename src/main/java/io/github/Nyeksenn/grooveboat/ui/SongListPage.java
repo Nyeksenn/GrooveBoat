@@ -75,10 +75,11 @@ public class SongListPage extends NavigationPage {
     public void loadItems() {
         if (this.subsonic == null && this.executor == null) {
             var window = (GrooveboatWindow) getRoot();
+            var app = (GrooveboatApp) window.getApplication();
             var albumTextureLoader = AlbumTextureLoader.getInstance();
 
-            this.subsonic = window.subsonic;
-            this.executor = window.executor;
+            this.subsonic = app.subsonic;
+            this.executor = app.executor;
             this.win = window;
 
             var menuItem = new MenuItem();

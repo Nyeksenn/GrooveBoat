@@ -1,7 +1,6 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
 import io.github.Nyeksenn.grooveboat.audio.AppPipeline;
-import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import io.github.Nyeksenn.grooveboat.gobjects.MediaSubsonic;
 import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
 import io.github.Nyeksenn.grooveboat.gobjects.SongListItem;
@@ -23,9 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.foreign.MemorySegment;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/music-player.ui", name = "MusicPlayer")
 @RegisteredType(name = "MusicPlayer")
@@ -47,29 +43,11 @@ public class MusicPlayer extends Box {
     @GtkChild(name = "song-queue")
     public SongQueue songQueue;
 
-    private Subsonic subsonic;
-
     private AppPipeline appPipeline;
 
-    private ExecutorService exec;
+    private GrooveboatApp app;
 
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
-
-    public MediaSubsonic stream;
-
-    public void initPlayer() {
-        if (this.subsonic == null && exec == null) {
-            var window = (GrooveboatWindow) getRoot();
-            var app = (GrooveboatApp) window.getApplication();
-
-            this.exec = window.executor;
-            this.subsonic = window.subsonic;
-            this.appPipeline = app.pipeline;
-
-            var bus = appPipeline.getBus();
-            bus.addWatch(0, this::handleBusMessage);
-        }
-    }
+    private MediaSubsonic stream;
 
     public boolean handleBusMessage(Bus bus, Message msg) {
         if (msg.readType().contains(MessageType.EOS)) {
@@ -102,22 +80,8 @@ public class MusicPlayer extends Box {
         if (songItem != null) {
             this.mediaControls.setMediaStream(null);
 
-            if (stream != null) {
-                stream.destroyStream();
-                stream = null;
-            }
-
-            stream = new MediaSubsonic(
-                    songItem.getSongId(),
-                    songItem.getDuration().getSeconds() * 1000000L,
-                    subsonic,
-                    appPipeline,
-                    exec,
-                    songItem.getContentType(),
-                    scheduler
-            );
-
-            stream.initializeStream();
+            app.closeStream();
+            this.stream = app.createStream(songItem.getSongId(), songItem.getDuration().getSeconds() * 1000000L, songItem.getContentType());
             this.mediaControls.setMediaStream(stream);
             this.playerAlbumArtist.setLabel(songItem.getArtistName());
             this.playerSongName.setLabel(songItem.getSongName());
@@ -131,17 +95,28 @@ public class MusicPlayer extends Box {
             var win = (GrooveboatWindow) getRoot();
             assert win != null;
 
+            var app = (GrooveboatApp) win.getApplication();
+
+            this.app = app;
+
+            if (app.getStream() != null) {
+                this.stream = app.getStream();
+            }
+
             var togglePlayingAction = new SimpleAction("toggle-play", null);
-            togglePlayingAction.onActivate((param) -> {
+            togglePlayingAction.onActivate((_) -> {
                 if (stream != null) {
                     stream.setPlaying(!stream.getPlaying());
                 }
             });
             win.addAction(togglePlayingAction);
             songQueue.connect("initialize-song", (SongQueue.InitializeSong) this::initializeMediaStream);
-            initPlayer();
+
+            this.appPipeline = app.pipeline;
+
+            var bus = appPipeline.getBus();
+            bus.addWatch(0, this::handleBusMessage);
         });
-        this.onUnrealize(this::destroy);
     }
 
     public MusicPlayer() {
@@ -149,13 +124,5 @@ public class MusicPlayer extends Box {
 
     public MusicPlayer(MemorySegment address) {
         super(address);
-    }
-
-    public void destroy() {
-        logger.info("Closing Music Player");
-        if (stream != null) {
-            stream.destroyStream();
-        }
-        scheduler.shutdownNow();
     }
 }

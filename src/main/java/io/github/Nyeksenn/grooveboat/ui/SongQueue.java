@@ -80,7 +80,8 @@ public final class SongQueue extends Bin {
     }
 
     private void setupActions(GrooveboatWindow win) {
-        var exec = win.executor;
+        var app = (GrooveboatApp) win.getApplication();
+        var exec = app.executor;
 
         var entries = new ActionEntry[7];
 
