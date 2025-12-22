@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <template class="MusicChooser" parent="AdwNavigationPage">
-    <property name="title" translatable="yes">Content</property>
+    <property name="title" translatable="yes">GrooveBoat</property>
     <property name="tag">content</property>
     <property name="child">
       <object class="AdwToolbarView">
