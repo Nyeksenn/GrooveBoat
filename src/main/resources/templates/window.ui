@@ -24,8 +24,9 @@
                   <object class="AdwSpinner">
                     <property name="halign">center</property>
                     <property name="valign">center</property>
-                    <property name="width-request">48</property>
-                    <property name="height-request">48</property>
+                    <style>
+                      <class name="spinner"/>
+                    </style>
                   </object>
                 </property>
               </object>

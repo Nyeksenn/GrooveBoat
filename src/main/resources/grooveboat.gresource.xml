@@ -18,6 +18,7 @@
     <file compressed="true" alias="credentials-page.ui" preprocess="xml-stripblanks">templates/credentials-page.ui</file>
     <file compressed="true" alias="music-controls.ui" preprocess="xml-stripblanks">templates/music-controls.ui</file>
     <file compressed="true" alias="song-queue.ui" preprocess="xml-stripblanks">templates/song-queue.ui</file>
+    <file compressed="true" alias="mini-player.ui" preprocess="xml-stripblanks">templates/mini-player.ui</file>
 
     <file compressed="true" alias="main.css">css/main.css</file>
   </gresource>

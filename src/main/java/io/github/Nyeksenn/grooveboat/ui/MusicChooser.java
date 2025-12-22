@@ -27,6 +27,9 @@ public class MusicChooser extends NavigationPage {
     @GtkChild(name = "music-switcher-bar")
     public ViewSwitcherBar musicSwitcherBar;
 
+    @GtkChild(name = "mini-player")
+    public MiniPlayer miniPlayer;
+
     @InstanceInit
     public void init() {
     }

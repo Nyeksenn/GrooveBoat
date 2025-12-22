@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="MiniPlayer" parent="GtkBox">
+    <property name="visible">false</property>
+    <property name="halign">fill</property>
+    <property name="hexpand">true</property>
+    <property name="valign">end</property>
+
+    <style>
+      <class name="card"/>
+      <class name="mini-player"/>
+    </style>
+    <child>
+      <object class="GtkBox">
+        <property name="orientation">horizontal</property>
+        <property name="valign">center</property>
+        <property name="hexpand">true</property>
+        <property name="spacing">15</property>
+        <child>
+          <object class="RoundedImage" id="mini-album-cover">
+            <property name="halign">start</property>
+            <property name="pixel-size">30</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="halign">start</property>
+            <property name="valign">center</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkLabel" id="mini-song-title-label">
+                <property name="halign">start</property>
+                <property name="ellipsize">end</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel" id="mini-album-artist-label">
+                <property name="ellipsize">end</property>
+                <property name="halign">start</property>
+                <style>
+                  <class name="dimmed"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="halign">end</property>
+            <property name="hexpand">true</property>
+            <child>
+              <object class="GtkButton" id="mini-play-previous">
+                <property name="icon-name">skip-backward-large-symbolic</property>
+                <property name="action-name">app.play-previous</property>
+                <style>
+                  <class name="flat"/>
+                </style>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="mini-play-toggle">
+                <property name="icon-name">play-symbolic</property>
+                <property name="action-name">app.toggle-play</property>
+                <style>
+                  <class name="flat"/>
+                </style>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="mini-play-skip">
+                <property name="icon-name">skip-forward-large-symbolic</property>
+                <property name="action-name">app.play-next</property>
+                <property name="action-target">false</property>
+                <style>
+                  <class name="flat"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkGestureClick" id="mini-player-click">
+        <signal name="pressed" handler="mini-player-pressed"/>
+      </object>
+    </child>
+  </template>
+</interface>

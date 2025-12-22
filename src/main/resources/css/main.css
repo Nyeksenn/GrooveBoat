@@ -37,3 +37,14 @@
 .queue-item {
   min-width: 300px;
 }
+
+.spinner {
+  min-width: 48px;
+  min-height: 48px;
+}
+
+.mini-player {
+  border-radius: 0;
+  padding: 10px;
+  background: var(--window-bg-color);
+}
