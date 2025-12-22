@@ -62,6 +62,7 @@ public class Main {
             TemplateTypes.register(CredentialsPage.class);
             TemplateTypes.register(MusicControls.class);
             TemplateTypes.register(SongQueue.class);
+            TemplateTypes.register(MiniPlayer.class);
             Types.register(RoundedImage.class);
             Types.register(QueueStore.class);
         } catch (GErrorException e) {

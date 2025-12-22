@@ -1,7 +1,6 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
 import io.github.Nyeksenn.grooveboat.audio.QueueStore;
-import io.github.Nyeksenn.grooveboat.gobjects.MediaSubsonic;
 import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
 import io.github.Nyeksenn.grooveboat.gobjects.SongListItem;
 import org.gnome.gtk.Box;
@@ -37,30 +36,21 @@ public class MusicPlayer extends Box {
 
     private GrooveboatApp app;
 
-    private MediaSubsonic stream;
-
     private void initializeMediaStream(SongListItem songItem) {
         if (songItem != null) {
-            this.mediaControls.setMediaStream(null);
-
-            app.closeStream();
-            this.stream = app.createStream(songItem.getSongId(), songItem.getDuration().getSeconds() * 1000000L, songItem.getContentType());
             this.playerAlbumArtist.setLabel(songItem.getArtistName());
             this.playerSongName.setLabel(songItem.getSongName());
             this.playerAlbumPicture.setTexture(songItem.getCoverArt());
-            this.mediaControls.setMediaStream(stream);
+            this.mediaControls.setMediaStream(app.getStream());
         }
     }
 
     private void initializePlayer(SongListItem songItem) {
         if (songItem != null) {
-            if (this.stream == null) {
-                this.stream = app.createStream(songItem.getSongId(), songItem.getDuration().getSeconds() * 1000000L, songItem.getContentType());
-            }
             this.playerAlbumArtist.setLabel(songItem.getArtistName());
             this.playerSongName.setLabel(songItem.getSongName());
             this.playerAlbumPicture.setTexture(songItem.getCoverArt());
-            this.mediaControls.setMediaStream(stream);
+            this.mediaControls.setMediaStream(app.getStream());
         }
     }
 
@@ -72,10 +62,6 @@ public class MusicPlayer extends Box {
 
             var app = (GrooveboatApp) win.getApplication();
             this.app = app;
-
-            if (app.getStream() != null) {
-                this.stream = app.getStream();
-            }
 
             if (!app.queueStore.getSelection().isEmpty()) {
                 initializePlayer(app.queueStore.getSelection().getSelectedItem());

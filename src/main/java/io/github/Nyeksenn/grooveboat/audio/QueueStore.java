@@ -42,12 +42,16 @@ public class QueueStore extends GObject {
 
     public void itemSelectionChanged(ParamSpec pspec) {
         var selectedItem = model.getItem(selection.getSelected());
-        emit("initialize-song", selectedItem);
-        if (!initialized) {
-            initialized = true;
-        } else {
-            var action = app.lookupAction("toggle-play");
-            action.activate(null);
+        if (selectedItem != null) {
+            app.closeStream();
+            app.createStream(selectedItem.getSongId(), selectedItem.getDuration().getSeconds() * 1000000L, selectedItem.getContentType());
+            emit("initialize-song", selectedItem);
+            if (!initialized) {
+                initialized = true;
+            } else {
+                var action = app.lookupAction("toggle-play");
+                action.activate(null);
+            }
         }
     }
 

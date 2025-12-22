@@ -94,14 +94,14 @@ public class GrooveboatWindow extends ApplicationWindow {
 
     @GtkCallback(name = "breakpoint-apply")
     public void handleBreakpointApply() {
-//        musicChooser.sidebarToggle.setVisible(true);
+        musicChooser.miniPlayer.setVisible(true);
         musicChooser.musicSwitcherBar.setReveal(true);
         musicChooser.musicChooserHeader.setTitleWidget(null);
     }
 
     @GtkCallback(name = "breakpoint-unapply")
     public void handleBreakpointUnapply() {
-//        musicChooser.sidebarToggle.setVisible(false);
+        musicChooser.miniPlayer.setVisible(false);
         musicChooser.musicSwitcherBar.setReveal(false);
         musicChooser.musicChooserHeader.setTitleWidget(musicChooser.musicSwitcherTitle);
     }
