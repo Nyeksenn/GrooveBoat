@@ -88,10 +88,10 @@ public class AlbumListView extends Box {
 
     @InstanceInit
     public void init() {
-        this.onRealize(this::loadItems);
         this.store = new ListStore<>();
-        NoSelection<ListStore<AlbumListItem>> model = new NoSelection<>(this.store);
+        NoSelection<AlbumListItem> model = new NoSelection<>(this.store);
         gridView.setModel(model);
+        this.onRealize(this::loadItems);
     }
 
     public AlbumListView() {

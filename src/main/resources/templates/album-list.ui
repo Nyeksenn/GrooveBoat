@@ -5,18 +5,6 @@
       <object class="GtkStack" id="album-list-stack">
         <property name="transition-type">1</property>
         <property name="hexpand">True</property>
-        <!--        <child>-->
-        <!--          <object class="GtkStackPage" id="stackpage-noalbums">-->
-        <!--            <property name="name">albums-missing</property>-->
-        <!--            <property name="child">-->
-        <!--              <object class="AdwStatusPage" id="noalbums-status-page">-->
-        <!--                <property name="title" translatable="yes">Albums Missing</property>-->
-        <!--                <property name="description" translatable="yes">No albums were found on the server.</property>-->
-        <!--                <property name="icon-name">item-missing-symbolic</property>-->
-        <!--              </object>-->
-        <!--            </property>-->
-        <!--          </object>-->
-        <!--        </child>-->
         <child>
           <object class="GtkStackPage" id="stackpage-albums">
             <property name="name">albums-found</property>
@@ -24,13 +12,15 @@
               <object class="AdwNavigationView" id="album-nav-view">
                 <child>
                   <object class="AdwNavigationPage">
-                    <property name="title" translatable="yes">Page 1</property>
+                    <style>
+                      <class name="padded"/>
+                    </style>
+                    <property name="title" translatable="yes">Album Page</property>
                     <property name="child">
                       <object class="GtkScrolledWindow">
                         <property name="hscrollbar-policy">GTK_POLICY_NEVER</property>
                         <child>
-                          <object class="AdwClampScrollable">
-                            <property name="maximum-size">1600</property>
+                          <object class="GtkScrolledWindow">
                             <property name="child">
                               <object class="GtkGridView" id="album-grid-view">
                                 <property name="orientation">1</property>

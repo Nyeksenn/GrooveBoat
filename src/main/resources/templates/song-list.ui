@@ -38,13 +38,12 @@
           </object>
         </child>
         <child>
-          <object class="GtkScrolledWindow">
-            <property name="hscrollbar-policy">GTK_POLICY_NEVER</property>
-            <property name="vexpand">true</property>
-            <child>
-              <object class="AdwClampScrollable">
-                <property name="maximum-size">800</property>
-                <property name="tightening-threshold">500</property>
+          <object class="AdwClamp">
+            <property name="maximum-size">800</property>
+            <property name="tightening-threshold">600</property>
+            <property name="child">
+              <object class="GtkScrolledWindow">
+                <property name="propagate-natural-height">true</property>
                 <property name="child">
                   <object class="GtkListView" id="song-list-view">
                     <property name="orientation">1</property>
@@ -60,7 +59,7 @@
                   </object>
                 </property>
               </object>
-            </child>
+            </property>
           </object>
         </child>
       </object>
