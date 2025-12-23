@@ -4,7 +4,7 @@
     <property name="title" translatable="yes">GrooveBoat</property>
     <property name="tag">content</property>
     <property name="child">
-      <object class="AdwToolbarView">
+      <object class="AdwToolbarView" id="chooser-tbv">
         <child type="top">
           <object class="AdwHeaderBar" id="music-chooser-header">
             <property name="title-widget">
@@ -16,100 +16,123 @@
             <child type="start">
               <object class="Avatar" id="account-menu"/>
             </child>
+            <child type="end">
+              <object class="GtkToggleButton" id="button-search">
+                <property name="icon-name">edit-find-symbolic</property>
+                <signal name="clicked" handler="search-clicked"/>
+              </object>
+            </child>
           </object>
         </child>
         <property name="content">
-          <object class="GtkOverlay" id="mini-player-overlay">
-            <property name="child">
-              <object class="AdwViewStack" id="music-chooser-stack">
-                <property name="vexpand">true</property>
+          <object class="GtkBox">
+            <property name="orientation">1</property>
+            <child>
+              <object class="GtkSearchBar" id="album-searchbar">
+<!--                <property name="key-capture-widget">chooser-tbv</property>-->
                 <child>
-                  <object class="AdwViewStackPage" id="albumsPage">
-                    <property name="name">albums</property>
-                    <property name="title" translatable="yes">Albums</property>
-                    <property name="icon-name">library-music-symbolic</property>
-                    <property name="use-underline">true</property>
-                    <property name="child">
-                      <object class="AlbumListView" />
-                    </property>
-                  </object>
-                </child>
-                <child>
-                  <object class="AdwViewStackPage" id="artistsPage">
-                    <property name="name">artists</property>
-                    <property name="title" translatable="yes">Artists</property>
-                    <property name="icon-name">library-artists-symbolic</property>
-                    <property name="use-underline">true</property>
-                    <property name="child">
-                      <object class="AdwStatusPage">
-                        <property name="title" bind-source="artistsPage" bind-property="title" bind-flags="sync-create"/>
-                        <property name="icon-name" bind-source="artistsPage" bind-property="icon-name"
-                                  bind-flags="sync-create"/>
-                        <property name="child">
-                          <object class="GtkBox">
-                            <property name="orientation">1</property>
-                            <property name="valign">3</property>
-                            <child>
-                              <object class="GtkLinkButton">
-                                <property name="label" translatable="yes">API Reference</property>
-                                <property name="uri">
-                                  https://gnome.pages.gitlab.gnome.org/libadwaita/doc/1.6/class.ViewSwitcher.html
-                                </property>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkLinkButton">
-                                <property name="label" translatable="yes">Human Interface Guidelines</property>
-                                <property name="uri">https://developer.gnome.org/hig/patterns/nav/view-switchers.html
-                                </property>
-                              </object>
-                            </child>
-                          </object>
-                        </property>
-                      </object>
-                    </property>
-                  </object>
-                </child>
-                <child>
-                  <object class="AdwViewStackPage" id="genresPage">
-                    <property name="name">genres</property>
-                    <property name="title" translatable="yes">Genres</property>
-                    <property name="icon-name">shapes-large-symbolic</property>
-                    <property name="use-underline">true</property>
-                    <property name="child">
-                      <object class="AdwStatusPage">
-                        <property name="title" bind-source="genresPage" bind-property="title" bind-flags="sync-create"/>
-                        <property name="icon-name" bind-source="genresPage" bind-property="icon-name"
-                                  bind-flags="sync-create"/>
-                        <property name="child">
-                          <object class="GtkBox">
-                            <property name="orientation">1</property>
-                            <property name="valign">3</property>
-                            <child>
-                              <object class="GtkLinkButton">
-                                <property name="label" translatable="yes">API Reference</property>
-                                <property name="uri">
-                                  https://gnome.pages.gitlab.gnome.org/libadwaita/doc/1.6/class.ViewSwitcher.html
-                                </property>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkLinkButton">
-                                <property name="label" translatable="yes">Human Interface Guidelines</property>
-                                <property name="uri">https://developer.gnome.org/hig/patterns/nav/view-switchers.html
-                                </property>
-                              </object>
-                            </child>
-                          </object>
-                        </property>
-                      </object>
-                    </property>
+                  <object class="GtkSearchEntry" id="album-searchentry">
+                    <property name="search-delay">100</property>
+                    <property name="placeholder-text" translatable="yes">Search fruits</property>
+                    <!--                <property name="width-request">400</property>-->
                   </object>
                 </child>
               </object>
-            </property>
-            <child type="overlay">
-              <object class="MiniPlayer" id="mini-player"/>
+            </child>
+            <child>
+              <object class="GtkOverlay" id="mini-player-overlay">
+                <property name="child">
+                  <object class="AdwViewStack" id="music-chooser-stack">
+                    <property name="vexpand">true</property>
+                    <child>
+                      <object class="AdwViewStackPage" id="albumsPage">
+                        <property name="name">albums</property>
+                        <property name="title" translatable="yes">Albums</property>
+                        <property name="icon-name">library-music-symbolic</property>
+                        <property name="use-underline">true</property>
+                        <property name="child">
+                          <object class="AlbumListView" />
+                        </property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="AdwViewStackPage" id="artistsPage">
+                        <property name="name">artists</property>
+                        <property name="title" translatable="yes">Artists</property>
+                        <property name="icon-name">library-artists-symbolic</property>
+                        <property name="use-underline">true</property>
+                        <property name="child">
+                          <object class="AdwStatusPage">
+                            <property name="title" bind-source="artistsPage" bind-property="title" bind-flags="sync-create"/>
+                            <property name="icon-name" bind-source="artistsPage" bind-property="icon-name"
+                                      bind-flags="sync-create"/>
+                            <property name="child">
+                              <object class="GtkBox">
+                                <property name="orientation">1</property>
+                                <property name="valign">3</property>
+                                <child>
+                                  <object class="GtkLinkButton">
+                                    <property name="label" translatable="yes">API Reference</property>
+                                    <property name="uri">
+                                      https://gnome.pages.gitlab.gnome.org/libadwaita/doc/1.6/class.ViewSwitcher.html
+                                    </property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkLinkButton">
+                                    <property name="label" translatable="yes">Human Interface Guidelines</property>
+                                    <property name="uri">https://developer.gnome.org/hig/patterns/nav/view-switchers.html
+                                    </property>
+                                  </object>
+                                </child>
+                              </object>
+                            </property>
+                          </object>
+                        </property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="AdwViewStackPage" id="genresPage">
+                        <property name="name">genres</property>
+                        <property name="title" translatable="yes">Genres</property>
+                        <property name="icon-name">shapes-large-symbolic</property>
+                        <property name="use-underline">true</property>
+                        <property name="child">
+                          <object class="AdwStatusPage">
+                            <property name="title" bind-source="genresPage" bind-property="title" bind-flags="sync-create"/>
+                            <property name="icon-name" bind-source="genresPage" bind-property="icon-name"
+                                      bind-flags="sync-create"/>
+                            <property name="child">
+                              <object class="GtkBox">
+                                <property name="orientation">1</property>
+                                <property name="valign">3</property>
+                                <child>
+                                  <object class="GtkLinkButton">
+                                    <property name="label" translatable="yes">API Reference</property>
+                                    <property name="uri">
+                                      https://gnome.pages.gitlab.gnome.org/libadwaita/doc/1.6/class.ViewSwitcher.html
+                                    </property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkLinkButton">
+                                    <property name="label" translatable="yes">Human Interface Guidelines</property>
+                                    <property name="uri">https://developer.gnome.org/hig/patterns/nav/view-switchers.html
+                                    </property>
+                                  </object>
+                                </child>
+                              </object>
+                            </property>
+                          </object>
+                        </property>
+                      </object>
+                    </child>
+                  </object>
+                </property>
+                <child type="overlay">
+                  <object class="MiniPlayer" id="mini-player"/>
+                </child>
+              </object>
             </child>
           </object>
         </property>

@@ -8,11 +8,11 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.java-gi:gstreamer:0.13.0-RC1'
-    implementation 'org.java-gi:glib:0.13.0-RC1'
-    implementation 'org.java-gi:gtk:0.13.0-RC1'
-    implementation 'org.java-gi:adw:0.13.0-RC1'
-    implementation 'org.java-gi:secret:0.13.0-RC1'
+    implementation 'org.java-gi:gstreamer:0.13.1'
+    implementation 'org.java-gi:glib:0.13.1'
+    implementation 'org.java-gi:gtk:0.13.1'
+    implementation 'org.java-gi:adw:0.13.1'
+    implementation 'org.java-gi:secret:0.13.1'
     implementation 'tools.jackson.core:jackson-databind:3.0.1'
     implementation 'tools.jackson.module:jackson-module-blackbird:3.0.1'
     implementation 'io.ebean:ebean:17.1.1'

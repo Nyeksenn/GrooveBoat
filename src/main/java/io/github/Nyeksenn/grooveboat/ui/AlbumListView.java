@@ -1,15 +1,14 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
+import io.github.Nyeksenn.grooveboat.gobjects.AlbumFilter;
 import io.github.Nyeksenn.grooveboat.gobjects.AlbumListItem;
+import io.github.Nyeksenn.grooveboat.gobjects.AlbumTitleSorter;
 import org.gnome.adw.NavigationView;
 import org.gnome.gio.ListStore;
 import org.gnome.glib.GLib;
 import org.gnome.gobject.GObject;
-import org.gnome.gtk.Box;
-import org.gnome.gtk.GridView;
-import org.gnome.gtk.ListItem;
-import org.gnome.gtk.NoSelection;
+import org.gnome.gtk.*;
 import org.javagi.gobject.annotations.InstanceInit;
 import org.javagi.gobject.annotations.RegisteredType;
 import org.javagi.gtk.annotations.GtkCallback;
@@ -26,7 +25,10 @@ import java.util.concurrent.Executors;
 @RegisteredType(name = "AlbumListView")
 public class AlbumListView extends Box {
     private static final Logger logger = LoggerFactory.getLogger(AlbumListView.class);
+    private final AlbumTitleSorter titleSorter = new AlbumTitleSorter();
+    private final AlbumFilter filter = new AlbumFilter();
     private ListStore<AlbumListItem> store;
+    private SortListModel<AlbumListItem> sortedModel;
     private Subsonic subsonic;
     private ExecutorService executor;
 
@@ -89,8 +91,8 @@ public class AlbumListView extends Box {
     @InstanceInit
     public void init() {
         this.store = new ListStore<>();
-        NoSelection<AlbumListItem> model = new NoSelection<>(this.store);
-        gridView.setModel(model);
+        this.sortedModel = new SortListModel<>(this.store, titleSorter);
+        gridView.setModel(new NoSelection<AlbumListItem>(this.sortedModel));
         this.onRealize(this::loadItems);
     }
 
