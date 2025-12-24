@@ -48,3 +48,9 @@
   padding: 10px;
   background: var(--window-bg-color);
 }
+
+.searchbar > revealer > box {
+  background-color: var(--window-bg-color);
+  border-style: none;
+  box-shadow: none;
+}

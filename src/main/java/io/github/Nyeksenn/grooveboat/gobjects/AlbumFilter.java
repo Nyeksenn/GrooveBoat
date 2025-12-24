@@ -29,9 +29,9 @@ public class AlbumFilter extends Filter {
     @Override
     public boolean match(GObject item) {
         var i = (AlbumListItem) item;
-        var titleMatch = i.getAlbumName().contains(searchString);
-        var artistMatch = i.getAlbumArtist().contains(searchString);
-        return titleMatch | artistMatch;
+        var titleMatch = i.getAlbumName().toLowerCase().contains(searchString);
+        var artistMatch = i.getAlbumArtist().toLowerCase().contains(searchString);
+        return titleMatch || artistMatch;
     }
 
     public AlbumFilter() {

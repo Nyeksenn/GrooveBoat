@@ -4,8 +4,10 @@ import org.gnome.adw.HeaderBar;
 import org.gnome.adw.NavigationPage;
 import org.gnome.adw.ViewSwitcher;
 import org.gnome.adw.ViewSwitcherBar;
-import org.gnome.gtk.Button;
 import org.gnome.gtk.SearchBar;
+import org.gnome.gtk.SearchEntry;
+import org.gnome.gtk.ToggleButton;
+import org.gnome.gtk.Widget;
 import org.javagi.gobject.annotations.InstanceInit;
 import org.javagi.gobject.annotations.RegisteredType;
 import org.javagi.gtk.annotations.GtkCallback;
@@ -37,7 +39,10 @@ public class MusicChooser extends NavigationPage {
     public SearchBar albumSearchbar;
 
     @GtkChild(name = "button-search")
-    public Button buttonSearch;
+    public ToggleButton buttonSearch;
+
+    @GtkChild(name = "album-searchentry")
+    public SearchEntry searchEntry;
 
     @GtkCallback(name = "search-clicked")
     public void searchClicked() {
@@ -46,6 +51,10 @@ public class MusicChooser extends NavigationPage {
 
     @InstanceInit
     public void init() {
+        onRealize(() -> {
+            albumSearchbar.setKeyCaptureWidget((Widget) getRoot());
+            albumSearchbar.bindProperty("search-mode-enabled", buttonSearch, "active").build();
+        });
     }
 
     public MusicChooser() {

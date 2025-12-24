@@ -93,7 +93,20 @@ public class AlbumListView extends Box {
         this.store = new ListStore<>();
         this.sortedModel = new SortListModel<>(this.store, titleSorter);
         gridView.setModel(new NoSelection<AlbumListItem>(this.sortedModel));
-        this.onRealize(this::loadItems);
+        this.onRealize(() -> {
+            var win = (GrooveboatWindow) getRoot();
+            win.musicChooser.searchEntry.onSearchStarted(() -> {
+                gridView.setModel(new NoSelection<AlbumListItem>(new FilterListModel<AlbumListItem>(sortedModel, filter)));
+            });
+            win.musicChooser.searchEntry.onStopSearch(() -> {
+                gridView.setModel(new NoSelection<AlbumListItem>(sortedModel));
+            });
+            win.musicChooser.searchEntry.onSearchChanged(() -> {
+                var searchTerm = win.musicChooser.searchEntry.getText();
+                filter.setSearchString(searchTerm);
+            });
+            loadItems();
+        });
     }
 
     public AlbumListView() {
