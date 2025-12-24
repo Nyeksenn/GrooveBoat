@@ -23,12 +23,14 @@
         <property name="orientation">vertical</property>
         <child>
           <object class="GtkLabel" id="album-name">
-            <property name="wrap">true</property>
+            <property name="wrap">false</property>
+            <property name="ellipsize">end</property>
           </object>
         </child>
         <child>
           <object class="GtkLabel" id="album-artist">
-            <property name="wrap">true</property>
+            <property name="wrap">false</property>
+            <property name="ellipsize">end</property>
             <style>
               <class name="dimmed"/>
             </style>
