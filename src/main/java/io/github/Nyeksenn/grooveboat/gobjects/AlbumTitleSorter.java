@@ -18,12 +18,19 @@ public class AlbumTitleSorter extends Sorter {
     public Ordering compare(GObject item1, GObject item2) {
         var first = (AlbumListItem) item1;
         var second = (AlbumListItem) item2;
-        var ordering = first.getAlbumName().toLowerCase().compareTo(second.getAlbumName().toLowerCase());
+        var artistOrdering = first.getAlbumArtist().toLowerCase().compareTo(second.getAlbumArtist().toLowerCase());
+        var albumOrdering = first.getAlbumName().toLowerCase().compareTo(second.getAlbumName().toLowerCase());
 
-        if (ordering < 0) {
+        if (artistOrdering < 0) {
             return Ordering.SMALLER;
-        } else if (ordering == 0) {
-            return Ordering.EQUAL;
+        } else if (artistOrdering == 0) {
+            if (albumOrdering < 0) {
+                return Ordering.SMALLER;
+            } else if (albumOrdering == 0) {
+                return Ordering.EQUAL;
+            } else {
+                return Ordering.LARGER;
+            }
         } else {
             return Ordering.LARGER;
         }
