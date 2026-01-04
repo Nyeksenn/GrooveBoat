@@ -60,7 +60,7 @@ public class SubsonicClient {
     private static final HttpClient httpClient = HttpClient.newBuilder()
             .version(HttpClient.Version.HTTP_1_1)
             .followRedirects(HttpClient.Redirect.NORMAL)
-            .connectTimeout(Duration.ofSeconds(2)).build();
+            .connectTimeout(Duration.ofSeconds(5)).build();
 
     private final HashMap<String, String> baseQueryParams = new HashMap<>();
 
@@ -202,11 +202,12 @@ public class SubsonicClient {
         var file = File.newForPath(imagePath.toString());
 
         executor.submit(() -> {
+            logger.info("Saving cover");
             var pngBytes = texture.saveToPngBytes();
             try {
                 file.replaceContents(pngBytes, null, false, Set.of(FileCreateFlags.REPLACE_DESTINATION), null, null);
             } catch (GErrorException e) {
-                logger.warn("Couldn't cache cover");
+                logger.warn("Couldn't save cover");
             }
         });
 

@@ -34,6 +34,7 @@ public class Subsonic implements AutoCloseable {
     private SubsonicClient client;
     private final Database db = DB.getDefault();
     private final ExecutorService exec = Executors.newVirtualThreadPerTaskExecutor();
+    private final ExecutorService threadExec = Executors.newThreadPerTaskExecutor(Executors.defaultThreadFactory());
 
     private List<ArtistModel> refreshArtists() {
         try {
@@ -93,10 +94,10 @@ public class Subsonic implements AutoCloseable {
 
                     Path coverPath;
                     try {
-                        coverPath = client.cacheCoverArt(album.coverArt(), 500);
+                        coverPath = client.cacheCoverArt(album.coverArt(), 800);
                     } catch (IOException | NoSuchAlgorithmException | GErrorException e) {
                         coverPath = null;
-                        logger.warn("Unable to cache cover art for album {}", album.name());
+                        logger.warn("Unable to cache cover art for album {}: {}", album.name(), e.getMessage());
                     }
 
                     var newAlbumModel = new AlbumModel(album.id(), album.name(), album.songCount(), album.year(), Duration.ofSeconds(album.duration()), coverPath, albumArtists);
@@ -235,7 +236,7 @@ public class Subsonic implements AutoCloseable {
     }
 
     public void newClient(String baseUrl, String username, String password) {
-        var client = new SubsonicClient(baseUrl, exec, username, password);
+        var client = new SubsonicClient(baseUrl, threadExec, username, password);
         logger.info("Reinitializing client for connecting to {}", client.getHost());
         this.client = client;
     }
@@ -258,5 +259,6 @@ public class Subsonic implements AutoCloseable {
     @Override
     public void close() {
         exec.close();
+        threadExec.close();
     }
 }
