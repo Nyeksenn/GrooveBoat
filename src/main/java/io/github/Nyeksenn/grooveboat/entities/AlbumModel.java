@@ -5,8 +5,8 @@ import io.ebean.annotation.Length;
 import io.ebean.annotation.NotNull;
 import jakarta.persistence.*;
 
+import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -29,8 +29,7 @@ public class AlbumModel extends BaseModel {
 
     Duration duration;
 
-    @Column(length = 100000000)
-    byte[] coverArt;
+    Path coverPath;
 
     @ManyToMany
     @JoinTable(name = "album_artists")
@@ -79,12 +78,12 @@ public class AlbumModel extends BaseModel {
         this.duration = duration;
     }
 
-    public byte[] getCoverArt() {
-        return coverArt;
+    public Path getCoverPath() {
+        return coverPath;
     }
 
-    public void setCoverArt(byte[] coverArt) {
-        this.coverArt = coverArt;
+    public void setCoverPath(Path coverPath) {
+        this.coverPath = coverPath;
     }
 
     public List<ArtistModel> getAlbumArtists() {
@@ -113,13 +112,13 @@ public class AlbumModel extends BaseModel {
         this.albumArtists = albumArtists;
     }
 
-    public AlbumModel(String albumId, String title, int songCount, int release_year, Duration duration, byte[] coverArt, List<ArtistModel> albumArtists) {
+    public AlbumModel(String albumId, String title, int songCount, int release_year, Duration duration, Path coverPath, List<ArtistModel> albumArtists) {
         this.albumId = albumId;
         this.title = title;
         this.songCount = songCount;
         this.release_year = release_year;
         this.duration = duration;
-        this.coverArt = coverArt;
+        this.coverPath = coverPath;
         this.albumArtists = albumArtists;
     }
 
@@ -128,7 +127,7 @@ public class AlbumModel extends BaseModel {
         this.setSongCount(src.getSongCount());
         this.setRelease_year(src.getRelease_year());
         this.setDuration(src.getDuration());
-        this.setCoverArt(src.getCoverArt());
+        this.setCoverPath(src.getCoverPath());
         this.setAlbumArtists(src.getAlbumArtists());
     }
 
@@ -136,11 +135,11 @@ public class AlbumModel extends BaseModel {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         AlbumModel that = (AlbumModel) o;
-        return getSongCount() == that.getSongCount() && getRelease_year() == that.getRelease_year() && Objects.equals(getAlbumId(), that.getAlbumId()) && Objects.equals(getTitle(), that.getTitle()) && Objects.equals(getDuration(), that.getDuration()) && Arrays.equals(getCoverArt(), that.getCoverArt()) && Objects.equals(getAlbumArtists(), that.getAlbumArtists());
+        return songCount == that.songCount && release_year == that.release_year && Objects.equals(albumId, that.albumId) && Objects.equals(title, that.title) && Objects.equals(duration, that.duration) && Objects.equals(coverPath, that.coverPath);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getAlbumId(), getTitle(), getSongCount(), getRelease_year(), getDuration(), Arrays.hashCode(getCoverArt()), getAlbumArtists());
+        return Objects.hash(albumId, title, songCount, release_year, duration, coverPath);
     }
 }

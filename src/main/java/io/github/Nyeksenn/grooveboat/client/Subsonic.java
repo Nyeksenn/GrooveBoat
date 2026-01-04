@@ -11,12 +11,15 @@ import io.github.Nyeksenn.grooveboat.entities.SongModel;
 import io.github.Nyeksenn.grooveboat.entities.query.QAlbumModel;
 import io.github.Nyeksenn.grooveboat.entities.query.QArtistModel;
 import io.github.Nyeksenn.grooveboat.entities.query.QSongModel;
+import org.javagi.base.GErrorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.http.HttpResponse;
+import java.nio.file.Path;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -87,14 +90,16 @@ public class Subsonic implements AutoCloseable {
                     var savedAlbumModel = new QAlbumModel().albumId.equalTo(album.id()).findOne();
 
                     var albumArtists = resolveArtists(album.artists());
-                    byte[] albumCover;
+
+                    Path coverPath;
                     try {
-                        albumCover = client.getCoverArt(album.coverArt(), 1000);
-                    } catch (IOException e) {
-                        albumCover = null;
+                        coverPath = client.cacheCoverArt(album.coverArt(), 500);
+                    } catch (IOException | NoSuchAlgorithmException | GErrorException e) {
+                        coverPath = null;
+                        logger.warn("Unable to cache cover art for album {}", album.name());
                     }
 
-                    var newAlbumModel = new AlbumModel(album.id(), album.name(), album.songCount(), album.year(), Duration.ofSeconds(album.duration()), albumCover, albumArtists);
+                    var newAlbumModel = new AlbumModel(album.id(), album.name(), album.songCount(), album.year(), Duration.ofSeconds(album.duration()), coverPath, albumArtists);
 
                     // Insert
                     if (savedAlbumModel == null) {

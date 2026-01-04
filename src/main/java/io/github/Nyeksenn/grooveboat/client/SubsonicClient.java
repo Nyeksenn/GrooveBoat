@@ -1,6 +1,11 @@
 package io.github.Nyeksenn.grooveboat.client;
 
 import io.github.Nyeksenn.grooveboat.deserializer.*;
+import io.github.Nyeksenn.grooveboat.utils.Helpers;
+import org.gnome.gdk.Texture;
+import org.gnome.gio.File;
+import org.gnome.gio.FileCreateFlags;
+import org.javagi.base.GErrorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.core.JacksonException;
@@ -20,16 +25,23 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.gnome.glib.GLib.getHostName;
 
 public class SubsonicClient {
     private static final Logger logger = LoggerFactory.getLogger(SubsonicClient.class);
+    private static final ExecutorService executor = Executors.newFixedThreadPool(8);
+    private static final Path imageCachePath = Paths.get(Helpers.getUserDataPath(), "grooveboat", "covers");
     private static final JsonMapper om = JsonMapper.builder()
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
@@ -169,13 +181,35 @@ public class SubsonicClient {
         return executeGetBinary(new AbsoluteEndpoint(url), null);
     }
 
-    public byte[] getCoverArt(String id, int size) throws IOException {
+    public Path cacheCoverArt(String id, int size) throws IOException, NoSuchAlgorithmException, GErrorException {
         var params = new HashMap<>(Map.of(
                 "id", id,
                 "size", String.valueOf(size)
         ));
 
-        return executeGetBinary(new RelativeEndpoint("/rest/getCoverArt"), params);
+        var imageBytes = executeGetBinary(new RelativeEndpoint("/rest/getCoverArt"), params);
+
+        var md = MessageDigest.getInstance("SHA-256");
+        md.update(imageBytes);
+        var digest = md.digest();
+        var hf = HexFormat.of();
+        var digestString = hf.formatHex(digest);
+        var fileName = digestString + ".png";
+        var imagePath = imageCachePath.resolve(fileName);
+
+        var texture = Texture.fromBytes(imageBytes);
+        var file = File.newForPath(imagePath.toString());
+
+        executor.submit(() -> {
+            var pngBytes = texture.saveToPngBytes();
+            try {
+                file.replaceContents(pngBytes, null, false, Set.of(FileCreateFlags.REPLACE_DESTINATION), null, null);
+            } catch (GErrorException e) {
+                logger.warn("Couldn't cache cover");
+            }
+        });
+
+        return imagePath;
     }
 
     public List<Album> getAlbumList2() throws IOException {
@@ -324,5 +358,11 @@ public class SubsonicClient {
         var splitResults = baseUrl.split("://");
         this.scheme = splitResults[0];
         this.host = splitResults[1];
+
+        try {
+            Files.createDirectories(imageCachePath);
+        } catch (IOException e) {
+            logger.warn("Couldn't create image cache dir");
+        }
     }
 }

@@ -6,7 +6,7 @@ create table album (
   song_count                    integer not null,
   release_year                  integer not null,
   duration                      bigint,
-  cover_art                     varbinary(100000000),
+  cover_path                    varchar(255),
   version                       bigint not null,
   when_created                  timestamp not null,
   when_modified                 timestamp not null,
