@@ -59,8 +59,7 @@ public class SubsonicClient {
 
     private static final HttpClient httpClient = HttpClient.newBuilder()
             .version(HttpClient.Version.HTTP_1_1)
-            .followRedirects(HttpClient.Redirect.NORMAL)
-            .connectTimeout(Duration.ofSeconds(5)).build();
+            .followRedirects(HttpClient.Redirect.NORMAL).build();
 
     private final HashMap<String, String> baseQueryParams = new HashMap<>();
 
