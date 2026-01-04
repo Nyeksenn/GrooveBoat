@@ -45,6 +45,10 @@ public class AlbumTextureLoader {
         }
     }
 
+    public void insert(String albumId, Texture texture) {
+        map.put(albumId, texture);
+    }
+
     public Texture load(String albumId) {
         return map.computeIfAbsent(albumId, this::fetchTexture);
     }

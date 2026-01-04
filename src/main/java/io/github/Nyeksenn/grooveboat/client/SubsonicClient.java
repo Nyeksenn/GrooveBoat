@@ -1,6 +1,7 @@
 package io.github.Nyeksenn.grooveboat.client;
 
 import io.github.Nyeksenn.grooveboat.deserializer.*;
+import io.github.Nyeksenn.grooveboat.ui.AlbumTextureLoader;
 import io.github.Nyeksenn.grooveboat.utils.Helpers;
 import org.gnome.gdk.Texture;
 import org.gnome.gio.File;
@@ -34,13 +35,13 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static org.gnome.glib.GLib.getHostName;
 
 public class SubsonicClient {
     private static final Logger logger = LoggerFactory.getLogger(SubsonicClient.class);
-    private static final ExecutorService executor = Executors.newFixedThreadPool(8);
+    private final ExecutorService executor;
+    private static final AlbumTextureLoader textureLoader = AlbumTextureLoader.getInstance();
     private static final Path imageCachePath = Paths.get(Helpers.getUserDataPath(), "grooveboat", "covers");
     private static final JsonMapper om = JsonMapper.builder()
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
@@ -209,6 +210,7 @@ public class SubsonicClient {
             }
         });
 
+        textureLoader.insert(id, texture);
         return imagePath;
     }
 
@@ -347,7 +349,8 @@ public class SubsonicClient {
         this.password = password;
     }
 
-    public SubsonicClient(String baseUrl, String username, String password) {
+    public SubsonicClient(String baseUrl, ExecutorService executor, String username, String password) {
+        this.executor = executor;
         this.username = username;
         this.password = password;
 
