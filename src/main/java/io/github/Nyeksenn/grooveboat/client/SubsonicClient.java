@@ -33,6 +33,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 
@@ -214,14 +215,15 @@ public class SubsonicClient {
         return imagePath;
     }
 
-    public List<Album> getAlbumList2() throws IOException {
+    public List<Album> getNewAlbums(Instant lastRefresh) throws IOException {
         var moreToGo = true;
-        List<Album> albums = new ArrayList<>(200);
+        final int PAGE_SIZE = 200;
+        List<Album> albums = new ArrayList<>(PAGE_SIZE);
         var offset = 0;
         var params = new HashMap<>(Map.of(
-                "size", String.valueOf(500),
+                "size", String.valueOf(PAGE_SIZE),
                 "offset", String.valueOf(offset),
-                "type", "alphabeticalByArtist"
+                "type", "newest"
         ));
 
         while (moreToGo) {
@@ -235,14 +237,28 @@ public class SubsonicClient {
             } else {
                 try {
                     List<Album> partialAlbumList = albumReader.readValue(album_fragment);
-                    albums.addAll(partialAlbumList);
+
+                    if (partialAlbumList.size() < PAGE_SIZE) {
+                        moreToGo = false;
+                    }
+
+                    for (var album : partialAlbumList) {
+                        var createdAt = Instant.parse(album.created());
+                        if (createdAt.isAfter(lastRefresh)) {
+                            albums.add(album);
+                        } else {
+                            moreToGo = false;
+                            break;
+                        }
+                    }
+
                 } catch (IllegalArgumentException | JacksonException e) {
                     logger.warn(e.getMessage());
                     return new ArrayList<>();
                 }
             }
 
-            offset += 500;
+            offset += PAGE_SIZE;
             params.replace("offset", String.valueOf(offset));
         }
 

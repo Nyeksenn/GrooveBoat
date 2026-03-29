@@ -13,9 +13,8 @@ import java.util.Objects;
 @Table(name = "song")
 @Index(unique = true, columnNames = {"song_id"})
 public class SongModel extends BaseModel {
-    @NotNull
-    @Length(100)
-    String songId;
+    @Id
+    String id;
 
     @NotNull
     @Length(200)
@@ -44,12 +43,12 @@ public class SongModel extends BaseModel {
     @JoinColumn(name = "album_id")
     AlbumModel album;
 
-    public String getSongId() {
-        return songId;
+    public String getId() {
+        return id;
     }
 
-    public void setSongId(String songId) {
-        this.songId = songId;
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getTitle() {
@@ -143,7 +142,7 @@ public class SongModel extends BaseModel {
     }
 
     public SongModel(String songId, String title, int track, int year, Duration duration, int bitRate, String contentType, int discNumber, List<ArtistModel> songArtists, AlbumModel album) {
-        this.songId = songId;
+        this.id = songId;
         this.title = title;
         this.track = track;
         this.releaseYear = year;
@@ -171,11 +170,11 @@ public class SongModel extends BaseModel {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         SongModel songModel = (SongModel) o;
-        return getTrack() == songModel.getTrack() && getReleaseYear() == songModel.getReleaseYear() && getBitRate() == songModel.getBitRate() && getDiscNumber() == songModel.getDiscNumber() && Objects.equals(getSongId(), songModel.getSongId()) && Objects.equals(getTitle(), songModel.getTitle()) && Objects.equals(getDuration(), songModel.getDuration()) && Objects.equals(getContentType(), songModel.getContentType()) && Objects.equals(getSongArtists(), songModel.getSongArtists()) && Objects.equals(getAlbum(), songModel.getAlbum());
+        return getTrack() == songModel.getTrack() && getReleaseYear() == songModel.getReleaseYear() && getBitRate() == songModel.getBitRate() && getDiscNumber() == songModel.getDiscNumber() && Objects.equals(getId(), songModel.getId()) && Objects.equals(getTitle(), songModel.getTitle()) && Objects.equals(getDuration(), songModel.getDuration()) && Objects.equals(getContentType(), songModel.getContentType()) && Objects.equals(getSongArtists(), songModel.getSongArtists()) && Objects.equals(getAlbum(), songModel.getAlbum());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getSongId(), getTitle(), getTrack(), getReleaseYear(), getDuration(), getBitRate(), getContentType(), getDiscNumber(), getSongArtists(), getAlbum());
+        return Objects.hash(getId(), getTitle(), getTrack(), getReleaseYear(), getDuration(), getBitRate(), getContentType(), getDiscNumber(), getSongArtists(), getAlbum());
     }
 }

@@ -3,10 +3,7 @@ package io.github.Nyeksenn.grooveboat.entities;
 import io.ebean.annotation.Index;
 import io.ebean.annotation.Length;
 import io.ebean.annotation.NotNull;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -16,9 +13,8 @@ import java.util.Set;
 @Table(name = "artist")
 @Index(unique = true, columnNames = {"artist_id"})
 public class ArtistModel extends BaseModel {
-    @NotNull
-    @Length(100)
-    String artistId;
+    @Id
+    String id;
 
     @NotNull
     @Length(200)
@@ -33,12 +29,12 @@ public class ArtistModel extends BaseModel {
     @ManyToMany(mappedBy = "songArtists")
     Set<SongModel> songs;
 
-    public String getArtistId() {
-        return artistId;
+    public String getId() {
+        return id;
     }
 
-    public void setArtistId(String artistId) {
-        this.artistId = artistId;
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -66,30 +62,25 @@ public class ArtistModel extends BaseModel {
     }
 
     public ArtistModel(String artistId, String name) {
-        this.artistId = artistId;
+        this.id = artistId;
         this.name = name;
     }
 
     public ArtistModel(String artistId, String name, byte[] image) {
-        this.artistId = artistId;
+        this.id = artistId;
         this.name = name;
         this.image = image;
-    }
-
-    public void setAllFields(ArtistModel src) {
-        this.setName(src.getName());
-        this.setImage(src.getImage());
     }
 
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         ArtistModel that = (ArtistModel) o;
-        return Objects.equals(getArtistId(), that.getArtistId()) && Objects.equals(getName(), that.getName()) && Arrays.equals(getImage(), that.getImage());
+        return Objects.equals(getId(), that.getId()) && Objects.equals(getName(), that.getName()) && Arrays.equals(getImage(), that.getImage());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getArtistId(), getName(), Arrays.hashCode(getImage()));
+        return Objects.hash(getId(), getName(), Arrays.hashCode(getImage()));
     }
 }

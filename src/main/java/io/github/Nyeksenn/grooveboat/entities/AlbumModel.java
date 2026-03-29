@@ -14,9 +14,8 @@ import java.util.Objects;
 @Table(name = "album")
 @Index(unique = true, columnNames = {"album_id"})
 public class AlbumModel extends BaseModel {
-    @NotNull
-    @Length(100)
-    String albumId;
+    @Id
+    String id;
 
     @NotNull
     @Length(100)
@@ -38,12 +37,12 @@ public class AlbumModel extends BaseModel {
     @OneToMany(mappedBy = "album")
     List<SongModel> songs;
 
-    public String getAlbumId() {
-        return albumId;
+    public String getId() {
+        return id;
     }
 
-    public void setAlbumId(String albumId) {
-        this.albumId = albumId;
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getTitle() {
@@ -112,8 +111,8 @@ public class AlbumModel extends BaseModel {
         this.albumArtists = albumArtists;
     }
 
-    public AlbumModel(String albumId, String title, int songCount, int release_year, Duration duration, Path coverPath, List<ArtistModel> albumArtists) {
-        this.albumId = albumId;
+    public AlbumModel(String id, String title, int songCount, int release_year, Duration duration, Path coverPath, List<ArtistModel> albumArtists) {
+        this.id = id;
         this.title = title;
         this.songCount = songCount;
         this.release_year = release_year;
@@ -122,24 +121,15 @@ public class AlbumModel extends BaseModel {
         this.albumArtists = albumArtists;
     }
 
-    public void setAllFields(AlbumModel src) {
-        this.setTitle(src.getTitle());
-        this.setSongCount(src.getSongCount());
-        this.setRelease_year(src.getRelease_year());
-        this.setDuration(src.getDuration());
-        this.setCoverPath(src.getCoverPath());
-        this.setAlbumArtists(src.getAlbumArtists());
-    }
-
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         AlbumModel that = (AlbumModel) o;
-        return songCount == that.songCount && release_year == that.release_year && Objects.equals(albumId, that.albumId) && Objects.equals(title, that.title) && Objects.equals(duration, that.duration) && Objects.equals(coverPath, that.coverPath);
+        return songCount == that.songCount && release_year == that.release_year && Objects.equals(id, that.id) && Objects.equals(title, that.title) && Objects.equals(duration, that.duration) && Objects.equals(coverPath, that.coverPath);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(albumId, title, songCount, release_year, duration, coverPath);
+        return Objects.hash(id, title, songCount, release_year, duration, coverPath);
     }
 }

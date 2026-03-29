@@ -74,8 +74,8 @@ public class AlbumListView extends Box {
                         try (var localExec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())) {
                             localExec.submit(() -> {
                                 try {
-                                    var texture = albumTextureLoader.load(album.getAlbumId());
-                                    var albumListItem = new AlbumListItem(texture, album.getTitle(), album.getDisplayArtist(), album.getAlbumId());
+                                    var texture = albumTextureLoader.load(album.getId());
+                                    var albumListItem = new AlbumListItem(texture, album.getTitle(), album.getDisplayArtist(), album.getId());
                                     GLib.idleAddOnce(() -> this.store.append(albumListItem));
                                 } catch (NullPointerException e) {
                                     logger.warn("Didn't find texture for album {}", album.getTitle());

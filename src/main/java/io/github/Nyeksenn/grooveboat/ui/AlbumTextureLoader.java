@@ -32,7 +32,7 @@ public class AlbumTextureLoader {
 
     private Texture fetchTexture(String albumId) {
         var alb = QAlbumModel.alias();
-        var album = new QAlbumModel().select(alb.albumId, alb.coverPath).albumId.equalTo(albumId).findOne();
+        var album = new QAlbumModel().select(alb.id, alb.coverPath).id.equalTo(albumId).findOne();
         if (album != null) {
             try {
                 return Texture.fromFilename(album.getCoverPath().toString());

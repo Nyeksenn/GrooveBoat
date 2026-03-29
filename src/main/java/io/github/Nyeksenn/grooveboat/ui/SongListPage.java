@@ -91,11 +91,11 @@ public class SongListPage extends NavigationPage {
             this.executor.submit(() -> {
                 var songs = subsonic.getSongs(albumId);
                 try {
-                    var texture = albumTextureLoader.load(songs.getFirst().getAlbum().getAlbumId());
+                    var texture = albumTextureLoader.load(songs.getFirst().getAlbum().getId());
                     for (var song : songs) {
                         var songListItem = new SongListItem(
                                 song.getTitle(),
-                                song.getSongId(),
+                                song.getId(),
                                 song.getDisplayArtist(),
                                 song.getAlbum().getTitle(),
                                 song.getDuration(),
