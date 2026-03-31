@@ -3,6 +3,7 @@ package io.github.Nyeksenn.grooveboat.client;
 import io.ebean.DB;
 import io.ebean.Database;
 import io.ebean.DuplicateKeyException;
+import io.ebean.InsertOptions;
 import io.github.Nyeksenn.grooveboat.deserializer.ShortArtist;
 import io.github.Nyeksenn.grooveboat.deserializer.SubsonicResponse;
 import io.github.Nyeksenn.grooveboat.entities.AlbumModel;
@@ -39,45 +40,32 @@ public class Subsonic implements AutoCloseable {
     private final ExecutorService exec = Executors.newVirtualThreadPerTaskExecutor();
     private final ExecutorService threadExec = Executors.newThreadPerTaskExecutor(Executors.defaultThreadFactory());
 
-//    private List<ArtistModel> refreshArtists() {
-//        try {
-//            var numSavedArtists = new QArtistModel().findCount();
-//            var artists = client.getArtists();
-//            var artistModelList = new ArrayList<ArtistModel>(100);
-//
-//            if (numSavedArtists == artists.size()) {
-//                return new QArtistModel().findList();
-//            }
-//
-//            try {
-//                for (var artist : artists) {
-//                    var savedArtistModel = new QArtistModel().artistId.equalTo(artist.id()).findOne();
-//                    var artistImage = client.getArtistImage(artist.artistImageUrl());
-//                    var newArtistModel = new ArtistModel(artist.id(), artist.name(), artistImage);
-//
-//                    // Insert
-//                    if (savedArtistModel == null) {
-//                        artistModelList.add(newArtistModel);
-//                    } else if (!newArtistModel.equals(savedArtistModel)) {
-//                        // Update
-//                        savedArtistModel.setAllFields(newArtistModel);
-//                        artistModelList.add(savedArtistModel);
-//                    } else {
-//                        artistModelList.add(savedArtistModel);
-//                    }
-//                }
-//
-//                db.saveAll(artistModelList);
-//                return artistModelList;
-//            } catch (Exception e) {
-//                logger.warn(e.getMessage());
-//            }
-//        } catch (IOException e) {
-//            logger.warn("Couldn't fetch artist list: {}", e.getMessage());
-//        }
-//
-//        return null;
-//    }
+    private void updateArtists () {
+        final String sql = """
+                MERGE INTO ARTIST (id, name, artist_image_path)
+                KEY (id)
+                VALUES (:id, :name, :artistImagePath)
+                """;
+
+        var artists = new QArtistModel().findList();
+        try (var tx = DB.beginTransaction()) {
+            for (var artist : artists) {
+                try {
+                    var remoteArtist = client.getArtist(artist.getId());
+                    var artistImagePath = client.cacheArtistImage(remoteArtist.artistImageUrl(), remoteArtist.name());
+                    var remoteArtistModel = new ArtistModel(remoteArtist.id(), remoteArtist.name(), artistImagePath);
+                    DB.sqlUpdate(sql)
+                            .setParameter("id", remoteArtistModel.getId())
+                            .setParameter("name", remoteArtistModel.getName())
+                            .setParameter("artistImagePath", remoteArtistModel.getArtistImagePath())
+                            .execute();
+                } catch (IOException e) {
+                    logger.warn("Couldn't retrieve artist {}", artist.getName());
+                }
+            }
+            tx.commit();
+        }
+    }
 
     private List<AlbumModel> refreshAlbums() {
         var lastRefresh = Instant.ofEpochSecond(settings.getUint64("last-sync"));
@@ -111,7 +99,11 @@ public class Subsonic implements AutoCloseable {
             db.saveAll(albumModelList);
 
             settings.setUint64("last-sync", Instant.now().getEpochSecond());
-            return albumModelList;
+
+            // Cache Artist Images
+            updateArtists();
+
+            return new QAlbumModel().findList();
         } catch (IOException e) {
             logger.warn("Couldn't fetch albums");
         } catch (CompletionException e) {

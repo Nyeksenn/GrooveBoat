@@ -1,81 +1,68 @@
 -- apply changes
-create table album
-(
-    id            varchar(255) not null,
-    title         varchar(100) not null,
-    song_count    integer      not null,
-    release_year  integer      not null,
-    duration      bigint,
-    cover_path    varchar(255),
-    version       bigint       not null,
-    when_created  timestamp    not null,
-    when_modified timestamp    not null,
-    constraint uq_album_album_id unique (id),
-    constraint pk_album primary key (id)
+create table album (
+  id                            varchar(255) not null,
+  title                         varchar(100) not null,
+  song_count                    integer not null,
+  release_year                  integer not null,
+  duration                      bigint,
+  cover_path                    varchar(255),
+  version                       bigint not null,
+  when_created                  timestamp not null,
+  when_modified                 timestamp not null,
+  constraint pk_album primary key (id)
 );
 
-create table album_artists
-(
-    album_id  varchar(255) not null,
-    artist_id varchar(255) not null,
-    constraint pk_album_artists primary key (album_id, artist_id)
+create table album_artists (
+  album_id                      varchar(255) not null,
+  artist_id                     varchar(255) not null,
+  constraint pk_album_artists primary key (album_id,artist_id)
 );
 
-create table artist
-(
-    id            varchar(255) not null,
-    name          varchar(200) not null,
-    image         varbinary(100000000),
-    version       bigint       not null,
-    when_created  timestamp    not null,
-    when_modified timestamp    not null,
-    constraint uq_artist_artist_id unique (id),
-    constraint pk_artist primary key (id)
+create table artist (
+  id                            varchar(255) not null,
+  name                          varchar(200) not null,
+  artist_image_path             varchar(255),
+  version                       bigint not null,
+  when_created                  timestamp not null,
+  when_modified                 timestamp not null,
+  constraint pk_artist primary key (id)
 );
 
-create table song
-(
-    id            varchar(255) not null,
-    title         varchar(200) not null,
-    track         integer      not null,
-    release_year  integer      not null,
-    duration      bigint       not null,
-    bit_rate      integer      not null,
-    content_type  varchar(50),
-    disc_number   integer      not null,
-    album_id      varchar(255),
-    version       bigint       not null,
-    when_created  timestamp    not null,
-    when_modified timestamp    not null,
-    constraint uq_song_song_id unique (id),
-    constraint pk_song primary key (id)
+create table song (
+  id                            varchar(255) not null,
+  title                         varchar(200) not null,
+  track                         integer not null,
+  release_year                  integer not null,
+  duration                      bigint not null,
+  bit_rate                      integer not null,
+  content_type                  varchar(50),
+  disc_number                   integer not null,
+  album_id                      varchar(255),
+  version                       bigint not null,
+  when_created                  timestamp not null,
+  when_modified                 timestamp not null,
+  constraint pk_song primary key (id)
 );
 
-create table song_artists
-(
-    song_id   varchar(255) not null,
-    artist_id varchar(255) not null,
-    constraint pk_song_artists primary key (song_id, artist_id)
+create table song_artists (
+  song_id                       varchar(255) not null,
+  artist_id                     varchar(255) not null,
+  constraint pk_song_artists primary key (song_id,artist_id)
 );
 
 -- foreign keys and indices
 create index ix_album_artists_album on album_artists (album_id);
-alter table album_artists
-    add constraint fk_album_artists_album foreign key (album_id) references album (id) on delete restrict on update restrict;
+alter table album_artists add constraint fk_album_artists_album foreign key (album_id) references album (id) on delete restrict on update restrict;
 
 create index ix_album_artists_artist on album_artists (artist_id);
-alter table album_artists
-    add constraint fk_album_artists_artist foreign key (artist_id) references artist (id) on delete restrict on update restrict;
+alter table album_artists add constraint fk_album_artists_artist foreign key (artist_id) references artist (id) on delete restrict on update restrict;
 
 create index ix_song_album_id on song (album_id);
-alter table song
-    add constraint fk_song_album_id foreign key (album_id) references album (id) on delete restrict on update restrict;
+alter table song add constraint fk_song_album_id foreign key (album_id) references album (id) on delete restrict on update restrict;
 
 create index ix_song_artists_song on song_artists (song_id);
-alter table song_artists
-    add constraint fk_song_artists_song foreign key (song_id) references song (id) on delete restrict on update restrict;
+alter table song_artists add constraint fk_song_artists_song foreign key (song_id) references song (id) on delete restrict on update restrict;
 
 create index ix_song_artists_artist on song_artists (artist_id);
-alter table song_artists
-    add constraint fk_song_artists_artist foreign key (artist_id) references artist (id) on delete restrict on update restrict;
+alter table song_artists add constraint fk_song_artists_artist foreign key (artist_id) references artist (id) on delete restrict on update restrict;
 

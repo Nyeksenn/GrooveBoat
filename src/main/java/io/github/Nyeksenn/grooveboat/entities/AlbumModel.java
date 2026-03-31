@@ -12,7 +12,6 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "album")
-@Index(unique = true, columnNames = {"album_id"})
 public class AlbumModel extends BaseModel {
     @Id
     String id;

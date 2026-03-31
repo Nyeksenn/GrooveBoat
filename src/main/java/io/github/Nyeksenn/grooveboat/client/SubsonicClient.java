@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -29,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -43,7 +45,8 @@ public class SubsonicClient {
     private static final Logger logger = LoggerFactory.getLogger(SubsonicClient.class);
     private final ExecutorService executor;
     private static final AlbumTextureLoader textureLoader = AlbumTextureLoader.getInstance();
-    private static final Path imageCachePath = Paths.get(Helpers.getUserDataPath(), "grooveboat", "covers");
+    private static final Path COVER_CACHE_PATH = Paths.get(Helpers.getUserDataPath(), "grooveboat", "covers");
+    private static final Path ARTIST_IMAGE_CACHE_PATH = Paths.get(Helpers.getUserDataPath(), "grooveboat", "artist-images");
     private static final JsonMapper om = JsonMapper.builder()
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
@@ -178,8 +181,15 @@ public class SubsonicClient {
         }
     }
 
-    public byte[] getArtistImage(String url) throws IOException {
-        return executeGetBinary(new AbsoluteEndpoint(url), null);
+    public Path cacheArtistImage(String urlString, String artistName) throws IOException {
+        var url = URI.create(urlString).toURL();
+        var outPath = ARTIST_IMAGE_CACHE_PATH.resolve(artistName + ".jpg");
+        Files.createDirectories(ARTIST_IMAGE_CACHE_PATH);
+        try (var in = url.openStream()) {
+            Files.copy(in, outPath, StandardCopyOption.REPLACE_EXISTING);
+        }
+
+        return outPath;
     }
 
     public Path cacheCoverArt(String id, int size) throws IOException, NoSuchAlgorithmException, GErrorException {
@@ -196,7 +206,7 @@ public class SubsonicClient {
         var hf = HexFormat.of();
         var digestString = hf.formatHex(digest);
         var fileName = digestString + ".png";
-        var imagePath = imageCachePath.resolve(fileName);
+        var imagePath = COVER_CACHE_PATH.resolve(fileName);
 
         var texture = Texture.fromBytes(imageBytes);
         var file = File.newForPath(imagePath.toString());
@@ -282,21 +292,6 @@ public class SubsonicClient {
         }
     }
 
-    public List<Artist> getArtists() throws IOException, IllegalArgumentException {
-        List<Index> indices;
-        try {
-            var response = executeGetString("/rest/getArtists", null);
-            var root = om.readTree(response);
-            var index_fragment = root.path("subsonic-response").path("artists").path("index");
-
-            indices = indexReader.readValue(index_fragment);
-            return indices.stream().flatMap(item -> item.artist().stream()).toList();
-        } catch (JacksonException e) {
-            logger.warn(e.getMessage());
-            throw new IOException("Couldn't deserialize artist list");
-        }
-    }
-
     public List<Song> getSongsByAlbum(String albumId) throws IOException, IllegalArgumentException {
         var params = new HashMap<>(Map.of(
                 "id", albumId
@@ -379,7 +374,7 @@ public class SubsonicClient {
         this.host = splitResults[1];
 
         try {
-            Files.createDirectories(imageCachePath);
+            Files.createDirectories(COVER_CACHE_PATH);
         } catch (IOException e) {
             logger.warn("Couldn't create image cache dir");
         }
