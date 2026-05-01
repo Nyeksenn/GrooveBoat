@@ -7,29 +7,34 @@ repositories {
     mavenCentral()
 }
 
+ext {
+    ebeanVersion = "17.5.0"
+    javaGiVersion = "0.14.1"
+}
+
 dependencies {
-    implementation 'org.java-gi:gstreamer:0.13.1'
-    implementation 'org.java-gi:glib:0.13.1'
-    implementation 'org.java-gi:gtk:0.13.1'
-    implementation 'org.java-gi:adw:0.13.1'
-    implementation 'org.java-gi:secret:0.13.1'
+    implementation "org.java-gi:gstreamer:${javaGiVersion}"
+    implementation "org.java-gi:glib:${javaGiVersion}"
+    implementation "org.java-gi:gtk:${javaGiVersion}"
+    implementation "org.java-gi:adw:${javaGiVersion}"
+    implementation "org.java-gi:secret:${javaGiVersion}"
     implementation 'tools.jackson.core:jackson-databind:3.0.1'
     implementation 'tools.jackson.module:jackson-module-blackbird:3.0.1'
-    implementation 'io.ebean:ebean:17.1.1'
-    implementation 'io.ebean:ebean-ddl-generator:17.1.1'
-    implementation 'io.ebean:ebean-test:17.1.1'
+    implementation "io.ebean:ebean:${ebeanVersion}"
+    implementation "io.ebean:ebean-ddl-generator:${ebeanVersion}"
+    implementation "io.ebean:ebean-test:${ebeanVersion}"
     implementation 'com.h2database:h2:2.4.240'
     implementation 'commons-validator:commons-validator:1.10.0'
     implementation 'org.semver4j:semver4j:6.0.0'
 
-    annotationProcessor 'io.ebean:querybean-generator:17.1.1'
+    annotationProcessor "io.ebean:querybean-generator:${ebeanVersion}"
     runtimeOnly 'org.slf4j:slf4j-api:2.0.17'
     runtimeOnly 'ch.qos.logback:logback-classic:1.5.20'
 }
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(23)
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 

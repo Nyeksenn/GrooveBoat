@@ -5,11 +5,11 @@
       <profile name="Gradle Imported" enabled="true">
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
-          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.ebean/querybean-generator/17.1.1/f81fc8d46e808cba02f5168e7848f39b3771c5dd/querybean-generator-17.1.1.jar" />
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.ebean/querybean-generator/17.5.0/240f8bf0f5529dcce204b0590fcd32dc9fa84f04/querybean-generator-17.5.0.jar" />
         </processorPath>
         <module name="GrooveBoat.main" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel target="23" />
+    <bytecodeTargetLevel target="25" />
   </component>
 </project>

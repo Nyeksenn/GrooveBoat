@@ -21,7 +21,7 @@ public final class AppPipeline {
     private final MainContext ctx = new MainContext();
     private final MainLoop loop = new MainLoop(ctx, false);
     private final Query posQuery = Query.position(Format.TIME);
-    private Pipeline pipeline;
+    private final Pipeline pipeline;
     private Bus bus;
     public static final int BUFFER_SIZE = 8192;
     private Element audioconvert;
