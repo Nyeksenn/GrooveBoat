@@ -142,7 +142,7 @@ public class SubsonicClient {
         }
     }
 
-    private byte[] executeGetBinary(Endpoint endpoint, Map<String, String> params) throws IOException {
+    private HttpResponse<byte[]> executeGetBinary(Endpoint endpoint, Map<String, String> params) throws IOException {
         try {
             URI uri;
 
@@ -152,7 +152,7 @@ public class SubsonicClient {
             }
 
             var request = HttpRequest.newBuilder().GET().timeout(Duration.ofSeconds(30)).uri(uri).build();
-            return httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray()).body();
+            return httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
         } catch (InterruptedException e) {
             throw new IOException(e);
         }
@@ -192,37 +192,25 @@ public class SubsonicClient {
         return outPath;
     }
 
-    public Path cacheCoverArt(String id, int size) throws IOException, NoSuchAlgorithmException, GErrorException {
+    public Path cacheCoverArt(String id, int size) throws IOException {
         var params = new HashMap<>(Map.of(
                 "id", id,
                 "size", String.valueOf(size)
         ));
 
-        var imageBytes = executeGetBinary(new RelativeEndpoint("/rest/getCoverArt"), params);
+        var resp = executeGetBinary(new RelativeEndpoint("/rest/getCoverArt"), params);
 
-        var md = MessageDigest.getInstance("SHA-256");
-        md.update(imageBytes);
-        var digest = md.digest();
-        var hf = HexFormat.of();
-        var digestString = hf.formatHex(digest);
-        var fileName = digestString + ".png";
-        var imagePath = COVER_CACHE_PATH.resolve(fileName);
+        var contentType = resp.headers().firstValue("Content-Type");
+        if (contentType.isPresent()) {
+            var ctSplit = contentType.get().split("/");
+            var fileName = id + "." + ctSplit[1];
+            var imagePath = COVER_CACHE_PATH.resolve(fileName);
+            Files.write(imagePath, resp.body());
 
-        var texture = Texture.fromBytes(imageBytes);
-        var file = File.newForPath(imagePath.toString());
-
-        executor.submit(() -> {
-            logger.info("Saving cover");
-            var pngBytes = texture.saveToPngBytes();
-            try {
-                file.replaceContents(pngBytes, null, false, Set.of(FileCreateFlags.REPLACE_DESTINATION), null, null);
-            } catch (GErrorException e) {
-                logger.warn("Couldn't save cover");
-            }
-        });
-
-        textureLoader.insert(id, texture);
-        return imagePath;
+            return imagePath;
+        } else {
+            throw new IOException("Response did not contain Content-Type header");
+        }
     }
 
     public List<Album> getNewAlbums(Instant lastRefresh) throws IOException {

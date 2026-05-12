@@ -3,7 +3,6 @@ package io.github.Nyeksenn.grooveboat.client;
 import io.ebean.DB;
 import io.ebean.Database;
 import io.ebean.DuplicateKeyException;
-import io.ebean.InsertOptions;
 import io.github.Nyeksenn.grooveboat.deserializer.ShortArtist;
 import io.github.Nyeksenn.grooveboat.deserializer.SubsonicResponse;
 import io.github.Nyeksenn.grooveboat.entities.AlbumModel;
@@ -52,7 +51,7 @@ public class Subsonic implements AutoCloseable {
             for (var artist : artists) {
                 try {
                     var remoteArtist = client.getArtist(artist.getId());
-                    var artistImagePath = client.cacheArtistImage(remoteArtist.artistImageUrl(), remoteArtist.name());
+                    var artistImagePath = client.cacheCoverArt(artist.getId(), 800);
                     var remoteArtistModel = new ArtistModel(remoteArtist.id(), remoteArtist.name(), artistImagePath);
                     DB.sqlUpdate(sql)
                             .setParameter("id", remoteArtistModel.getId())
@@ -85,7 +84,7 @@ public class Subsonic implements AutoCloseable {
                     Path coverPath;
                     try {
                         coverPath = client.cacheCoverArt(album.coverArt(), 800);
-                    } catch (IOException | NoSuchAlgorithmException | GErrorException e) {
+                    } catch (IOException e) {
                         coverPath = null;
                         logger.warn("Unable to cache cover art for album {}: {}", album.name(), e.getMessage());
                     }
