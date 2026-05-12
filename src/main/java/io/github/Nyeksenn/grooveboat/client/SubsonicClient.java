@@ -43,10 +43,8 @@ import static org.gnome.glib.GLib.getHostName;
 
 public class SubsonicClient {
     private static final Logger logger = LoggerFactory.getLogger(SubsonicClient.class);
-    private final ExecutorService executor;
     private static final AlbumTextureLoader textureLoader = AlbumTextureLoader.getInstance();
     private static final Path COVER_CACHE_PATH = Paths.get(Helpers.getUserDataPath(), "grooveboat", "covers");
-    private static final Path ARTIST_IMAGE_CACHE_PATH = Paths.get(Helpers.getUserDataPath(), "grooveboat", "artist-images");
     private static final JsonMapper om = JsonMapper.builder()
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
@@ -56,8 +54,8 @@ public class SubsonicClient {
             .build();
     private static final ObjectReader albumReader = om.readerFor(new TypeReference<List<Album>>() {
     });
-    private static final ObjectReader indexReader = om.readerFor(new TypeReference<List<Index>>() {
-    });
+/*    private static final ObjectReader indexReader = om.readerFor(new TypeReference<List<Index>>() {
+    });*/
     private static final ObjectReader songReader = om.readerFor(new TypeReference<List<Song>>() {
     });
 
@@ -142,15 +140,9 @@ public class SubsonicClient {
         }
     }
 
-    private HttpResponse<byte[]> executeGetBinary(Endpoint endpoint, Map<String, String> params) throws IOException {
+    private HttpResponse<byte[]> executeGetBinary(String endpoint, Map<String, String> params) throws IOException {
         try {
-            URI uri;
-
-            switch (endpoint) {
-                case AbsoluteEndpoint ep -> uri = URI.create(ep.url());
-                case RelativeEndpoint ep -> uri = getUri(ep.url(), params);
-            }
-
+            var uri = getUri(endpoint, params);
             var request = HttpRequest.newBuilder().GET().timeout(Duration.ofSeconds(30)).uri(uri).build();
             return httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
         } catch (InterruptedException e) {
@@ -181,24 +173,13 @@ public class SubsonicClient {
         }
     }
 
-    public Path cacheArtistImage(String urlString, String artistName) throws IOException {
-        var url = URI.create(urlString).toURL();
-        var outPath = ARTIST_IMAGE_CACHE_PATH.resolve(artistName + ".jpg");
-        Files.createDirectories(ARTIST_IMAGE_CACHE_PATH);
-        try (var in = url.openStream()) {
-            Files.copy(in, outPath, StandardCopyOption.REPLACE_EXISTING);
-        }
-
-        return outPath;
-    }
-
     public Path cacheCoverArt(String id, int size) throws IOException {
         var params = new HashMap<>(Map.of(
                 "id", id,
                 "size", String.valueOf(size)
         ));
 
-        var resp = executeGetBinary(new RelativeEndpoint("/rest/getCoverArt"), params);
+        var resp = executeGetBinary("/rest/getCoverArt", params);
 
         var contentType = resp.headers().firstValue("Content-Type");
         if (contentType.isPresent()) {
@@ -348,8 +329,7 @@ public class SubsonicClient {
         this.password = password;
     }
 
-    public SubsonicClient(String baseUrl, ExecutorService executor, String username, String password) {
-        this.executor = executor;
+    public SubsonicClient(String baseUrl, String username, String password) {
         this.username = username;
         this.password = password;
 

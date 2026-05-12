@@ -213,7 +213,7 @@ public class Subsonic implements AutoCloseable {
     }
 
     public void newClient(String baseUrl, String username, String password) {
-        var client = new SubsonicClient(baseUrl, threadExec, username, password);
+        var client = new SubsonicClient(baseUrl, username, password);
         logger.info("Reinitializing client for connecting to {}", client.getHost());
         this.client = client;
     }
