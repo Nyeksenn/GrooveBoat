@@ -5,6 +5,7 @@ import org.gnome.adw.NavigationPage;
 import org.gnome.adw.ViewSwitcher;
 import org.gnome.adw.ViewSwitcherBar;
 import org.gnome.gio.SimpleAction;
+import org.gnome.glib.GLib;
 import org.gnome.gtk.*;
 import org.javagi.gobject.annotations.InstanceInit;
 import org.javagi.gobject.annotations.RegisteredType;
@@ -65,6 +66,9 @@ public class MusicChooser extends NavigationPage {
                     refreshProgressBar.setVisible(true);
                     app.subsonic.refreshRemoteData(refreshProgressBar);
                     refreshProgressBar.setVisible(false);
+                    GLib.idleAddOnce(() -> {
+                        win.activateActionIfExists("win.reload-albums", null);
+                    });
                 });
             });
             app.addAction(refreshAction);

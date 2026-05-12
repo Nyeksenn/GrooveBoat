@@ -7,6 +7,7 @@ import io.github.Nyeksenn.grooveboat.gobjects.AlbumListItem;
 import io.github.Nyeksenn.grooveboat.gobjects.AlbumTitleSorter;
 import org.gnome.adw.NavigationView;
 import org.gnome.gio.ListStore;
+import org.gnome.gio.SimpleAction;
 import org.gnome.glib.GLib;
 import org.gnome.gobject.GObject;
 import org.gnome.gtk.*;
@@ -59,14 +60,17 @@ public class AlbumListView extends Box {
         albumCard.navView = albumNavView;
     }
 
-    public void loadItems() {
-        if (this.subsonic == null && this.executor == null) {
+    public void loadItems(boolean reload) {
+        if (this.executor == null) {
             var window = (GrooveboatWindow) getRoot();
             var albumTextureLoader = AlbumTextureLoader.getInstance();
             var app = (GrooveboatApp) window.getApplication();
 
-            this.subsonic = app.subsonic;
             this.executor = app.executor;
+
+            if (reload) {
+                this.store.removeAll();
+            }
 
             this.executor.submit(() -> {
                 var albums = new QAlbumModel().findList();
@@ -104,7 +108,15 @@ public class AlbumListView extends Box {
                 var searchTerm = win.musicChooser.searchEntry.getText();
                 filter.setSearchString(searchTerm);
             });
-            loadItems();
+
+            var reloadAction = new SimpleAction("reload-albums", null);
+            reloadAction.onActivate((_) -> {
+                logger.info("Reloading albums");
+                loadItems(true);
+            });
+            win.addAction(reloadAction);
+
+            loadItems(false);
         });
     }
 
