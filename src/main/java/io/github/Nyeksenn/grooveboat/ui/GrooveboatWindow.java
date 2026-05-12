@@ -4,6 +4,7 @@ import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import io.github.Nyeksenn.grooveboat.gobjects.SecretKeeper;
 import org.gnome.adw.ApplicationWindow;
 import org.gnome.gio.Settings;
+import org.gnome.gio.SimpleAction;
 import org.gnome.glib.GLib;
 import org.gnome.gtk.Stack;
 import org.javagi.base.Out;
@@ -83,6 +84,11 @@ public class GrooveboatWindow extends ApplicationWindow {
         onRealize(() -> {
             var app = (GrooveboatApp) getApplication();
             this.initializeClient();
+            var refreshAction = new SimpleAction("refresh-data", null);
+            refreshAction.onActivate((_) -> {
+                executor.submit(subsonic::refreshRemoteData);
+            });
+            addAction(refreshAction);
             app.queueStore.loadState();
         });
     }

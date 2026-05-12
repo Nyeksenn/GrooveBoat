@@ -17,7 +17,7 @@ public class SetupDialog extends Dialog {
         onRealize(() -> {
             var win = (GrooveboatWindow) getRoot();
             var action = new SimpleAction("close-setup", null);
-            action.onActivate((param) -> {
+            action.onActivate((_) -> {
                 win.mainStack.setVisibleChildName("content-page");
                 forceClose();
             });
