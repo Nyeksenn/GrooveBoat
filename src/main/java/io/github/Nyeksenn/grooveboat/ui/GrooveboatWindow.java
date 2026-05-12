@@ -70,7 +70,7 @@ public class GrooveboatWindow extends ApplicationWindow {
             executor.submit(() -> {
                 var connectionSuccessful = checkConnection(url, username);
                 if (connectionSuccessful) {
-                    subsonic.refreshRemoteData();
+                    subsonic.refreshRemoteData(null);
                     GLib.idleAddOnce(() -> mainStack.setVisibleChildName("content-page"));
                 } else {
                     GLib.idleAddOnce(() -> mainStack.setVisibleChildName("error-page"));
@@ -84,11 +84,6 @@ public class GrooveboatWindow extends ApplicationWindow {
         onRealize(() -> {
             var app = (GrooveboatApp) getApplication();
             this.initializeClient();
-            var refreshAction = new SimpleAction("refresh-data", null);
-            refreshAction.onActivate((_) -> {
-                executor.submit(subsonic::refreshRemoteData);
-            });
-            app.addAction(refreshAction);
             app.queueStore.loadState();
         });
     }

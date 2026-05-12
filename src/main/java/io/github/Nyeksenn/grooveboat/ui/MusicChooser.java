@@ -4,10 +4,8 @@ import org.gnome.adw.HeaderBar;
 import org.gnome.adw.NavigationPage;
 import org.gnome.adw.ViewSwitcher;
 import org.gnome.adw.ViewSwitcherBar;
-import org.gnome.gtk.SearchBar;
-import org.gnome.gtk.SearchEntry;
-import org.gnome.gtk.ToggleButton;
-import org.gnome.gtk.Widget;
+import org.gnome.gio.SimpleAction;
+import org.gnome.gtk.*;
 import org.javagi.gobject.annotations.InstanceInit;
 import org.javagi.gobject.annotations.RegisteredType;
 import org.javagi.gtk.annotations.GtkCallback;
@@ -44,6 +42,9 @@ public class MusicChooser extends NavigationPage {
     @GtkChild(name = "album-searchentry")
     public SearchEntry searchEntry;
 
+    @GtkChild(name = "refresh-progress-bar")
+    public ProgressBar refreshProgressBar;
+
     @GtkCallback(name = "search-clicked")
     public void searchClicked() {
         albumSearchbar.setSearchMode(!albumSearchbar.getSearchMode());
@@ -52,8 +53,21 @@ public class MusicChooser extends NavigationPage {
     @InstanceInit
     public void init() {
         onRealize(() -> {
+            var win = (GrooveboatWindow) getRoot();
+            var app = (GrooveboatApp) win.getApplication();
+
             albumSearchbar.setKeyCaptureWidget((Widget) getRoot());
             albumSearchbar.bindProperty("search-mode-enabled", buttonSearch, "active").build();
+
+            var refreshAction = new SimpleAction("refresh-data", null);
+            refreshAction.onActivate((_) -> {
+                app.executor.submit(() -> {
+                    refreshProgressBar.setVisible(true);
+                    app.subsonic.refreshRemoteData(refreshProgressBar);
+                    refreshProgressBar.setVisible(false);
+                });
+            });
+            app.addAction(refreshAction);
         });
     }
 
