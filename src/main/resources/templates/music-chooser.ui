@@ -17,6 +17,12 @@
               <object class="Avatar" id="account-menu"/>
             </child>
             <child type="end">
+              <object class="GtkMenuButton" id="pref-menu-button">
+                <property name="icon-name">open-menu-symbolic</property>
+                <property name="menu-model">preferences-menu</property>
+              </object>
+            </child>
+            <child type="end">
               <object class="GtkToggleButton" id="button-search">
                 <property name="icon-name">edit-find-symbolic</property>
                 <signal name="clicked" handler="search-clicked"/>
@@ -146,4 +152,13 @@
       </object>
     </property>
   </template>
+
+  <menu id="preferences-menu">
+    <section>
+      <item>
+        <attribute name="label">Refresh</attribute>
+        <attribute name="action">app.refresh-data</attribute>
+      </item>
+    </section>
+  </menu>
 </interface>

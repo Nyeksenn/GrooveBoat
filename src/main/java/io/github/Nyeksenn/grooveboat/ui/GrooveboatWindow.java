@@ -88,7 +88,7 @@ public class GrooveboatWindow extends ApplicationWindow {
             refreshAction.onActivate((_) -> {
                 executor.submit(subsonic::refreshRemoteData);
             });
-            addAction(refreshAction);
+            app.addAction(refreshAction);
             app.queueStore.loadState();
         });
     }
