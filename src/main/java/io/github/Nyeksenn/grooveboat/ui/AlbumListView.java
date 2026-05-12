@@ -1,6 +1,7 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
+import io.github.Nyeksenn.grooveboat.entities.query.QAlbumModel;
 import io.github.Nyeksenn.grooveboat.gobjects.AlbumFilter;
 import io.github.Nyeksenn.grooveboat.gobjects.AlbumListItem;
 import io.github.Nyeksenn.grooveboat.gobjects.AlbumTitleSorter;
@@ -68,20 +69,18 @@ public class AlbumListView extends Box {
             this.executor = app.executor;
 
             this.executor.submit(() -> {
-                var albums = subsonic.getAlbums();
-                if (albums != null) {
-                    for (var album : albums) {
-                        try (var localExec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())) {
-                            localExec.submit(() -> {
-                                try {
-                                    var texture = albumTextureLoader.load(album.getId());
-                                    var albumListItem = new AlbumListItem(texture, album.getTitle(), album.getDisplayArtist(), album.getId());
-                                    GLib.idleAddOnce(() -> this.store.append(albumListItem));
-                                } catch (NullPointerException e) {
-                                    logger.warn("Didn't find texture for album {}", album.getTitle());
-                                }
-                            });
-                        }
+                var albums = new QAlbumModel().findList();
+                for (var album : albums) {
+                    try (var localExec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())) {
+                        localExec.submit(() -> {
+                            try {
+                                var texture = albumTextureLoader.load(album.getId());
+                                var albumListItem = new AlbumListItem(texture, album.getTitle(), album.getDisplayArtist(), album.getId());
+                                GLib.idleAddOnce(() -> this.store.append(albumListItem));
+                            } catch (NullPointerException e) {
+                                logger.warn("Didn't find texture for album {}", album.getTitle());
+                            }
+                        });
                     }
                 }
             });

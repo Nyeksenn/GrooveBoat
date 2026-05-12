@@ -12,7 +12,6 @@ import io.github.Nyeksenn.grooveboat.entities.query.QAlbumModel;
 import io.github.Nyeksenn.grooveboat.entities.query.QArtistModel;
 import io.github.Nyeksenn.grooveboat.entities.query.QSongModel;
 import org.gnome.gio.Settings;
-import org.javagi.base.GErrorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +19,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
-import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -66,15 +64,17 @@ public class Subsonic implements AutoCloseable {
         }
     }
 
-    private List<AlbumModel> refreshAlbums() {
+    public void refreshRemoteData() {
         var lastRefresh = Instant.ofEpochSecond(settings.getUint64("last-sync"));
 
         try {
             List<CompletableFuture<AlbumModel>> futures = new ArrayList<>(200);
 
             var newAlbums = client.getNewAlbums(lastRefresh);
+
+            // If no new albums we can return early
             if (newAlbums.isEmpty()) {
-                return new QAlbumModel().findList();
+                return;
             }
 
             for (var album : newAlbums) {
@@ -101,8 +101,6 @@ public class Subsonic implements AutoCloseable {
 
             // Cache Artist Images
             updateArtists();
-
-            return new QAlbumModel().findList();
         } catch (IOException e) {
             logger.warn("Couldn't fetch albums");
         } catch (CompletionException e) {
@@ -110,8 +108,6 @@ public class Subsonic implements AutoCloseable {
         } catch (Exception e) {
             logger.warn(e.getMessage());
         }
-
-        return null;
     }
 
     private static ArrayList<ArtistModel> resolveArtists(List<ShortArtist> artists) {
@@ -133,12 +129,6 @@ public class Subsonic implements AutoCloseable {
         }
         return artistList;
     }
-
-
-    public List<AlbumModel> getAlbums() {
-        return this.refreshAlbums();
-    }
-
 
     public List<SongModel> getSongs(String albumId) {
         try {
