@@ -70,7 +70,7 @@ public class GrooveboatWindow extends ApplicationWindow {
             executor.submit(() -> {
                 var connectionSuccessful = checkConnection(url, username);
                 if (connectionSuccessful) {
-                    subsonic.refreshRemoteData(null);
+                    subsonic.refreshRemoteData(false);
                     GLib.idleAddOnce(() -> mainStack.setVisibleChildName("content-page"));
                 } else {
                     GLib.idleAddOnce(() -> mainStack.setVisibleChildName("error-page"));

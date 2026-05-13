@@ -1,6 +1,14 @@
 package io.github.Nyeksenn.grooveboat.utils;
 
+import io.ebean.Database;
+import io.ebean.Transaction;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class Helpers {
@@ -70,5 +78,39 @@ public final class Helpers {
 
     public static boolean hasMapping(String ianaType) {
         return ianaType != null && IANA_TO_GSTREAMER.containsKey(ianaType.toLowerCase().trim());
+    }
+
+    public static final List<String> TABLES = Arrays.asList(
+            "PUBLIC.ALBUM",
+            "PUBLIC.ALBUM_ARTISTS",
+            "PUBLIC.ARTIST",
+            "PUBLIC.SONG",
+            "PUBLIC.SONG_ARTISTS"
+    );
+
+    public static void truncateDB(Database db) throws SQLException {
+        try (Transaction transaction = db.beginTransaction()) {
+
+            Connection connection = transaction.connection();
+
+            try (Statement stmt = connection.createStatement()) {
+
+                stmt.execute("SET REFERENTIAL_INTEGRITY FALSE");
+
+                for (String tbl : TABLES) {
+                    String sql = "TRUNCATE TABLE " + tbl + " RESTART IDENTITY";
+                    stmt.execute(sql);
+                }
+
+                stmt.execute("SET REFERENTIAL_INTEGRITY TRUE");
+            }
+
+            connection.commit();
+
+            db.cacheManager().clearAll();
+
+            transaction.commit();
+        }
+
     }
 }

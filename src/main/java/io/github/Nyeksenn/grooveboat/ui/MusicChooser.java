@@ -16,6 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.foreign.MemorySegment;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/music-chooser.ui", name = "MusicChooser")
 @RegisteredType(name = "MusicChooser")
@@ -62,16 +64,37 @@ public class MusicChooser extends NavigationPage {
 
             var refreshAction = new SimpleAction("refresh-data", null);
             refreshAction.onActivate((_) -> {
-                app.executor.submit(() -> {
+                try (var timer = Executors.newSingleThreadScheduledExecutor()) {
+                    timer.scheduleAtFixedRate(() -> {refreshProgressBar.pulse();}, 0, 200, TimeUnit.MILLISECONDS);
                     refreshProgressBar.setVisible(true);
-                    app.subsonic.refreshRemoteData(refreshProgressBar);
-                    refreshProgressBar.setVisible(false);
-                    GLib.idleAddOnce(() -> {
-                        win.activateActionIfExists("win.reload-albums", null);
+                    app.executor.submit(() -> {
+                        app.subsonic.refreshRemoteData(false);
+                        GLib.idleAddOnce(() -> {
+                            win.activateActionIfExists("win.reload-albums", null);
+                            refreshProgressBar.setVisible(false);
+                        });
                     });
-                });
+                }
+                refreshProgressBar.setFraction(0.0);
             });
             app.addAction(refreshAction);
+
+            var fullRefreshAction = new SimpleAction("full-refresh", null);
+            fullRefreshAction.onActivate((_) -> {
+                try (var timer = Executors.newSingleThreadScheduledExecutor()) {
+                    timer.scheduleAtFixedRate(() -> {refreshProgressBar.pulse();}, 0, 200, TimeUnit.MILLISECONDS);
+                    refreshProgressBar.setVisible(true);
+                    app.executor.submit(() -> {
+                        app.subsonic.refreshRemoteData(true);
+                        GLib.idleAddOnce(() -> {
+                            win.activateActionIfExists("win.reload-albums", null);
+                            refreshProgressBar.setVisible(false);
+                        });
+                    });
+                }
+                refreshProgressBar.setFraction(0.0);
+            });
+            app.addAction(fullRefreshAction);
         });
     }
 

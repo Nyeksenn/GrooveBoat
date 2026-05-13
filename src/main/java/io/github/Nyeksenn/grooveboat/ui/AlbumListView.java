@@ -61,34 +61,29 @@ public class AlbumListView extends Box {
     }
 
     public void loadItems(boolean reload) {
-        if (this.executor == null) {
-            var window = (GrooveboatWindow) getRoot();
-            var albumTextureLoader = AlbumTextureLoader.getInstance();
-            var app = (GrooveboatApp) window.getApplication();
+        var albumTextureLoader = AlbumTextureLoader.getInstance();
 
-            this.executor = app.executor;
-
-            if (reload) {
-                this.store.removeAll();
-            }
-
-            this.executor.submit(() -> {
-                var albums = new QAlbumModel().findList();
-                for (var album : albums) {
-                    try (var localExec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())) {
-                        localExec.submit(() -> {
-                            try {
-                                var texture = albumTextureLoader.load(album.getId());
-                                var albumListItem = new AlbumListItem(texture, album.getTitle(), album.getDisplayArtist(), album.getId());
-                                GLib.idleAddOnce(() -> this.store.append(albumListItem));
-                            } catch (NullPointerException e) {
-                                logger.warn("Didn't find texture for album {}", album.getTitle());
-                            }
-                        });
-                    }
-                }
-            });
+        if (reload) {
+            this.store.removeAll();
         }
+
+        this.executor.submit(() -> {
+            var albums = new QAlbumModel().findList();
+            logger.info("Loading {} albums", albums.size());
+            for (var album : albums) {
+                try (var localExec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())) {
+                    localExec.submit(() -> {
+                        try {
+                            var texture = albumTextureLoader.load(album.getId());
+                            var albumListItem = new AlbumListItem(texture, album.getTitle(), album.getDisplayArtist(), album.getId());
+                            GLib.idleAddOnce(() -> this.store.append(albumListItem));
+                        } catch (NullPointerException e) {
+                            logger.warn("Didn't find texture for album {}", album.getTitle());
+                        }
+                    });
+                }
+            }
+        });
     }
 
     @InstanceInit
@@ -96,8 +91,12 @@ public class AlbumListView extends Box {
         this.store = new ListStore<>();
         this.sortedModel = new SortListModel<>(this.store, titleSorter);
         gridView.setModel(new NoSelection<AlbumListItem>(this.sortedModel));
+
         this.onRealize(() -> {
             var win = (GrooveboatWindow) getRoot();
+            var app = (GrooveboatApp) win.getApplication();
+            this.executor = app.executor;
+
             win.musicChooser.searchEntry.onSearchStarted(() -> {
                 gridView.setModel(new NoSelection<AlbumListItem>(new FilterListModel<AlbumListItem>(sortedModel, filter)));
             });

@@ -11,9 +11,8 @@ import io.github.Nyeksenn.grooveboat.entities.SongModel;
 import io.github.Nyeksenn.grooveboat.entities.query.QAlbumModel;
 import io.github.Nyeksenn.grooveboat.entities.query.QArtistModel;
 import io.github.Nyeksenn.grooveboat.entities.query.QSongModel;
+import io.github.Nyeksenn.grooveboat.utils.Helpers;
 import org.gnome.gio.Settings;
-import org.gnome.glib.GLib;
-import org.gnome.gtk.ProgressBar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
+import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -66,17 +66,21 @@ public class Subsonic implements AutoCloseable {
         }
     }
 
-    public void refreshRemoteData(ProgressBar pbar) {
+    public void refreshRemoteData(boolean fullRefresh) {
+        if (fullRefresh) {
+            settings.setUint64("last-sync", 0L);
+            try {
+                Helpers.truncateDB(db);
+            } catch (SQLException e) {
+                logger.warn("Couldn't truncate tables");
+            }
+        }
         var lastRefresh = Instant.ofEpochSecond(settings.getUint64("last-sync"));
 
         try {
             List<CompletableFuture<AlbumModel>> futures = new ArrayList<>(200);
 
             var newAlbums = client.getNewAlbums(lastRefresh);
-
-            if (pbar != null) {
-                GLib.idleAddOnce(pbar::pulse);
-            }
 
             // If no new albums we can return early
             if (newAlbums.isEmpty()) {
@@ -95,23 +99,14 @@ public class Subsonic implements AutoCloseable {
                         logger.warn("Unable to cache cover art for album {}: {}", album.name(), e.getMessage());
                     }
 
-                    if (pbar != null) {
-                        GLib.idleAddOnce(pbar::pulse);
-                    }
                     return new AlbumModel(album.id(), album.name(), album.songCount(), album.year(), Duration.ofSeconds(album.duration()), coverPath, albumArtists);
                 }, exec);
                 futures.add(future);
             }
 
-            if (pbar != null) {
-                GLib.idleAddOnce(pbar::pulse);
-            }
             var albumModelList = futures.stream().map(CompletableFuture::join).toList();
             db.saveAll(albumModelList);
 
-            if (pbar != null) {
-                GLib.idleAddOnce(pbar::pulse);
-            }
             settings.setUint64("last-sync", Instant.now().getEpochSecond());
 
             // Cache Artist Images
