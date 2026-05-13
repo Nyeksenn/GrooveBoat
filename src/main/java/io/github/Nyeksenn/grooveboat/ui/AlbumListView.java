@@ -1,11 +1,13 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
 import io.github.Nyeksenn.grooveboat.client.Subsonic;
+import io.github.Nyeksenn.grooveboat.entities.query.QAlbumModel;
 import io.github.Nyeksenn.grooveboat.gobjects.AlbumFilter;
 import io.github.Nyeksenn.grooveboat.gobjects.AlbumListItem;
 import io.github.Nyeksenn.grooveboat.gobjects.AlbumTitleSorter;
 import org.gnome.adw.NavigationView;
 import org.gnome.gio.ListStore;
+import org.gnome.gio.SimpleAction;
 import org.gnome.glib.GLib;
 import org.gnome.gobject.GObject;
 import org.gnome.gtk.*;
@@ -58,34 +60,30 @@ public class AlbumListView extends Box {
         albumCard.navView = albumNavView;
     }
 
-    public void loadItems() {
-        if (this.subsonic == null && this.executor == null) {
-            var window = (GrooveboatWindow) getRoot();
-            var albumTextureLoader = AlbumTextureLoader.getInstance();
-            var app = (GrooveboatApp) window.getApplication();
+    public void loadItems(boolean reload) {
+        var albumTextureLoader = AlbumTextureLoader.getInstance();
 
-            this.subsonic = app.subsonic;
-            this.executor = app.executor;
-
-            this.executor.submit(() -> {
-                var albums = subsonic.getAlbums();
-                if (albums != null) {
-                    for (var album : albums) {
-                        try (var localExec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())) {
-                            localExec.submit(() -> {
-                                try {
-                                    var texture = albumTextureLoader.load(album.getAlbumId());
-                                    var albumListItem = new AlbumListItem(texture, album.getTitle(), album.getDisplayArtist(), album.getAlbumId());
-                                    GLib.idleAddOnce(() -> this.store.append(albumListItem));
-                                } catch (NullPointerException e) {
-                                    logger.warn("Didn't find texture for album {}", album.getTitle());
-                                }
-                            });
-                        }
-                    }
-                }
-            });
+        if (reload) {
+            this.store.removeAll();
         }
+
+        this.executor.submit(() -> {
+            var albums = new QAlbumModel().findList();
+            logger.info("Loading {} albums", albums.size());
+            for (var album : albums) {
+                try (var localExec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())) {
+                    localExec.submit(() -> {
+                        try {
+                            var texture = albumTextureLoader.load(album.getId());
+                            var albumListItem = new AlbumListItem(texture, album.getTitle(), album.getDisplayArtist(), album.getId());
+                            GLib.idleAddOnce(() -> this.store.append(albumListItem));
+                        } catch (NullPointerException e) {
+                            logger.warn("Didn't find texture for album {}", album.getTitle());
+                        }
+                    });
+                }
+            }
+        });
     }
 
     @InstanceInit
@@ -93,8 +91,12 @@ public class AlbumListView extends Box {
         this.store = new ListStore<>();
         this.sortedModel = new SortListModel<>(this.store, titleSorter);
         gridView.setModel(new NoSelection<AlbumListItem>(this.sortedModel));
+
         this.onRealize(() -> {
             var win = (GrooveboatWindow) getRoot();
+            var app = (GrooveboatApp) win.getApplication();
+            this.executor = app.executor;
+
             win.musicChooser.searchEntry.onSearchStarted(() -> {
                 gridView.setModel(new NoSelection<AlbumListItem>(new FilterListModel<AlbumListItem>(sortedModel, filter)));
             });
@@ -105,7 +107,15 @@ public class AlbumListView extends Box {
                 var searchTerm = win.musicChooser.searchEntry.getText();
                 filter.setSearchString(searchTerm);
             });
-            loadItems();
+
+            var reloadAction = new SimpleAction("reload-albums", null);
+            reloadAction.onActivate((_) -> {
+                logger.info("Reloading albums");
+                loadItems(true);
+            });
+            win.addAction(reloadAction);
+
+            loadItems(false);
         });
     }
 

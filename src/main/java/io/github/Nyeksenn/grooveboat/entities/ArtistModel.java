@@ -3,29 +3,24 @@ package io.github.Nyeksenn.grooveboat.entities;
 import io.ebean.annotation.Index;
 import io.ebean.annotation.Length;
 import io.ebean.annotation.NotNull;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
 
 @Entity
 @Table(name = "artist")
-@Index(unique = true, columnNames = {"artist_id"})
 public class ArtistModel extends BaseModel {
-    @NotNull
-    @Length(100)
-    String artistId;
+    @Id
+    String id;
 
     @NotNull
     @Length(200)
     String name;
 
-    @Column(length = 100000000)
-    byte[] image;
+    Path artistImagePath;
 
     @ManyToMany(mappedBy = "albumArtists")
     Set<AlbumModel> albums;
@@ -33,12 +28,12 @@ public class ArtistModel extends BaseModel {
     @ManyToMany(mappedBy = "songArtists")
     Set<SongModel> songs;
 
-    public String getArtistId() {
-        return artistId;
+    public String getId() {
+        return id;
     }
 
-    public void setArtistId(String artistId) {
-        this.artistId = artistId;
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -49,12 +44,12 @@ public class ArtistModel extends BaseModel {
         this.name = name;
     }
 
-    public byte[] getImage() {
-        return image;
+    public Path getArtistImagePath() {
+        return artistImagePath;
     }
 
-    public void setImage(byte[] image) {
-        this.image = image;
+    public void setArtistImagePath(Path artistImagePath) {
+        this.artistImagePath = artistImagePath;
     }
 
     public Set<AlbumModel> getAlbums() {
@@ -66,30 +61,25 @@ public class ArtistModel extends BaseModel {
     }
 
     public ArtistModel(String artistId, String name) {
-        this.artistId = artistId;
+        this.id = artistId;
         this.name = name;
     }
 
-    public ArtistModel(String artistId, String name, byte[] image) {
-        this.artistId = artistId;
+    public ArtistModel(String artistId, String name, Path path) {
+        this.id = artistId;
         this.name = name;
-        this.image = image;
-    }
-
-    public void setAllFields(ArtistModel src) {
-        this.setName(src.getName());
-        this.setImage(src.getImage());
+        this.artistImagePath = path;
     }
 
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         ArtistModel that = (ArtistModel) o;
-        return Objects.equals(getArtistId(), that.getArtistId()) && Objects.equals(getName(), that.getName()) && Arrays.equals(getImage(), that.getImage());
+        return Objects.equals(id, that.id) && Objects.equals(name, that.name) && Objects.equals(artistImagePath, that.artistImagePath) && Objects.equals(albums, that.albums) && Objects.equals(songs, that.songs);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getArtistId(), getName(), Arrays.hashCode(getImage()));
+        return Objects.hash(id, name, artistImagePath, albums, songs);
     }
 }

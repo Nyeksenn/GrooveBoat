@@ -11,13 +11,18 @@ import io.github.Nyeksenn.grooveboat.entities.SongModel;
 import io.github.Nyeksenn.grooveboat.entities.query.QAlbumModel;
 import io.github.Nyeksenn.grooveboat.entities.query.QArtistModel;
 import io.github.Nyeksenn.grooveboat.entities.query.QSongModel;
+import io.github.Nyeksenn.grooveboat.utils.Helpers;
+import org.gnome.gio.Settings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.http.HttpResponse;
+import java.nio.file.Path;
+import java.sql.SQLException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -27,92 +32,85 @@ import java.util.concurrent.Executors;
 
 public class Subsonic implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(Subsonic.class);
+    private final Settings settings = new Settings("io.github.Nyeksenn.grooveboat");
 
     private SubsonicClient client;
     private final Database db = DB.getDefault();
     private final ExecutorService exec = Executors.newVirtualThreadPerTaskExecutor();
+    private final ExecutorService threadExec = Executors.newThreadPerTaskExecutor(Executors.defaultThreadFactory());
 
-    private List<ArtistModel> refreshArtists() {
-        try {
-            var numSavedArtists = new QArtistModel().findCount();
-            var artists = client.getArtists();
-            var artistModelList = new ArrayList<ArtistModel>(100);
+    private void updateArtists () {
+        final String sql = """
+                MERGE INTO ARTIST (id, name, artist_image_path)
+                KEY (id)
+                VALUES (:id, :name, :artistImagePath)
+                """;
 
-            if (numSavedArtists == artists.size()) {
-                return new QArtistModel().findList();
-            }
-
-            try {
-                for (var artist : artists) {
-                    var savedArtistModel = new QArtistModel().artistId.equalTo(artist.id()).findOne();
-                    var artistImage = client.getArtistImage(artist.artistImageUrl());
-                    var newArtistModel = new ArtistModel(artist.id(), artist.name(), artistImage);
-
-                    // Insert
-                    if (savedArtistModel == null) {
-                        artistModelList.add(newArtistModel);
-                    } else if (!newArtistModel.equals(savedArtistModel)) {
-                        // Update
-                        savedArtistModel.setAllFields(newArtistModel);
-                        artistModelList.add(savedArtistModel);
-                    } else {
-                        artistModelList.add(savedArtistModel);
-                    }
+        var artists = new QArtistModel().findList();
+        try (var tx = DB.beginTransaction()) {
+            for (var artist : artists) {
+                try {
+                    var remoteArtist = client.getArtist(artist.getId());
+                    var artistImagePath = client.cacheCoverArt(artist.getId(), 800);
+                    var remoteArtistModel = new ArtistModel(remoteArtist.id(), remoteArtist.name(), artistImagePath);
+                    DB.sqlUpdate(sql)
+                            .setParameter("id", remoteArtistModel.getId())
+                            .setParameter("name", remoteArtistModel.getName())
+                            .setParameter("artistImagePath", remoteArtistModel.getArtistImagePath())
+                            .execute();
+                } catch (IOException e) {
+                    logger.warn("Couldn't retrieve artist {}", artist.getName());
                 }
-
-                db.saveAll(artistModelList);
-                return artistModelList;
-            } catch (Exception e) {
-                logger.warn(e.getMessage());
             }
-        } catch (IOException e) {
-            logger.warn("Couldn't fetch artist list: {}", e.getMessage());
+            tx.commit();
         }
-
-        return null;
     }
 
-    private List<AlbumModel> refreshAlbums() {
+    public void refreshRemoteData(boolean fullRefresh) {
+        if (fullRefresh) {
+            settings.setUint64("last-sync", 0L);
+            try {
+                Helpers.truncateDB(db);
+            } catch (SQLException e) {
+                logger.warn("Couldn't truncate tables");
+            }
+        }
+        var lastRefresh = Instant.ofEpochSecond(settings.getUint64("last-sync"));
+
         try {
-            var albums = client.getAlbumList2();
-            var numSavedAlbums = new QAlbumModel().findCount();
             List<CompletableFuture<AlbumModel>> futures = new ArrayList<>(200);
 
-            if (numSavedAlbums == albums.size()) {
-                return new QAlbumModel().findList();
+            var newAlbums = client.getNewAlbums(lastRefresh);
+
+            // If no new albums we can return early
+            if (newAlbums.isEmpty()) {
+                return;
             }
 
-            for (var album : albums) {
+            for (var album : newAlbums) {
                 var future = CompletableFuture.supplyAsync(() -> {
-                    var savedAlbumModel = new QAlbumModel().albumId.equalTo(album.id()).findOne();
-
                     var albumArtists = resolveArtists(album.artists());
-                    byte[] albumCover;
+
+                    Path coverPath;
                     try {
-                        albumCover = client.getCoverArt(album.coverArt(), 1000);
+                        coverPath = client.cacheCoverArt(album.coverArt(), 800);
                     } catch (IOException e) {
-                        albumCover = null;
+                        coverPath = null;
+                        logger.warn("Unable to cache cover art for album {}: {}", album.name(), e.getMessage());
                     }
 
-                    var newAlbumModel = new AlbumModel(album.id(), album.name(), album.songCount(), album.year(), Duration.ofSeconds(album.duration()), albumCover, albumArtists);
-
-                    // Insert
-                    if (savedAlbumModel == null) {
-                        return newAlbumModel;
-                    } else if (!newAlbumModel.equals(savedAlbumModel)) {
-                        // Update
-                        savedAlbumModel.setAllFields(newAlbumModel);
-                        return savedAlbumModel;
-                    } else {
-                        return savedAlbumModel;
-                    }
+                    return new AlbumModel(album.id(), album.name(), album.songCount(), album.year(), Duration.ofSeconds(album.duration()), coverPath, albumArtists);
                 }, exec);
                 futures.add(future);
             }
 
             var albumModelList = futures.stream().map(CompletableFuture::join).toList();
             db.saveAll(albumModelList);
-            return albumModelList;
+
+            settings.setUint64("last-sync", Instant.now().getEpochSecond());
+
+            // Cache Artist Images
+            updateArtists();
         } catch (IOException e) {
             logger.warn("Couldn't fetch albums");
         } catch (CompletionException e) {
@@ -120,21 +118,19 @@ public class Subsonic implements AutoCloseable {
         } catch (Exception e) {
             logger.warn(e.getMessage());
         }
-
-        return null;
     }
 
     private static ArrayList<ArtistModel> resolveArtists(List<ShortArtist> artists) {
         var artistList = new ArrayList<ArtistModel>(3);
         for (var artist : artists) {
-            var savedArtist = new QArtistModel().artistId.equalTo(artist.id()).findOne();
+            var savedArtist = new QArtistModel().id.equalTo(artist.id()).findOne();
             if (savedArtist == null) {
                 try {
                     var newArtist = new ArtistModel(artist.id(), artist.name());
                     newArtist.save();
                     artistList.add(newArtist);
                 } catch (DuplicateKeyException e) {
-                    savedArtist = new QArtistModel().artistId.equalTo(artist.id()).findOne();
+                    savedArtist = new QArtistModel().id.equalTo(artist.id()).findOne();
                     artistList.add(savedArtist);
                 }
             } else {
@@ -144,19 +140,10 @@ public class Subsonic implements AutoCloseable {
         return artistList;
     }
 
-
-    public List<AlbumModel> getAlbums() {
-        return this.refreshAlbums();
-    }
-
-    public List<ArtistModel> getArtists() {
-        return this.refreshArtists();
-    }
-
     public List<SongModel> getSongs(String albumId) {
         try {
             var songList = client.getSongsByAlbum(albumId);
-            var songsSaved = new QSongModel().album.albumId.equalTo(albumId).findList();
+            var songsSaved = new QSongModel().album.id.equalTo(albumId).findList();
 
             if (songsSaved.size() == songList.size()) {
                 return songsSaved;
@@ -164,10 +151,10 @@ public class Subsonic implements AutoCloseable {
 
             var futures = new ArrayList<CompletableFuture<SongModel>>(30);
 
-            var album = new QAlbumModel().albumId.equalTo(albumId).findOne();
+            var album = new QAlbumModel().id.equalTo(albumId).findOne();
             for (var song : songList) {
                 var future = CompletableFuture.supplyAsync(() -> {
-                    var savedSongModel = new QSongModel().songId.equalTo(song.id()).findOne();
+                    var savedSongModel = new QSongModel().id.equalTo(song.id()).findOne();
                     var artists = resolveArtists(song.artists());
                     var newSongModel = new SongModel(
                             song.id(),
@@ -206,10 +193,6 @@ public class Subsonic implements AutoCloseable {
             logger.warn(e.getMessage());
             return new ArrayList<>();
         }
-    }
-
-    public HttpResponse<InputStream> getSongStream(String songId) throws IOException {
-        return this.client.stream(songId, false, 0L);
     }
 
     public HttpResponse<InputStream> seekSongStream(String songId, long position) throws IOException {
@@ -253,5 +236,6 @@ public class Subsonic implements AutoCloseable {
     @Override
     public void close() {
         exec.close();
+        threadExec.close();
     }
 }

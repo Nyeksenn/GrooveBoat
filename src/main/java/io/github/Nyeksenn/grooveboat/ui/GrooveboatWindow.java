@@ -4,6 +4,7 @@ import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import io.github.Nyeksenn.grooveboat.gobjects.SecretKeeper;
 import org.gnome.adw.ApplicationWindow;
 import org.gnome.gio.Settings;
+import org.gnome.gio.SimpleAction;
 import org.gnome.glib.GLib;
 import org.gnome.gtk.Stack;
 import org.javagi.base.Out;
@@ -69,6 +70,7 @@ public class GrooveboatWindow extends ApplicationWindow {
             executor.submit(() -> {
                 var connectionSuccessful = checkConnection(url, username);
                 if (connectionSuccessful) {
+                    subsonic.refreshRemoteData(false);
                     GLib.idleAddOnce(() -> mainStack.setVisibleChildName("content-page"));
                 } else {
                     GLib.idleAddOnce(() -> mainStack.setVisibleChildName("error-page"));

@@ -4,10 +4,9 @@ import org.gnome.adw.HeaderBar;
 import org.gnome.adw.NavigationPage;
 import org.gnome.adw.ViewSwitcher;
 import org.gnome.adw.ViewSwitcherBar;
-import org.gnome.gtk.SearchBar;
-import org.gnome.gtk.SearchEntry;
-import org.gnome.gtk.ToggleButton;
-import org.gnome.gtk.Widget;
+import org.gnome.gio.SimpleAction;
+import org.gnome.glib.GLib;
+import org.gnome.gtk.*;
 import org.javagi.gobject.annotations.InstanceInit;
 import org.javagi.gobject.annotations.RegisteredType;
 import org.javagi.gtk.annotations.GtkCallback;
@@ -17,6 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.foreign.MemorySegment;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/music-chooser.ui", name = "MusicChooser")
 @RegisteredType(name = "MusicChooser")
@@ -44,6 +45,9 @@ public class MusicChooser extends NavigationPage {
     @GtkChild(name = "album-searchentry")
     public SearchEntry searchEntry;
 
+    @GtkChild(name = "refresh-progress-bar")
+    public ProgressBar refreshProgressBar;
+
     @GtkCallback(name = "search-clicked")
     public void searchClicked() {
         albumSearchbar.setSearchMode(!albumSearchbar.getSearchMode());
@@ -52,8 +56,45 @@ public class MusicChooser extends NavigationPage {
     @InstanceInit
     public void init() {
         onRealize(() -> {
+            var win = (GrooveboatWindow) getRoot();
+            var app = (GrooveboatApp) win.getApplication();
+
             albumSearchbar.setKeyCaptureWidget((Widget) getRoot());
             albumSearchbar.bindProperty("search-mode-enabled", buttonSearch, "active").build();
+
+            var refreshAction = new SimpleAction("refresh-data", null);
+            refreshAction.onActivate((_) -> {
+                try (var timer = Executors.newSingleThreadScheduledExecutor()) {
+                    timer.scheduleAtFixedRate(() -> {refreshProgressBar.pulse();}, 0, 200, TimeUnit.MILLISECONDS);
+                    refreshProgressBar.setVisible(true);
+                    app.executor.submit(() -> {
+                        app.subsonic.refreshRemoteData(false);
+                        GLib.idleAddOnce(() -> {
+                            win.activateActionIfExists("win.reload-albums", null);
+                            refreshProgressBar.setVisible(false);
+                        });
+                    });
+                }
+                refreshProgressBar.setFraction(0.0);
+            });
+            app.addAction(refreshAction);
+
+            var fullRefreshAction = new SimpleAction("full-refresh", null);
+            fullRefreshAction.onActivate((_) -> {
+                try (var timer = Executors.newSingleThreadScheduledExecutor()) {
+                    timer.scheduleAtFixedRate(() -> {refreshProgressBar.pulse();}, 0, 200, TimeUnit.MILLISECONDS);
+                    refreshProgressBar.setVisible(true);
+                    app.executor.submit(() -> {
+                        app.subsonic.refreshRemoteData(true);
+                        GLib.idleAddOnce(() -> {
+                            win.activateActionIfExists("win.reload-albums", null);
+                            refreshProgressBar.setVisible(false);
+                        });
+                    });
+                }
+                refreshProgressBar.setFraction(0.0);
+            });
+            app.addAction(fullRefreshAction);
         });
     }
 

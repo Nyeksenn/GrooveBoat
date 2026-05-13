@@ -58,7 +58,7 @@ public class QueueStore extends GObject {
     public void loadState() {
         var initSong = new QSongModel().findList().getFirst();
         var action = app.lookupAction("queue-song");
-        action.activate(Variant.string(initSong.getSongId()));
+        action.activate(Variant.string(initSong.getId()));
     }
 
     private void setupActions() {
@@ -74,12 +74,12 @@ public class QueueStore extends GObject {
                         exec.submit(() -> {
                             logger.info("Playing this song:");
                             var songId = parameter.getString(null);
-                            var song = new QSongModel().songId.equalTo(songId).findOne();
+                            var song = new QSongModel().id.equalTo(songId).findOne();
                             if (song != null) {
-                                var texture = loader.load(song.getAlbum().getAlbumId());
+                                var texture = loader.load(song.getAlbum().getId());
                                 var item = new SongListItem(
                                         song.getTitle(),
-                                        song.getSongId(),
+                                        song.getId(),
                                         song.getDisplayArtist(),
                                         song.getAlbum().getTitle(),
                                         song.getDuration(),
@@ -106,12 +106,12 @@ public class QueueStore extends GObject {
                         exec.submit(() -> {
                             logger.info("Queueing this song:");
                             var songId = parameter.getString(null);
-                            var song = new QSongModel().songId.equalTo(songId).findOne();
+                            var song = new QSongModel().id.equalTo(songId).findOne();
                             if (song != null) {
-                                var texture = loader.load(song.getAlbum().getAlbumId());
+                                var texture = loader.load(song.getAlbum().getId());
                                 var item = new SongListItem(
                                         song.getTitle(),
-                                        song.getSongId(),
+                                        song.getId(),
                                         song.getDisplayArtist(),
                                         song.getAlbum().getTitle(),
                                         song.getDuration(),
@@ -134,15 +134,15 @@ public class QueueStore extends GObject {
                     if (parameter != null) {
                         exec.submit(() -> {
                             var albumId = parameter.getString(null);
-                            var album = new QAlbumModel().albumId.equalTo(albumId).findOne();
+                            var album = new QAlbumModel().id.equalTo(albumId).findOne();
                             if (album != null) {
                                 GLib.idleAddOnce(model::removeAll);
                                 var songs = album.getSongs();
-                                var texture = loader.load(album.getAlbumId());
+                                var texture = loader.load(album.getId());
                                 for (var song : songs) {
                                     var item = new SongListItem(
                                             song.getTitle(),
-                                            song.getSongId(),
+                                            song.getId(),
                                             song.getDisplayArtist(),
                                             song.getAlbum().getTitle(),
                                             song.getDuration(),
@@ -166,14 +166,14 @@ public class QueueStore extends GObject {
                     if (parameter != null) {
                         exec.submit(() -> {
                             var albumId = parameter.getString(null);
-                            var album = new QAlbumModel().albumId.equalTo(albumId).findOne();
+                            var album = new QAlbumModel().id.equalTo(albumId).findOne();
                             if (album != null) {
-                                var texture = loader.load(album.getAlbumId());
+                                var texture = loader.load(album.getId());
                                 var songs = album.getSongs();
                                 for (var song : songs) {
                                     var item = new SongListItem(
                                             song.getTitle(),
-                                            song.getSongId(),
+                                            song.getId(),
                                             song.getDisplayArtist(),
                                             song.getAlbum().getTitle(),
                                             song.getDuration(),

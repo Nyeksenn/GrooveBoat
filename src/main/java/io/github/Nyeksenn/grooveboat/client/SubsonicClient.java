@@ -1,6 +1,12 @@
 package io.github.Nyeksenn.grooveboat.client;
 
 import io.github.Nyeksenn.grooveboat.deserializer.*;
+import io.github.Nyeksenn.grooveboat.ui.AlbumTextureLoader;
+import io.github.Nyeksenn.grooveboat.utils.Helpers;
+import org.gnome.gdk.Texture;
+import org.gnome.gio.File;
+import org.gnome.gio.FileCreateFlags;
+import org.javagi.base.GErrorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.core.JacksonException;
@@ -15,21 +21,30 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 
 import static org.gnome.glib.GLib.getHostName;
 
 public class SubsonicClient {
     private static final Logger logger = LoggerFactory.getLogger(SubsonicClient.class);
+    private static final AlbumTextureLoader textureLoader = AlbumTextureLoader.getInstance();
+    private static final Path COVER_CACHE_PATH = Paths.get(Helpers.getUserDataPath(), "grooveboat", "covers");
     private static final JsonMapper om = JsonMapper.builder()
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
@@ -39,15 +54,14 @@ public class SubsonicClient {
             .build();
     private static final ObjectReader albumReader = om.readerFor(new TypeReference<List<Album>>() {
     });
-    private static final ObjectReader indexReader = om.readerFor(new TypeReference<List<Index>>() {
-    });
+/*    private static final ObjectReader indexReader = om.readerFor(new TypeReference<List<Index>>() {
+    });*/
     private static final ObjectReader songReader = om.readerFor(new TypeReference<List<Song>>() {
     });
 
     private static final HttpClient httpClient = HttpClient.newBuilder()
             .version(HttpClient.Version.HTTP_1_1)
-            .followRedirects(HttpClient.Redirect.NORMAL)
-            .connectTimeout(Duration.ofSeconds(2)).build();
+            .followRedirects(HttpClient.Redirect.NORMAL).build();
 
     private final HashMap<String, String> baseQueryParams = new HashMap<>();
 
@@ -126,17 +140,11 @@ public class SubsonicClient {
         }
     }
 
-    private byte[] executeGetBinary(Endpoint endpoint, Map<String, String> params) throws IOException {
+    private HttpResponse<byte[]> executeGetBinary(String endpoint, Map<String, String> params) throws IOException {
         try {
-            URI uri;
-
-            switch (endpoint) {
-                case AbsoluteEndpoint ep -> uri = URI.create(ep.url());
-                case RelativeEndpoint ep -> uri = getUri(ep.url(), params);
-            }
-
+            var uri = getUri(endpoint, params);
             var request = HttpRequest.newBuilder().GET().timeout(Duration.ofSeconds(30)).uri(uri).build();
-            return httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray()).body();
+            return httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
         } catch (InterruptedException e) {
             throw new IOException(e);
         }
@@ -165,27 +173,36 @@ public class SubsonicClient {
         }
     }
 
-    public byte[] getArtistImage(String url) throws IOException {
-        return executeGetBinary(new AbsoluteEndpoint(url), null);
-    }
-
-    public byte[] getCoverArt(String id, int size) throws IOException {
+    public Path cacheCoverArt(String id, int size) throws IOException {
         var params = new HashMap<>(Map.of(
                 "id", id,
                 "size", String.valueOf(size)
         ));
 
-        return executeGetBinary(new RelativeEndpoint("/rest/getCoverArt"), params);
+        var resp = executeGetBinary("/rest/getCoverArt", params);
+
+        var contentType = resp.headers().firstValue("Content-Type");
+        if (contentType.isPresent()) {
+            var ctSplit = contentType.get().split("/");
+            var fileName = id + "." + ctSplit[1];
+            var imagePath = COVER_CACHE_PATH.resolve(fileName);
+            Files.write(imagePath, resp.body());
+
+            return imagePath;
+        } else {
+            throw new IOException("Response did not contain Content-Type header");
+        }
     }
 
-    public List<Album> getAlbumList2() throws IOException {
+    public List<Album> getNewAlbums(Instant lastRefresh) throws IOException {
         var moreToGo = true;
-        List<Album> albums = new ArrayList<>(200);
+        final int PAGE_SIZE = 200;
+        List<Album> albums = new ArrayList<>(PAGE_SIZE);
         var offset = 0;
         var params = new HashMap<>(Map.of(
-                "size", String.valueOf(500),
+                "size", String.valueOf(PAGE_SIZE),
                 "offset", String.valueOf(offset),
-                "type", "alphabeticalByArtist"
+                "type", "newest"
         ));
 
         while (moreToGo) {
@@ -199,14 +216,28 @@ public class SubsonicClient {
             } else {
                 try {
                     List<Album> partialAlbumList = albumReader.readValue(album_fragment);
-                    albums.addAll(partialAlbumList);
+
+                    if (partialAlbumList.size() < PAGE_SIZE) {
+                        moreToGo = false;
+                    }
+
+                    for (var album : partialAlbumList) {
+                        var createdAt = Instant.parse(album.created());
+                        if (createdAt.isAfter(lastRefresh)) {
+                            albums.add(album);
+                        } else {
+                            moreToGo = false;
+                            break;
+                        }
+                    }
+
                 } catch (IllegalArgumentException | JacksonException e) {
                     logger.warn(e.getMessage());
                     return new ArrayList<>();
                 }
             }
 
-            offset += 500;
+            offset += PAGE_SIZE;
             params.replace("offset", String.valueOf(offset));
         }
 
@@ -227,21 +258,6 @@ public class SubsonicClient {
             return om.treeToValue(subsonicResponse, Artist.class);
         } catch (JacksonException e) {
             throw new IOException("Couldn't deserialize artist");
-        }
-    }
-
-    public List<Artist> getArtists() throws IOException, IllegalArgumentException {
-        List<Index> indices;
-        try {
-            var response = executeGetString("/rest/getArtists", null);
-            var root = om.readTree(response);
-            var index_fragment = root.path("subsonic-response").path("artists").path("index");
-
-            indices = indexReader.readValue(index_fragment);
-            return indices.stream().flatMap(item -> item.artist().stream()).toList();
-        } catch (JacksonException e) {
-            logger.warn(e.getMessage());
-            throw new IOException("Couldn't deserialize artist list");
         }
     }
 
@@ -324,5 +340,11 @@ public class SubsonicClient {
         var splitResults = baseUrl.split("://");
         this.scheme = splitResults[0];
         this.host = splitResults[1];
+
+        try {
+            Files.createDirectories(COVER_CACHE_PATH);
+        } catch (IOException e) {
+            logger.warn("Couldn't create image cache dir");
+        }
     }
 }
