@@ -61,8 +61,13 @@ public class MusicControls extends Box {
     @Property
     public void setMediaStream(MediaStream mediaStream) {
         if (mediaStream != null) {
-            this.ms = new MediaStream.MediaStream$Impl(mediaStream.handle());
-            adjustment = new Adjustment(0.0, 0.0, (double) mediaStream.getDuration(), 1.0, 0.0, 0.0);
+            // The app has one media stream for its lifetime: bind it once. The duration changes per track, so it
+            // drives the adjustment's upper bound through a binding.
+            if (mediaStream == this.ms) {
+                return;
+            }
+            this.ms = mediaStream;
+            adjustment = new Adjustment(0.0, 0.0, Math.max(1.0, (double) mediaStream.getDuration()), 1.0, 0.0, 0.0);
             playbackPositionScale.setAdjustment(adjustment);
             setupBindings();
         } else {
@@ -99,7 +104,7 @@ public class MusicControls extends Box {
         var shouldLoop = loopButton.getActive();
         assert app != null;
 
-        app.shouldLoop = shouldLoop;
+        app.setLoop(shouldLoop);
         if (shouldLoop) {
             loopButton.setIconName("arrows-loop-tall-symbolic");
         } else {
@@ -126,6 +131,10 @@ public class MusicControls extends Box {
         ms.bindProperty("prepared", playbackPositionScale, "sensitive").syncCreate().build();
         ms.<Boolean, Boolean>bindProperty("seeking", playbackPositionScale, "sensitive")
                 .transformTo((seeking) -> !seeking).transformFrom(null).syncCreate().build();
+        ms.<Long, Double>bindProperty("duration", adjustment, "upper")
+                .transformTo((duration) -> Math.max(1.0, (double) duration))
+                .transformFrom(null)
+                .syncCreate().build();
         ms.<Long, Double>bindProperty("timestamp", adjustment, "value")
                 .transformTo((timestamp) -> (double) timestamp)
                 .transformFrom(null)

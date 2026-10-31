@@ -12,6 +12,11 @@
           </object>
         </child>
         <child>
+          <object class="ServerTypePage" id="server-type-page">
+            <property name="tag">server-type-page</property>
+          </object>
+        </child>
+        <child>
           <object class="ConnectionPage" id="connection-page">
             <property name="tag">connection-page</property>
           </object>

@@ -1,7 +1,7 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
 import io.github.Nyeksenn.grooveboat.audio.QueueStore;
-import io.github.Nyeksenn.grooveboat.gobjects.MediaSubsonic;
+import io.github.Nyeksenn.grooveboat.gobjects.RemoteMediaStream;
 import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
 import io.github.Nyeksenn.grooveboat.gobjects.SongListItem;
 import org.gnome.glib.Variant;
@@ -10,6 +10,7 @@ import org.gnome.gtk.Box;
 import org.gnome.gtk.Button;
 import org.gnome.gtk.GestureClick;
 import org.gnome.gtk.Label;
+import org.javagi.gobject.SignalConnection;
 import org.javagi.gobject.annotations.InstanceInit;
 import org.javagi.gobject.annotations.RegisteredType;
 import org.javagi.gtk.annotations.GtkCallback;
@@ -21,7 +22,8 @@ import java.lang.foreign.MemorySegment;
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/mini-player.ui", name = "MiniPlayer")
 @RegisteredType(name = "MiniPlayer")
 public class MiniPlayer extends Box {
-    private MediaSubsonic stream;
+    private RemoteMediaStream stream;
+    private SignalConnection<?> songConnection;
     private GrooveboatApp app;
 
     @GtkChild(name = "mini-album-cover")
@@ -63,11 +65,33 @@ public class MiniPlayer extends Box {
 
     public void initStream(SongListItem item) {
         if (item != null) {
+            albumCover.setTexture(item.getCoverArt());
+            songTitleLabel.setLabel(item.getSongName());
+            albumArtistLabel.setLabel(item.getArtistName());
+        }
+    }
+
+    @InstanceInit
+    public void init() {
+        onUnrealize(() -> {
+            if (songConnection != null) {
+                songConnection.disconnect();
+                songConnection = null;
+            }
+        });
+        onRealize(() -> {
+            var win = (GrooveboatWindow) getRoot();
+            var app = (GrooveboatApp) win.getApplication();
+            this.app = app;
+            songConnection = app.queueStore.connect("initialize-song", (QueueStore.InitializeSong) this::initStream);
+
+            // One stream for the app's lifetime: bind it once, although the widget is realized again whenever
+            // the window crosses the size breakpoint.
+            if (this.stream != null) {
+                initStream(stream.getCurrentItem());
+                return;
+            }
             this.stream = app.getStream();
-            var selectedSong = app.queueStore.getSelection().getSelectedItem();
-            albumCover.setTexture(selectedSong.getCoverArt());
-            songTitleLabel.setLabel(selectedSong.getSongName());
-            albumArtistLabel.setLabel(selectedSong.getArtistName());
             stream.<Boolean, String>bindProperty("playing", miniPlayToggle, "icon-name").transformTo((playing) -> {
                 if (playing) {
                     return "pause-symbolic";
@@ -75,32 +99,7 @@ public class MiniPlayer extends Box {
                     return "play-symbolic";
                 }
             }).transformFrom(null).syncCreate().build();
-        }
-    }
-
-    @InstanceInit
-    public void init() {
-        onRealize(() -> {
-            var win = (GrooveboatWindow) getRoot();
-            var app = (GrooveboatApp) win.getApplication();
-            this.app = app;
-            app.queueStore.connect("initialize-song", (QueueStore.InitializeSong) this::initStream);
-
-            this.stream = app.getStream();
-
-            if (this.stream != null) {
-                stream.<Boolean, String>bindProperty("playing", miniPlayToggle, "icon-name").transformTo((playing) -> {
-                    if (playing) {
-                        return "pause-symbolic";
-                    } else {
-                        return "play-symbolic";
-                    }
-                }).transformFrom(null).syncCreate().build();
-                var selectedSong = app.queueStore.getSelection().getSelectedItem();
-                albumCover.setTexture(selectedSong.getCoverArt());
-                songTitleLabel.setLabel(selectedSong.getSongName());
-                albumArtistLabel.setLabel(selectedSong.getArtistName());
-            }
+            initStream(stream.getCurrentItem());
         });
     }
 

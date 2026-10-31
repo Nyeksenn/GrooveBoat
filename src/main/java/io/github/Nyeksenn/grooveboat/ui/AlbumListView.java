@@ -1,6 +1,5 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
-import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import io.github.Nyeksenn.grooveboat.entities.query.QAlbumModel;
 import io.github.Nyeksenn.grooveboat.gobjects.AlbumFilter;
 import io.github.Nyeksenn.grooveboat.gobjects.AlbumListItem;
@@ -20,8 +19,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.foreign.MemorySegment;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/album-list.ui", name = "AlbumListView")
 @RegisteredType(name = "AlbumListView")
@@ -31,8 +30,14 @@ public class AlbumListView extends Box {
     private final AlbumFilter filter = new AlbumFilter();
     private ListStore<AlbumListItem> store;
     private SortListModel<AlbumListItem> sortedModel;
-    private Subsonic subsonic;
     private ExecutorService executor;
+    /** Incremented per load on the main thread; a finished load only applies if it is still the newest. */
+    private int loadGeneration = 0;
+    /**
+     * The widget is realized again whenever the window crosses the size breakpoint (the split view collapses or
+     * expands), so the one-time setup must not run again.
+     */
+    private boolean initialized = false;
 
     @GtkChild(name = "album-grid-view")
     public GridView gridView;
@@ -60,29 +65,29 @@ public class AlbumListView extends Box {
         albumCard.navView = albumNavView;
     }
 
-    public void loadItems(boolean reload) {
+    /**
+     * Replaces the grid's contents with the albums in the cache. Only the newest load is applied, so overlapping
+     * reloads can't add albums twice.
+     */
+    public void loadItems() {
         var albumTextureLoader = AlbumTextureLoader.getInstance();
-
-        if (reload) {
-            this.store.removeAll();
-        }
-
+        var generation = ++loadGeneration;
         this.executor.submit(() -> {
             var albums = new QAlbumModel().findList();
             logger.info("Loading {} albums", albums.size());
+            // Built on this executor thread: GObjects of custom types created on the ForkJoin common pool (e.g. via
+            // parallelStream) are broken and crash GTK as soon as they are added to a list store.
+            var items = new ArrayList<AlbumListItem>(albums.size());
             for (var album : albums) {
-                try (var localExec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())) {
-                    localExec.submit(() -> {
-                        try {
-                            var texture = albumTextureLoader.load(album.getId());
-                            var albumListItem = new AlbumListItem(texture, album.getTitle(), album.getDisplayArtist(), album.getId());
-                            GLib.idleAddOnce(() -> this.store.append(albumListItem));
-                        } catch (NullPointerException e) {
-                            logger.warn("Didn't find texture for album {}", album.getTitle());
-                        }
-                    });
-                }
+                items.add(new AlbumListItem(albumTextureLoader.load(album.getId()), album.getTitle(),
+                        album.getDisplayArtist(), album.getId()));
             }
+            GLib.idleAddOnce(() -> {
+                if (generation == loadGeneration) {
+                    store.removeAll();
+                    items.forEach(store::append);
+                }
+            });
         });
     }
 
@@ -93,6 +98,10 @@ public class AlbumListView extends Box {
         gridView.setModel(new NoSelection<AlbumListItem>(this.sortedModel));
 
         this.onRealize(() -> {
+            if (initialized) {
+                return;
+            }
+            initialized = true;
             var win = (GrooveboatWindow) getRoot();
             var app = (GrooveboatApp) win.getApplication();
             this.executor = app.executor;
@@ -111,11 +120,11 @@ public class AlbumListView extends Box {
             var reloadAction = new SimpleAction("reload-albums", null);
             reloadAction.onActivate((_) -> {
                 logger.info("Reloading albums");
-                loadItems(true);
+                loadItems();
             });
             win.addAction(reloadAction);
 
-            loadItems(false);
+            loadItems();
         });
     }
 

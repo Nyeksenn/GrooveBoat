@@ -2,15 +2,35 @@
 <!DOCTYPE schemalist SYSTEM "/usr/share/glib-2.0/schemas/gschema.dtd">
 <schemalist>
   <schema path="/io/github/Nyeksenn/grooveboat/" id="io.github.Nyeksenn.grooveboat">
+    <key name="backend" type="s">
+      <choices>
+        <choice value="none"/>
+        <choice value="opensubsonic"/>
+        <choice value="jellyfin"/>
+      </choices>
+      <default>"none"</default>
+      <summary>Backend</summary>
+      <description>Server type of the current session. "none" means logged out.</description>
+    </key>
     <key name="username" type="s">
       <summary>Username</summary>
       <default>""</default>
-      <description>The Subsonic API Username</description>
+      <description>The account name used to authenticate with the server</description>
     </key>
     <key name="url" type="s">
       <summary>URL</summary>
       <default>""</default>
-      <description>URL of the Subsonic-compatible Server</description>
+      <description>Base URL of the music server, including the scheme</description>
+    </key>
+    <key name="user-id" type="s">
+      <summary>User ID</summary>
+      <default>""</default>
+      <description>Server-side user ID (Jellyfin). Empty for OpenSubsonic.</description>
+    </key>
+    <key name="device-id" type="s">
+      <summary>Device ID</summary>
+      <default>""</default>
+      <description>Stable client device ID sent to Jellyfin. Generated on first use and kept across logouts.</description>
     </key>
     <key name="last-sync" type="t">
       <summary>Last sync</summary>

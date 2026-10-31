@@ -1,6 +1,6 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
-import io.github.Nyeksenn.grooveboat.client.Subsonic;
+import io.github.Nyeksenn.grooveboat.library.LibrarySync;
 import io.github.Nyeksenn.grooveboat.gobjects.SongListItem;
 import org.gnome.adw.NavigationPage;
 import org.gnome.gio.ListStore;
@@ -29,7 +29,7 @@ public class SongListPage extends NavigationPage {
     private static final Logger logger = LoggerFactory.getLogger(SongListPage.class);
     private final String albumId;
     private ListStore<SongListItem> store;
-    private Subsonic subsonic;
+    private LibrarySync library;
     private ExecutorService executor;
     private GrooveboatWindow win;
 
@@ -74,12 +74,15 @@ public class SongListPage extends NavigationPage {
     }
 
     public void loadItems() {
-        if (this.subsonic == null && this.executor == null) {
+        if (this.library == null && this.executor == null) {
             var window = (GrooveboatWindow) getRoot();
             var app = (GrooveboatApp) window.getApplication();
             var albumTextureLoader = AlbumTextureLoader.getInstance();
 
-            this.subsonic = app.subsonic;
+            this.library = app.getLibrary();
+            if (this.library == null) {
+                return;
+            }
             this.executor = app.executor;
             this.win = window;
 
@@ -89,9 +92,13 @@ public class SongListPage extends NavigationPage {
             this.albumQueueMenu.appendItem(menuItem);
 
             this.executor.submit(() -> {
-                var songs = subsonic.getSongs(albumId);
+                var songs = library.getSongs(albumId);
+                if (songs.isEmpty()) {
+                    logger.warn("No songs for album {}", albumId);
+                    return;
+                }
                 try {
-                    var texture = albumTextureLoader.load(songs.getFirst().getAlbum().getId());
+                    var texture = albumTextureLoader.load(albumId);
                     for (var song : songs) {
                         var songListItem = new SongListItem(
                                 song.getTitle(),

@@ -14,13 +14,14 @@
                 <property name="wrap">true</property>
                 <property name="justify">GTK_JUSTIFY_LEFT</property>
                 <property name="label">
-Let's connect you to your music server in just two quick steps:
+Let's connect you to your music server in just three quick steps:
 
-1. Enter your server address
-2. Add your login credentials
+1. Choose your server type
+2. Enter your server address
+3. Add your login credentials
 
-GrooveBoat is compatible with Subsonic and other compatible servers like Navidrome, Airsonic,
-and Gonic.
+GrooveBoat works with Jellyfin and with OpenSubsonic servers like Navidrome, Gonic
+and Airsonic-Advanced.
 
 Ready? Let's get started!
                 </property>
@@ -51,7 +52,7 @@ Ready? Let's get started!
               <object class="GtkButton" id="connection-next">
                 <property name="label" translatable="yes">Next</property>
                 <property name="action-name">navigation.push</property>
-                <property name="action-target">'connection-page'</property>
+                <property name="action-target">'server-type-page'</property>
                 <style>
                   <class name="raised"/>
                 </style>
