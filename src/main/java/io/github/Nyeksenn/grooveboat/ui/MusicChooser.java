@@ -74,6 +74,7 @@ public class MusicChooser extends NavigationPage {
                 done.set(true);
                 refreshProgressBar.setVisible(false);
                 win.activateActionIfExists("win.reload-albums", null);
+                win.activateActionIfExists("win.reload-artists", null);
             });
         });
     }

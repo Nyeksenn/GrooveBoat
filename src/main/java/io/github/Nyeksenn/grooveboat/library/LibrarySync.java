@@ -94,6 +94,9 @@ public final class LibrarySync implements AutoCloseable {
             logger.info("Found {} new albums", newAlbums.size());
             if (newAlbums.isEmpty()) {
                 settings.setUint64(AppSettings.LAST_SYNC, syncStarted.getEpochSecond());
+                // The artist page shows album artists' images; fetch those still missing (e.g. after the repair
+                // migration cleared broken paths) without querying every artist again.
+                updateArtists(true);
                 return;
             }
 
@@ -120,7 +123,7 @@ public final class LibrarySync implements AutoCloseable {
             db.saveAll(albumModels);
             settings.setUint64(AppSettings.LAST_SYNC, syncStarted.getEpochSecond());
 
-            updateArtists();
+            updateArtists(false);
         } catch (CancellationRequested e) {
             logger.info("Library sync cancelled");
         } catch (CompletionException e) {
@@ -138,8 +141,11 @@ public final class LibrarySync implements AutoCloseable {
         }
     }
 
-    private void updateArtists() {
-        var artists = new QArtistModel().findList();
+    /** @param missingImagesOnly only album artists without a cached image, instead of all artists */
+    private void updateArtists(boolean missingImagesOnly) {
+        var artists = missingImagesOnly
+                ? new QArtistModel().albums.isNotEmpty().artistImagePath.isNull().findList()
+                : new QArtistModel().findList();
         try (var tx = DB.beginTransaction()) {
             for (var artist : artists) {
                 checkCancelled();

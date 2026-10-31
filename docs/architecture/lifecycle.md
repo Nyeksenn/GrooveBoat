@@ -67,7 +67,7 @@ Logout is the only way to end a session, and so the only way to switch server or
    - the backend ends the server-side session where the protocol has one (best effort, short timeout);
    - the keyring entry is removed;
    - the cache tables are truncated and the cover cache directory is emptied;
-   - the in-memory texture cache is cleared;
+   - the in-memory cover and artist texture caches are cleared;
    - the session settings are reset (the device ID is kept on purpose).
 4. Back on the main thread, the library sync and backend are closed and the session slot is emptied. A new window is created and presented, and only then is the old one destroyed: an application with no windows would quit. The new window finds the backend set to *none* and opens setup.
 

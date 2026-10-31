@@ -54,8 +54,10 @@ public class Main {
             resource.resourcesRegister();
             TemplateTypes.register(MusicChooser.class);
             TemplateTypes.register(AlbumListView.class);
+            TemplateTypes.register(ArtistListView.class);
             TemplateTypes.register(MusicPlayer.class);
             TemplateTypes.register(SongListPage.class);
+            TemplateTypes.register(ArtistSongsPage.class);
             TemplateTypes.register(Avatar.class);
             TemplateTypes.register(WelcomePage.class);
             TemplateTypes.register(ServerTypePage.class);

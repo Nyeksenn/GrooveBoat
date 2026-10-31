@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="ArtistCard" parent="GtkBox">
+    <property name="orientation">1</property>
+    <property name="margin-start">10</property>
+    <property name="margin-end">10</property>
+    <property name="margin-top">10</property>
+    <property name="margin-bottom">10</property>
+    <property name="halign">center</property>
+    <property name="valign">center</property>
+    <property name="spacing">10</property>
+
+    <child>
+      <object class="AdwAvatar" id="artist-picture">
+        <property name="size">200</property>
+        <property name="show-initials">true</property>
+        <property name="valign">center</property>
+        <property name="halign">center</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkLabel" id="artist-name">
+        <property name="wrap">false</property>
+        <property name="ellipsize">end</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkGestureClick" id="artist-click">
+        <signal name="pressed" handler="artist-clicked"/>
+      </object>
+    </child>
+  </template>
+</interface>
