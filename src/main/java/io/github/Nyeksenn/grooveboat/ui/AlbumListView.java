@@ -70,7 +70,7 @@ public class AlbumListView extends Box {
      * reloads can't add albums twice.
      */
     public void loadItems() {
-        var albumTextureLoader = AlbumTextureLoader.getInstance();
+        var albumTextureLoader = CoverLoader.getInstance();
         var generation = ++loadGeneration;
         this.executor.submit(() -> {
             var albums = new QAlbumModel().findList();

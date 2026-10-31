@@ -119,7 +119,7 @@ public final class GrooveboatApp extends Application {
                 logger.warn("Couldn't clear cache tables: {}", e.getMessage());
             }
             BackendSupport.clearCoverCache();
-            AlbumTextureLoader.getInstance().clear();
+            CoverLoader.getInstance().clear();
             AppSettings.resetSession();
 
             GLib.idleAddOnce(() -> {

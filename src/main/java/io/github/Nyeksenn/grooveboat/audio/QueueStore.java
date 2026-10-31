@@ -3,7 +3,7 @@ package io.github.Nyeksenn.grooveboat.audio;
 import io.github.Nyeksenn.grooveboat.entities.query.QAlbumModel;
 import io.github.Nyeksenn.grooveboat.entities.query.QSongModel;
 import io.github.Nyeksenn.grooveboat.gobjects.SongListItem;
-import io.github.Nyeksenn.grooveboat.ui.AlbumTextureLoader;
+import io.github.Nyeksenn.grooveboat.ui.CoverLoader;
 import io.github.Nyeksenn.grooveboat.ui.GrooveboatApp;
 import org.gnome.gio.ActionEntry;
 import org.gnome.gio.ListStore;
@@ -24,7 +24,7 @@ import java.util.List;
 public class QueueStore extends GObject {
     private final GrooveboatApp app;
     private static final Logger logger = LoggerFactory.getLogger(QueueStore.class);
-    private static final AlbumTextureLoader loader = AlbumTextureLoader.getInstance();
+    private static final CoverLoader loader = CoverLoader.getInstance();
     private boolean initialized;
     private final ListStore<SongListItem> model = new ListStore<>();
     private final SingleSelection<SongListItem> selection = new SingleSelection<>(model);

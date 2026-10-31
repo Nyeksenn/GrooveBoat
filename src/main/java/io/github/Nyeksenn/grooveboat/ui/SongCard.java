@@ -50,6 +50,8 @@ public class SongCard extends Box {
     }
 
     public void setSongId(String songId) {
+        // Cards are recycled by list views: replace the entry instead of adding another one per bind.
+        songContextMenu.removeAll();
         var item = new MenuItem();
         item.setLabel("Add to queue");
         item.setActionAndTargetValue("app.queue-song", Variant.string(songId));

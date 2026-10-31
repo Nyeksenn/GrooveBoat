@@ -77,7 +77,7 @@ public class SongListPage extends NavigationPage {
         if (this.library == null && this.executor == null) {
             var window = (GrooveboatWindow) getRoot();
             var app = (GrooveboatApp) window.getApplication();
-            var albumTextureLoader = AlbumTextureLoader.getInstance();
+            var albumTextureLoader = CoverLoader.getInstance();
 
             this.library = app.getLibrary();
             if (this.library == null) {
