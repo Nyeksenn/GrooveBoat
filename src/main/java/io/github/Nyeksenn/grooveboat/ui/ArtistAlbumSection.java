@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
+import static org.javagi.util.Intl.i18n;
 import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
 import io.github.Nyeksenn.grooveboat.gobjects.SongListItem;
 import org.gnome.gdk.Texture;
@@ -37,7 +38,7 @@ public class ArtistAlbumSection extends Box {
 
     @GtkCallback(name = "play-album-clicked")
     public void playAlbumClicked() {
-        activateActionIfExists("app.play-album", Variant.string(albumId));
+        activateActionVariant("app.play-album", Variant.string(albumId));
     }
 
     /** Must be called on the main thread; the song items may be built elsewhere. */
@@ -52,7 +53,7 @@ public class ArtistAlbumSection extends Box {
         }
 
         var queueItem = new MenuItem();
-        queueItem.setLabel("Queue album");
+        queueItem.setLabel(i18n("Queue album"));
         queueItem.setActionAndTargetValue("app.queue-album", Variant.string(albumId));
         albumQueueMenu.appendItem(queueItem);
 

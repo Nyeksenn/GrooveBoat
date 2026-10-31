@@ -21,7 +21,7 @@
             <property name="name">loading-page</property>
             <property name="child">
               <object class="AdwStatusPage" id="loading-status">
-                <property name="title">Loading</property>
+                <property name="title" translatable="yes">Loading</property>
                 <property name="child">
                   <object class="AdwSpinner">
                     <property name="halign">center</property>
@@ -55,8 +55,8 @@
                 <property name="content">
                   <object class="AdwStatusPage" id="error-status">
                     <property name="icon-name">sad-computer-symbolic</property>
-                    <property name="title">Connection Error</property>
-                    <property name="description">Unable to reach the server. Please check your internet connection and your connection settings.</property>
+                    <property name="title" translatable="yes">Connection Error</property>
+                    <property name="description" translatable="yes">Unable to reach the server. Please check your internet connection and your connection settings.</property>
                     <property name="child">
                       <object class="GtkBox">
                         <property name="orientation">horizontal</property>

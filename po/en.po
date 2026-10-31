@@ -1,0 +1,424 @@
+# English translations for grooveboat package.
+# Copyright (C) 2026 THE grooveboat'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the grooveboat package.
+# Automatically generated, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: grooveboat 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-31 14:41+0100\n"
+"PO-Revision-Date: 2026-10-31 14:28+0100\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: data/io.github.Nyeksenn.grooveboat.desktop.in:2
+#: data/io.github.Nyeksenn.grooveboat.metainfo.xml.in:8
+#: data/ui/music-chooser.ui:4
+msgid "GrooveBoat"
+msgstr "GrooveBoat"
+
+#: data/io.github.Nyeksenn.grooveboat.desktop.in:3
+msgid "Play music from your Jellyfin or OpenSubsonic server"
+msgstr "Play music from your Jellyfin or OpenSubsonic server"
+
+#: data/io.github.Nyeksenn.grooveboat.desktop.in:9
+msgid "Music;Jellyfin;Subsonic;OpenSubsonic;Player;"
+msgstr "Music;Jellyfin;Subsonic;OpenSubsonic;Player;"
+
+#: data/io.github.Nyeksenn.grooveboat.metainfo.xml.in:9
+msgid "Play music from your own server"
+msgstr "Play music from your own server"
+
+#: data/io.github.Nyeksenn.grooveboat.metainfo.xml.in:11
+msgid ""
+"GrooveBoat is a music player for Jellyfin and OpenSubsonic servers such as "
+"Navidrome, Gonic and Airsonic-Advanced. Browse your albums, build a play "
+"queue and listen with gapless playback."
+msgstr ""
+"GrooveBoat is a music player for Jellyfin and OpenSubsonic servers such as "
+"Navidrome, Gonic and Airsonic-Advanced. Browse your albums, build a play "
+"queue and listen with gapless playback."
+
+#: data/ui/album-list.ui:12
+msgid "Album Page"
+msgstr "Album Page"
+
+#: data/ui/artist-list.ui:12
+msgid "Artist Page"
+msgstr "Artist Page"
+
+#: data/ui/artist-songs.ui:4
+msgid "Artist"
+msgstr "Artist"
+
+#: data/ui/artist-songs.ui:50
+msgid "No songs found"
+msgstr "No songs found"
+
+#: data/ui/connection-page.ui:4
+msgid "Hostname"
+msgstr "Hostname"
+
+#: data/ui/connection-page.ui:13 data/ui/connection-page.ui:16
+msgid "Connection"
+msgstr "Connection"
+
+#: data/ui/connection-page.ui:17
+msgid "Enter the hostname of the instance to which you want to connect to"
+msgstr "Enter the hostname of the instance to which you want to connect to"
+
+#: data/ui/connection-page.ui:20
+msgid "URL"
+msgstr "URL"
+
+#: data/ui/connection-page.ui:37 data/ui/credentials-page.ui:43
+#: data/ui/server-type-page.ui:51
+msgid "Back"
+msgstr "Back"
+
+#: data/ui/connection-page.ui:46 data/ui/welcome-page.ui:53
+msgid "Next"
+msgstr "Next"
+
+#: data/ui/credentials-page.ui:4 data/ui/credentials-page.ui:13
+#: data/ui/credentials-page.ui:16
+msgid "Credentials"
+msgstr "Credentials"
+
+#: data/ui/credentials-page.ui:17
+msgid "Enter your username and password"
+msgstr "Enter your username and password"
+
+#: data/ui/credentials-page.ui:20 data/ui/prefs.ui:43
+msgid "Username"
+msgstr "Username"
+
+#: data/ui/credentials-page.ui:26
+msgid "Password"
+msgstr "Password"
+
+#: data/ui/credentials-page.ui:52
+msgid "Finish"
+msgstr "Finish"
+
+#: data/ui/headerbar-menu.ui:6 data/ui/music-chooser.ui:114 data/ui/prefs.ui:6
+msgid "Preferences"
+msgstr "Preferences"
+
+#: data/ui/headerbar-menu.ui:12 data/ui/welcome-page.ui:43
+msgid "Quit"
+msgstr "Quit"
+
+#: data/ui/music-chooser.ui:51
+msgid "Enter Filter"
+msgstr "Enter Filter"
+
+#: data/ui/music-chooser.ui:64
+msgid "Albums"
+msgstr "Albums"
+
+#: data/ui/music-chooser.ui:75
+msgid "Artists"
+msgstr "Artists"
+
+#: data/ui/music-chooser.ui:118 data/ui/prefs.ui:55 data/ui/window.ui:77
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:172
+msgid "Log Out"
+msgstr "Log Out"
+
+#: data/ui/prefs.ui:9
+msgid "Account"
+msgstr "Account"
+
+#: data/ui/prefs.ui:13
+msgid "Server"
+msgstr "Server"
+
+#: data/ui/prefs.ui:14
+msgid "To use another server or account, log out and set GrooveBoat up again."
+msgstr "To use another server or account, log out and set GrooveBoat up again."
+
+#: data/ui/prefs.ui:17 data/ui/server-type-page.ui:4
+msgid "Server Type"
+msgstr "Server Type"
+
+#: data/ui/prefs.ui:25
+msgid "Address"
+msgstr "Address"
+
+#: data/ui/prefs.ui:34
+msgid "Version"
+msgstr "Version"
+
+#: data/ui/server-type-page.ui:11
+msgid "Which server do you use?"
+msgstr "Which server do you use?"
+
+#: data/ui/server-type-page.ui:12
+msgid "To switch to another server type later, log out first."
+msgstr "To switch to another server type later, log out first."
+
+#: data/ui/server-type-page.ui:15
+msgid "OpenSubsonic"
+msgstr "OpenSubsonic"
+
+#: data/ui/server-type-page.ui:16
+msgid "Navidrome, Gonic, Airsonic-Advanced and other OpenSubsonic servers"
+msgstr "Navidrome, Gonic, Airsonic-Advanced and other OpenSubsonic servers"
+
+#: data/ui/server-type-page.ui:28
+msgid "Jellyfin"
+msgstr "Jellyfin"
+
+#: data/ui/server-type-page.ui:29
+msgid "Jellyfin media server, version 10.9 or newer"
+msgstr "Jellyfin media server, version 10.9 or newer"
+
+#: data/ui/song-list.ui:4
+msgid "Page 2"
+msgstr "Page 2"
+
+#: data/ui/welcome-page.ui:4
+msgid "Setup"
+msgstr "Setup"
+
+#: data/ui/welcome-page.ui:10
+msgid "Welcome to GrooveBoat!"
+msgstr "Welcome to GrooveBoat!"
+
+#: data/ui/welcome-page.ui:16
+msgid ""
+"\n"
+"Let's connect you to your music server in just three quick steps:\n"
+"\n"
+"1. Choose your server type\n"
+"2. Enter your server address\n"
+"3. Add your login credentials\n"
+"\n"
+"GrooveBoat works with Jellyfin and with OpenSubsonic servers like Navidrome, "
+"Gonic\n"
+"and Airsonic-Advanced.\n"
+"\n"
+"Ready? Let's get started!\n"
+"                "
+msgstr ""
+"\n"
+"Let's connect you to your music server in just three quick steps:\n"
+"\n"
+"1. Choose your server type\n"
+"2. Enter your server address\n"
+"3. Add your login credentials\n"
+"\n"
+"GrooveBoat works with Jellyfin and with OpenSubsonic servers like Navidrome, "
+"Gonic\n"
+"and Airsonic-Advanced.\n"
+"\n"
+"Ready? Let's get started!\n"
+"                "
+
+#: data/ui/window.ui:24
+msgid "Loading"
+msgstr "Loading"
+
+#: data/ui/window.ui:58
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:129
+msgid "Connection Error"
+msgstr "Connection Error"
+
+#: data/ui/window.ui:59
+msgid ""
+"Unable to reach the server. Please check your internet connection and your "
+"connection settings."
+msgstr ""
+"Unable to reach the server. Please check your internet connection and your "
+"connection settings."
+
+#: data/ui/window.ui:67
+msgid "Retry"
+msgstr "Retry"
+
+#: data/ui/window.ui:103
+msgid "Sidebar"
+msgstr "Sidebar"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/backend/jellyfin/JellyfinBackend.java:165
+#: src/main/java/io/github/Nyeksenn/grooveboat/backend/jellyfin/JellyfinBackend.java:171
+#: src/main/java/io/github/Nyeksenn/grooveboat/backend/jellyfin/JellyfinBackend.java:176
+msgid "Not a Jellyfin server"
+msgstr "Not a Jellyfin server"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/backend/jellyfin/JellyfinBackend.java:180
+#, java-printf-format
+msgid "Jellyfin %s is too old, %s or newer is required"
+msgstr "Jellyfin %s is too old, %s or newer is required"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/backend/subsonic/SubsonicBackend.java:174
+#: src/main/java/io/github/Nyeksenn/grooveboat/backend/subsonic/SubsonicBackend.java:186
+msgid "Not a Subsonic server"
+msgstr "Not a Subsonic server"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/backend/subsonic/SubsonicBackend.java:177
+msgid "Server is not OpenSubsonic compatible"
+msgstr "Server is not OpenSubsonic compatible"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/backend/subsonic/SubsonicBackend.java:180
+#, java-printf-format
+msgid "Server API version %s is too old"
+msgstr "Server API version %s is too old"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/ArtistAlbumSection.java:56
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/SongListPage.java:91
+msgid "Queue album"
+msgstr "Queue album"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/ConnectionPage.java:106
+#, java-printf-format
+msgid "This looks like a %1$s server. Go back and choose %1$s."
+msgstr "This looks like a %1$s server. Go back and choose %1$s."
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/ConnectionPage.java:108
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:106
+msgid "Unable to reach server"
+msgstr "Unable to reach server"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/ConnectionPage.java:110
+msgid "Incompatible server"
+msgstr "Incompatible server"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/ConnectionPage.java:120
+#, java-printf-format
+msgid "%s Server"
+msgstr "%s Server"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/ConnectionPage.java:122
+#, java-printf-format
+msgid ""
+"Enter the address of your %s server, for example https://music.example.com"
+msgstr ""
+"Enter the address of your %s server, for example https://music.example.com"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:67
+msgid "GrooveBoat OpenSubsonic Password"
+msgstr "GrooveBoat OpenSubsonic Password"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:68
+msgid "GrooveBoat Jellyfin Access Token"
+msgstr "GrooveBoat Jellyfin Access Token"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:78
+msgid "Go back and enter the server address first"
+msgstr "Go back and enter the server address first"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:82
+msgid "Enter a username"
+msgstr "Enter a username"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:94
+msgid "Couldn't save the login to the keyring"
+msgstr "Couldn't save the login to the keyring"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:103
+msgid "Username or password wrong"
+msgstr "Username or password wrong"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:109
+msgid "Login failed"
+msgstr "Login failed"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatApp.java:98
+msgid "Logging Out"
+msgstr "Logging Out"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatApp.java:248
+#, java-printf-format
+msgid "Couldn't play “%s”"
+msgstr "Couldn't play “%s”"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:84
+msgid "Missing GStreamer Plugins"
+msgstr "Missing GStreamer Plugins"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:85
+#, java-printf-format
+msgid ""
+"GrooveBoat needs these GStreamer elements to play music: %s. Install the "
+"matching packages and restart the app."
+msgstr ""
+"GrooveBoat needs these GStreamer elements to play music: %s. Install the "
+"matching packages and restart the app."
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:102
+msgid "Connecting"
+msgstr "Connecting"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:124
+msgid "Session Expired"
+msgstr "Session Expired"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:125
+#, java-printf-format
+msgid ""
+"The server no longer accepts the stored login for %s. Log out and sign in "
+"again."
+msgstr ""
+"The server no longer accepts the stored login for %s. Log out and sign in "
+"again."
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:130
+#, java-printf-format
+msgid ""
+"Unable to reach the %s server. Please check your internet connection and try "
+"again."
+msgstr ""
+"Unable to reach the %s server. Please check your internet connection and try "
+"again."
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:137
+msgid "Loading Library"
+msgstr "Loading Library"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:164
+#, java-printf-format
+msgid ""
+"This clears the local library cache, the queue and the stored login. The "
+"music on your %s server is not affected. You can then sign in to the same or "
+"another server."
+msgstr ""
+"This clears the local library cache, the queue and the stored login. The "
+"music on your %s server is not affected. You can then sign in to the same or "
+"another server."
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:167
+msgid ""
+"This clears the local library cache, the queue and the stored login. The "
+"music on your server is not affected. You can then sign in to the same or "
+"another server."
+msgstr ""
+"This clears the local library cache, the queue and the stored login. The "
+"music on your server is not affected. You can then sign in to the same or "
+"another server."
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:170
+msgid "Log Out?"
+msgstr "Log Out?"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:171
+msgid "Cancel"
+msgstr "Cancel"
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/SongCard.java:57
+msgid "Add to queue"
+msgstr "Add to queue"
+
+#~ msgid "API Reference"
+#~ msgstr "API Reference"
+
+#~ msgid "Human Interface Guidelines"
+#~ msgstr "Human Interface Guidelines"
+

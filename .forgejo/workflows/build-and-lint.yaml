@@ -1,0 +1,61 @@
+# The actions below are examples; for an application that will be submitted to
+# Flathub, read these instructions and change the tasks accordingly:
+# https://docs.flathub.org/docs/for-app-authors/submission#build-and-install
+#
+# NOTE:
+# The action installs flatpak-builder as a Flatpak app. This requires a
+# privileged container. For Forgejo, this can be enabled in the runner config.
+
+name: build-and-lint
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-lint:
+    runs-on: docker
+    container:
+      image: node:trixie
+
+    steps:
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: 25
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Install dependencies
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update
+          apt-get install -y meson pkg-config appstream gettext desktop-file-utils libadwaita-1-dev
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Run Meson build
+        run: |
+          meson setup builddir
+          meson compile -C builddir
+
+      - name: Install Flatpak Builder
+        run: |
+          apt-get install -y flatpak
+          flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install flathub -y org.flatpak.Builder
+
+      - name: Check manifest
+        continue-on-error: true
+        run: |
+          flatpak run --command=flatpak-builder-lint org.flatpak.Builder manifest io.github.Nyeksenn.grooveboat.yaml
+
+      - name: Check appstream
+        continue-on-error: true
+        run: |
+          flatpak run --command=flatpak-builder-lint org.flatpak.Builder appstream builddir/data/io.github.Nyeksenn.grooveboat.metainfo.xml

@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
+import static org.javagi.util.Intl.i18n;
 import io.github.Nyeksenn.grooveboat.library.LibrarySync;
 import io.github.Nyeksenn.grooveboat.gobjects.SongListItem;
 import org.gnome.adw.NavigationPage;
@@ -87,7 +88,7 @@ public class SongListPage extends NavigationPage {
             this.win = window;
 
             var menuItem = new MenuItem();
-            menuItem.setLabel("Queue album");
+            menuItem.setLabel(i18n("Queue album"));
             menuItem.setActionAndTargetValue("app.queue-album", Variant.string(albumId));
             this.albumQueueMenu.appendItem(menuItem);
 

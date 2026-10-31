@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
+import static org.javagi.util.Intl.i18n;
 import io.github.Nyeksenn.grooveboat.backend.AuthenticationException;
 import io.github.Nyeksenn.grooveboat.backend.BackendType;
 import io.github.Nyeksenn.grooveboat.gobjects.SecretKeeper;
@@ -63,8 +64,8 @@ public class CredentialsPage extends NavigationPage {
 
     private static String keyringLabel(BackendType type) {
         return switch (type) {
-            case OPENSUBSONIC -> "GrooveBoat OpenSubsonic Password";
-            case JELLYFIN -> "GrooveBoat Jellyfin Access Token";
+            case OPENSUBSONIC -> i18n("GrooveBoat OpenSubsonic Password");
+            case JELLYFIN -> i18n("GrooveBoat Jellyfin Access Token");
         };
     }
 
@@ -74,11 +75,11 @@ public class CredentialsPage extends NavigationPage {
         final var password = entryPassword.getText();
         final var backend = SetupDialog.of(this).getCandidate();
         if (backend == null) {
-            fail("Go back and enter the server address first", false);
+            fail(i18n("Go back and enter the server address first"), false);
             return;
         }
         if (username.isEmpty()) {
-            fail("Enter a username", true);
+            fail(i18n("Enter a username"), true);
             return;
         }
 
@@ -90,7 +91,7 @@ public class CredentialsPage extends NavigationPage {
                         session.credential(), keyringLabel(backend.type())).join();
                 if (!stored) {
                     logger.error("Couldn't store credential in the keyring");
-                    fail("Couldn't save the login to the keyring", false);
+                    fail(i18n("Couldn't save the login to the keyring"), false);
                     return;
                 }
                 AppSettings.saveSession(backend.type(), backend.baseUrl(), username, session.userId());
@@ -99,13 +100,13 @@ public class CredentialsPage extends NavigationPage {
                     activateActionVariant("win.close-setup", null);
                 });
             } catch (AuthenticationException e) {
-                fail("Username or password wrong", true);
+                fail(i18n("Username or password wrong"), true);
             } catch (IOException e) {
                 logger.warn("Login failed: {}", e.getMessage());
-                fail("Unable to reach server", false);
+                fail(i18n("Unable to reach server"), false);
             } catch (RuntimeException e) {
                 logger.error("Login failed: {}", e.getMessage());
-                fail("Login failed", false);
+                fail(i18n("Login failed"), false);
             }
         });
     }

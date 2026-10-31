@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
+import static org.javagi.util.Intl.i18n;
 import io.ebean.DB;
 import io.github.Nyeksenn.grooveboat.audio.AppPipeline;
 import io.github.Nyeksenn.grooveboat.audio.QueueStore;
@@ -94,7 +95,7 @@ public final class GrooveboatApp extends Application {
 
         // On the main thread: block the UI and stop playback.
         if (win != null) {
-            win.showLoading("Logging Out");
+            win.showLoading(i18n("Logging Out"));
         }
         stream.stop();
         queueStore.clear();
@@ -244,7 +245,7 @@ public final class GrooveboatApp extends Application {
         }
         stream.fail();
         if (getActiveWindow() instanceof GrooveboatWindow gw) {
-            gw.showToast("Couldn't play \u201c" + current.getSongName() + "\u201d");
+            gw.showToast(String.format(i18n("Couldn't play \u201c%s\u201d"), current.getSongName()));
         }
         queueStore.advance(false);
     }

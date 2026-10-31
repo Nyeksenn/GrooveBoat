@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.backend.subsonic;
 
+import static org.javagi.util.Intl.i18n;
 import io.github.Nyeksenn.grooveboat.backend.*;
 import io.github.Nyeksenn.grooveboat.backend.subsonic.dto.Album;
 import io.github.Nyeksenn.grooveboat.backend.subsonic.dto.Artist;
@@ -170,19 +171,19 @@ public final class SubsonicBackend implements MusicBackend {
         try {
             var resp = envelope(node);
             if (resp.version() == null) {
-                return ServerInfo.incompatible("Not a Subsonic server");
+                return ServerInfo.incompatible(i18n("Not a Subsonic server"));
             }
             if (!resp.openSubsonic()) {
-                return ServerInfo.incompatible("Server is not OpenSubsonic compatible");
+                return ServerInfo.incompatible(i18n("Server is not OpenSubsonic compatible"));
             }
             if (new Semver(resp.version()).isLowerThan(MIN_API_VERSION)) {
-                return ServerInfo.incompatible("Server API version " + resp.version() + " is too old");
+                return ServerInfo.incompatible(String.format(i18n("Server API version %s is too old"), resp.version()));
             }
             var name = resp.type() != null ? resp.type() : "OpenSubsonic";
             var version = resp.serverVersion() != null ? resp.serverVersion() : resp.version();
             return ServerInfo.compatible(name, version);
         } catch (JacksonException | IllegalArgumentException e) {
-            return ServerInfo.incompatible("Not a Subsonic server");
+            return ServerInfo.incompatible(i18n("Not a Subsonic server"));
         }
     }
 

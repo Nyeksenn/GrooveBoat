@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
+import static org.javagi.util.Intl.i18n;
 import io.github.Nyeksenn.grooveboat.backend.BackendFactory;
 import io.github.Nyeksenn.grooveboat.backend.BackendSupport;
 import io.github.Nyeksenn.grooveboat.backend.BackendType;
@@ -102,12 +103,11 @@ public class ConnectionPage extends NavigationPage {
             // Wrong server type picked? Point the user at the right one.
             var other = type.other();
             if (probeQuietly(other, url).compatible()) {
-                fail("This looks like a " + other.displayName() + " server. Go back and choose "
-                        + other.displayName() + ".");
+                fail(String.format(i18n("This looks like a %1$s server. Go back and choose %1$s."), other.displayName()));
             } else if (info == null) {
-                fail("Unable to reach server");
+                fail(i18n("Unable to reach server"));
             } else {
-                fail(info.reason() != null ? info.reason() : "Incompatible server");
+                fail(info.reason() != null ? info.reason() : i18n("Incompatible server"));
             }
         });
     }
@@ -117,9 +117,10 @@ public class ConnectionPage extends NavigationPage {
         onMap(() -> {
             var type = SetupDialog.of(this).getBackendType();
             if (type != null) {
-                connectionGroup.setTitle(type.displayName() + " Server");
-                connectionGroup.setDescription("Enter the address of your " + type.displayName()
-                        + " server, for example https://music.example.com");
+                connectionGroup.setTitle(String.format(i18n("%s Server"), type.displayName()));
+                connectionGroup.setDescription(String.format(
+                        i18n("Enter the address of your %s server, for example https://music.example.com"),
+                        type.displayName()));
             }
             entryUrl.grabFocus();
         });

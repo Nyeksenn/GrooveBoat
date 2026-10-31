@@ -1,0 +1,33 @@
+id: io.github.Nyeksenn.grooveboat
+runtime: org.gnome.Platform
+runtime-version: '50'
+
+sdk: org.gnome.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.openjdk
+
+command: grooveboat
+
+finish-args:
+  - --device=dri
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --share=ipc
+  - --share=network
+  - --socket=pulseaudio
+  - --env=JAVA_HOME=/app/jre
+
+modules:
+  - name: jre
+    buildsystem: simple
+    build-commands:
+      - /usr/lib/sdk/openjdk/install.sh
+
+  - name: app
+    buildsystem: meson
+    build-options:
+      append-path: "/usr/lib/sdk/openjdk/gradle/bin:/usr/lib/sdk/openjdk/jvm/openjdk-26/bin"
+    sources:
+      - type: dir
+        path: .
+      - data/maven-dependencies.json

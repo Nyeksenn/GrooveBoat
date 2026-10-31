@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- Placeholder icon, replace with real artwork -->
+  <rect x="8" y="8" width="112" height="112" rx="26" fill="#3584e4"/>
+  <path d="M24 78h80l-12 22H36z" fill="#ffffff"/>
+  <path d="M62 24v50H38z" fill="#ffffff"/>
+  <path d="M68 34l24 40H68z" fill="#cfe3fb"/>
+</svg>

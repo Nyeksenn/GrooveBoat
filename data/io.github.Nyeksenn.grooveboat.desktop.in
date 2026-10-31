@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=GrooveBoat
+Comment=Play music from your Jellyfin or OpenSubsonic server
+Exec=grooveboat
+Icon=io.github.Nyeksenn.grooveboat
+Terminal=false
+Type=Application
+Categories=AudioVideo;Audio;Player;Music;
+Keywords=Music;Jellyfin;Subsonic;OpenSubsonic;Player;
+StartupNotify=true
+DBusActivatable=true

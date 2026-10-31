@@ -10,7 +10,7 @@
 
   <!-- File appender with rotation -->
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>logs/app.log</file>
+    <file>${XDG_DATA_HOME:-${user.home}/.local/share}/grooveboat/logs/app.log</file>
     <encoder>
       <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
       <charset>UTF-8</charset>
@@ -18,7 +18,7 @@
 
     <!-- Rolling policy -->
     <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-      <fileNamePattern>logs/app-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+      <fileNamePattern>${XDG_DATA_HOME:-${user.home}/.local/share}/grooveboat/logs/app-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
       <maxFileSize>10MB</maxFileSize>
       <maxHistory>30</maxHistory>
       <totalSizeCap>1GB</totalSizeCap>
@@ -26,7 +26,7 @@
   </appender>
 
   <!-- Root logger -->
-  <root level="TRACE">
+  <root level="INFO">
     <appender-ref ref="CONSOLE"/>
     <appender-ref ref="FILE"/>
   </root>

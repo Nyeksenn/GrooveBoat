@@ -9,16 +9,21 @@ GrooveBoat is a GTK4/libadwaita desktop music player for Jellyfin and OpenSubson
 ## Commands
 
 ```sh
-./gradlew run                 # build + run; uses the schema compiled into build/schemas (no install needed)
+./gradlew run                 # build + run (PROFILE=devel); uses the schema compiled into build/schemas (no install needed)
 ./gradlew build               # compile everything
 ./gradlew generateMigrations  # generate a new Ebean DB migration from entity changes
 ./install_settings.sh         # install the GSettings schema system-wide (sudo; needed for running outside `gradlew run`)
+flatpak-builder --force-clean --user --install-deps-from=flathub --install --state-dir=/tmp/flatpak-builder /tmp/builddir io.github.Nyeksenn.grooveboat.yaml   # build + install the Flatpak
+flatpak run io.github.Nyeksenn.grooveboat
+./gradlew flatpakGradleGenerator --no-configuration-cache   # regenerate data/maven-dependencies.json after changing Gradle dependencies
 ```
 
-- `classes` depends on `compileResources`, which first runs `compileSass` (`sass` CLI: `scss/main.scss` → `css/main.css`) and then `glib-compile-resources` to produce `src/main/resources/grooveboat.gresource`. Both `sass` and `glib-compile-resources` must be on PATH.
-- `Main` loads the gresource via the relative path `src/main/resources/grooveboat.gresource`, so the app must be run from the repo root.
+- The layout follows the [java-gi app template](https://codeberg.org/java-gi/app-template): `data/` holds the gresource XML, GSettings schema, desktop/metainfo/D-Bus service files, `ui/*.ui` templates, `icons/`, `scss/` and the generated, committed `css/main.css`; `po/` holds gettext files; `src/main/resources` only has `logback.xml` and `dbmigration/`. Meson (`meson.build`, `data/meson.build`, `po/meson.build`) installs everything and runs Gradle's `installShadowDist`; the Flatpak manifest is `io.github.Nyeksenn.grooveboat.yaml`.
+- `./gradlew run` depends on `compileResources`, which first runs `compileSass` (`sass` CLI: `data/scss/main.scss` → `data/css/main.css`, commit the result) and then `glib-compile-resources` to produce `build/generated/io.github.Nyeksenn.grooveboat.gresource`. Both `sass` and `glib-compile-resources` must be on PATH for development; the Flatpak build compiles the gresource with Meson and doesn't need `sass`.
+- `Main` loads the gresource from `build/generated` when `PROFILE=devel` (set by `gradlew run`, so run from the repo root) and from `/app/share/io.github.Nyeksenn.grooveboat` otherwise. Translations (`/app/share/locale`) are only bound outside the devel profile.
+- Logs go to `$XDG_DATA_HOME/grooveboat/logs` (logback.xml), not the working directory.
 - Without the GSettings schema `io.github.Nyeksenn.grooveboat` (keys in `utils.AppSettings`), `new Settings(...)` aborts the app. `gradlew run` sets `GSETTINGS_SCHEMA_DIR=build/schemas`.
-- To run or test without touching the real user state, set `XDG_DATA_HOME=<scratch dir>` (DB and cover cache) and `GSETTINGS_BACKEND=memory`. Build first without it, then run with `-x compileSass -x compileResources`: `sass` may be a distrobox wrapper, and rootless podman keeps its containers under `XDG_DATA_HOME`, so an overridden value makes distrobox create a second container. Never run `podman system reset` or similar with an overridden `XDG_DATA_HOME`; the runtime state under `XDG_RUNTIME_DIR` is shared with the real containers. For a headless GUI start, run `gtk4-broadwayd :7` and launch with `GDK_BACKEND=broadway BROADWAY_DISPLAY=:7`. Logback writes `logs/` into the working directory.
+- To run or test without touching the real user state, set `XDG_DATA_HOME=<scratch dir>` (DB, logs and cover cache) and `GSETTINGS_BACKEND=memory`. Build first without it, then run with `-x compileSass -x compileResources`: `sass` may be a distrobox wrapper, and rootless podman keeps its containers under `XDG_DATA_HOME`, so an overridden value makes distrobox create a second container. Never run `podman system reset` or similar with an overridden `XDG_DATA_HOME`; the runtime state under `XDG_RUNTIME_DIR` is shared with the real containers. For a headless GUI start, run `gtk4-broadwayd :7` and launch with `GDK_BACKEND=broadway BROADWAY_DISPLAY=:7`.
 - There is no test suite; `src/test` only holds `MigrationGenerator` (used by `generateMigrations`).
 
 ## Jellyfin test server
@@ -31,7 +36,7 @@ Detailed architecture docs live in `docs/` (start at `docs/README.md`). Summary:
 
 **Startup (`Main`)**: configures the default Ebean `Database` (H2 file at `$XDG_DATA_HOME/grooveboat/cache`, migrations auto-run from `resources/dbmigration/h2`), registers the gresource bundle, registers every templated widget / custom GObject type, then runs `GrooveboatApp`.
 
-**Adding a UI component** requires touching three places: a `.ui` template in `resources/templates/`, an entry in `grooveboat.gresource.xml` (alias = path under `/io/github/Nyeksenn/grooveboat/`), and a `TemplateTypes.register(...)` (or `Types.register(...)` for non-template GObjects) call in `Main`. Widget classes use `@GtkTemplate`, `@RegisteredType`, `@GtkChild(name=...)`, `@GtkCallback`, `@InstanceInit`, and must keep a `(MemorySegment address)` constructor. New icons likewise need a gresource entry under the `icons/scalable/actions/` prefix.
+**Adding a UI component** requires touching three places: a `.ui` template in `data/ui/`, an entry in `data/io.github.Nyeksenn.grooveboat.gresource.xml` (alias = path under `/io/github/Nyeksenn/grooveboat/`), and a `TemplateTypes.register(...)` (or `Types.register(...)` for non-template GObjects) call in `Main`. Widget classes use `@GtkTemplate`, `@RegisteredType`, `@GtkChild(name=...)`, `@GtkCallback`, `@InstanceInit`, and must keep a `(MemorySegment address)` constructor. New icons likewise need a gresource entry under the `icons/scalable/actions/` prefix.
 
 **Backends** (`backend/`): `MusicBackend` is the protocol-independent interface (probe, authenticate/restore, album/song/artist listing, image download, playback URL, release, logout) returning neutral records (`RemoteAlbum`, `RemoteSong`, …). Implementations: `backend.subsonic.SubsonicBackend` (salted-token auth; its JSON records live in `backend.subsonic.dto`) and `backend.jellyfin.JellyfinBackend` (`Authorization: MediaBrowser` header; reads JSON as trees). `BackendFactory` creates them. No code outside `backend/` may depend on a specific protocol.
 
@@ -49,4 +54,6 @@ Detailed architecture docs live in `docs/` (start at `docs/README.md`). Summary:
 
 **Settings and credentials**: `utils.AppSettings` wraps GSettings. `backend` (`none`/`opensubsonic`/`jellyfin`; `none` = logged out → setup dialog), `url`, `username`, `user-id`, `last-sync`, and `device-id` (kept across logouts). The session credential (the OpenSubsonic password or the Jellyfin access token) goes to the keyring via `SecretKeeper` (`COMPAT_NETWORK` schema, keyed by user/scheme/host). Setup (`SetupDialog`: `WelcomePage` → `ServerTypePage` → `ConnectionPage` → `CredentialsPage`) writes settings only after a successful login. `AppSettings.migrate()` maps pre-backend installs to `opensubsonic`.
 
-**Styling**: edit `resources/scss/main.scss`, not the generated `css/main.css`; it's loaded from the gresource at `/io/github/Nyeksenn/grooveboat/main.css`.
+**Styling**: edit `data/scss/main.scss`, not the generated `data/css/main.css` (regenerated by `compileSass`, and committed because the Flatpak build has no `sass`); it's loaded from the gresource at `/io/github/Nyeksenn/grooveboat/main.css`.
+
+**i18n**: user-visible strings are English gettext msgids: `translatable="yes"` in `.ui` files, `i18n(...)` (`org.javagi.util.Intl`) in Java; sentences with values use `String.format(i18n("... %s ..."), x)`, never concatenation. Log/exception messages and brand names stay untranslated. Every file with translatable strings must be listed in `po/POTFILES.in` (sorted). Regenerate `po/grooveboat.pot` with `meson compile grooveboat-pot -C builddir` and merge into `po/en.po` with `grooveboat-update-po`; `en.po` keeps `msgstr` equal to `msgid`. Add new languages to `po/LINGUAS`.

@@ -2,6 +2,7 @@ package io.github.Nyeksenn.grooveboat;
 
 import io.ebean.DatabaseFactory;
 import io.ebean.config.DatabaseConfig;
+import io.ebean.platform.h2.H2Platform;
 import io.github.Nyeksenn.grooveboat.audio.QueueStore;
 import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
 import io.github.Nyeksenn.grooveboat.ui.*;
@@ -12,6 +13,7 @@ import org.gnome.gio.Resource;
 import org.javagi.base.GErrorException;
 import org.javagi.gobject.types.Types;
 import org.javagi.gtk.types.TemplateTypes;
+import org.javagi.util.Intl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +24,20 @@ import java.util.Properties;
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
+    /** Set by `./gradlew run`: loads resources from the build directory and skips installed translations. */
+    public static final boolean DEVEL_PROFILE = "devel".equalsIgnoreCase(System.getenv("PROFILE"));
+    public static final String APPLICATION_ID = "io.github.Nyeksenn.grooveboat";
+    public static final String GETTEXT_DOMAIN = "grooveboat";
+    public static final String LOCALE_DIR = "/app/share/locale";
+    public static final String RESOURCE_DIR = DEVEL_PROFILE ? "build/generated" : "/app/share/" + APPLICATION_ID;
+
     public static void main(String[] args) {
+        // Initialize gettext (installed translations only exist in the flatpak)
+        if (!DEVEL_PROFILE) {
+            Intl.bindtextdomain(GETTEXT_DOMAIN, LOCALE_DIR);
+        }
+        Intl.textdomain(GETTEXT_DOMAIN);
+
         var cfg = new DatabaseConfig();
         var properties = new Properties();
         properties.put("ebean.migration.run", "true");
@@ -37,6 +52,8 @@ public class Main {
         properties.put("datasource.db.databaseUrl", dbUrl);
 
         cfg.loadFromProperties(properties);
+        // Set explicitly: the shadow jar can't reliably merge the platform ServiceLoader entries
+        cfg.setDatabasePlatform(new H2Platform());
         cfg.setDdlGenerate(false);
         cfg.setDdlRun(false);
         cfg.setDdlCreateOnly(false);
@@ -49,8 +66,7 @@ public class Main {
         AppSettings.migrate();
 
         try {
-            var resource = Resource.load(
-                    "src/main/resources/grooveboat.gresource");
+            var resource = Resource.load(RESOURCE_DIR + "/" + APPLICATION_ID + ".gresource");
             resource.resourcesRegister();
             TemplateTypes.register(MusicChooser.class);
             TemplateTypes.register(AlbumListView.class);
