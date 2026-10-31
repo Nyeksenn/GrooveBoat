@@ -59,6 +59,19 @@ public final class RemoteMediaStream extends MediaStream {
     /** While set, play/pause calls from GTK only update GTK's state and don't touch the pipeline. */
     private boolean detached = false;
     private ScheduledFuture<?> future;
+    /** Told (on the main thread) the new position in µs after every successful seek, e.g. for MPRIS. */
+    private java.util.function.LongConsumer seekListener;
+
+    public void setSeekListener(java.util.function.LongConsumer listener) {
+        this.seekListener = listener;
+    }
+
+    private void notifySeeked(long positionUs) {
+        var listener = seekListener;
+        if (listener != null) {
+            listener.accept(positionUs);
+        }
+    }
 
     public RemoteMediaStream(Supplier<MusicBackend> backend, AppPipeline pipeline, ExecutorService executor,
                              ScheduledExecutorService scheduler) {
@@ -100,6 +113,7 @@ public final class RemoteMediaStream extends MediaStream {
         if (pipeline.seek(timestamp)) {
             seekSuccess();
             update(timestamp);
+            notifySeeked(timestamp);
             setPlaying(true);
             // The position scale pauses this stream's pipeline and ticker directly while it is dragged, without
             // changing GTK's playing state, so setPlaying(true) above can be a no-op. Resume explicitly.
@@ -240,6 +254,7 @@ public final class RemoteMediaStream extends MediaStream {
         setPlaying(false);
         if (pipeline.seek(0L)) {
             update(0L);
+            notifySeeked(0L);
         }
     }
 

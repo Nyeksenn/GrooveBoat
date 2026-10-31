@@ -9,6 +9,7 @@ import io.github.Nyeksenn.grooveboat.backend.MusicBackend;
 import io.github.Nyeksenn.grooveboat.gobjects.RemoteMediaStream;
 import io.github.Nyeksenn.grooveboat.gobjects.SecretKeeper;
 import io.github.Nyeksenn.grooveboat.library.LibrarySync;
+import io.github.Nyeksenn.grooveboat.mpris.MprisService;
 import io.github.Nyeksenn.grooveboat.utils.AppSettings;
 import io.github.Nyeksenn.grooveboat.utils.Helpers;
 import org.freedesktop.gstreamer.gst.Bus;
@@ -43,9 +44,9 @@ public final class GrooveboatApp extends Application {
     public AppPipeline pipeline;
     public final QueueStore queueStore = new QueueStore(this);
     private RemoteMediaStream stream;
-    public boolean shouldLoop = false;
     private boolean buffering = false;
     private boolean loggingOut = false;
+    private MprisService mpris;
 
     /** The backend of the current session. Filled once per session, emptied only by logout. */
     private volatile MusicBackend backend;
@@ -183,7 +184,7 @@ public final class GrooveboatApp extends Application {
     /** With gapless playback, EOS only arrives when no follow-up track was handed to the pipeline in time. */
     private void onEndOfStream(Message msg) {
         logger.info("End of Stream");
-        if (!queueStore.advance(shouldLoop)) {
+        if (!queueStore.advance(true)) {
             stream.endOfQueue();
         }
     }
@@ -252,12 +253,6 @@ public final class GrooveboatApp extends Application {
 
     public RemoteMediaStream getStream() {
         return stream;
-    }
-
-    /** Turns loop mode on or off; the prepared follow-up track changes accordingly. */
-    public void setLoop(boolean loop) {
-        shouldLoop = loop;
-        queueStore.refreshNext();
     }
 
     // ---- Application
@@ -336,6 +331,8 @@ public final class GrooveboatApp extends Application {
         // One media stream for the app's lifetime; tracks are loaded into it.
         stream = new RemoteMediaStream(this::getBackend, pipeline, executor, scheduler);
 
+        mpris = MprisService.start(this);
+
         var preferences = new SimpleAction("account-settings", null);
         preferences.onActivate(this::preferencesActivated);
         addAction(preferences);
@@ -351,6 +348,9 @@ public final class GrooveboatApp extends Application {
     @Override
     protected void shutdown() {
         super.shutdown();
+        if (mpris != null) {
+            mpris.close();
+        }
         if (stream != null) {
             stream.stop();
         }

@@ -15,6 +15,7 @@ finish-args:
   - --share=ipc
   - --share=network
   - --socket=pulseaudio
+  - --own-name=org.mpris.MediaPlayer2.io.github.Nyeksenn.grooveboat
   - --env=JAVA_HOME=/app/jre
 
 modules:

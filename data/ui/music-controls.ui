@@ -49,10 +49,21 @@
         <property name="halign">center</property>
         <property name="spacing">20</property>
         <child>
-          <object class="GtkToggleButton" id="loop-button">
+          <object class="GtkToggleButton" id="shuffle-button">
             <property name="active">false</property>
+            <property name="icon-name">media-playlist-shuffle-symbolic</property>
+            <property name="tooltip-text" translatable="yes">Shuffle</property>
+            <signal name="toggled" handler="shuffle-toggled"/>
+            <style>
+              <class name="flat"/>
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="loop-button">
             <property name="icon-name">arrows-loop-tall-disabled-symbolic</property>
-            <signal name="toggled" handler="loop-toggled"/>
+            <property name="tooltip-text" translatable="yes">Repeat</property>
+            <signal name="clicked" handler="loop-clicked"/>
             <style>
               <class name="flat"/>
             </style>

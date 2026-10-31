@@ -9,6 +9,7 @@ data/ui/connection-page.ui
 data/ui/credentials-page.ui
 data/ui/headerbar-menu.ui
 data/ui/music-chooser.ui
+data/ui/music-controls.ui
 data/ui/prefs.ui
 data/ui/server-type-page.ui
 data/ui/song-list.ui
@@ -21,5 +22,6 @@ src/main/java/io/github/Nyeksenn/grooveboat/ui/ConnectionPage.java
 src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java
 src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatApp.java
 src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java
+src/main/java/io/github/Nyeksenn/grooveboat/ui/MusicControls.java
 src/main/java/io/github/Nyeksenn/grooveboat/ui/SongCard.java
 src/main/java/io/github/Nyeksenn/grooveboat/ui/SongListPage.java

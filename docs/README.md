@@ -11,6 +11,7 @@ GrooveBoat is a GTK4 / libadwaita desktop music player for Jellyfin and OpenSubs
 5. [User Interface](architecture/ui.md): the window structure, dialogs, the templated widgets, the resource bundle, actions, adaptive layout, and widget lifetime.
 6. [Threading Model](architecture/threading.md): which work runs on which thread, and how results get back to the UI.
 7. [Configuration and Storage](architecture/storage.md): settings, secrets, and the files written to disk.
+8. [MPRIS](architecture/mpris.md): the desktop media-control service, its threading rule, and how repeat/shuffle map onto the queue.
 
 ## Concepts
 
