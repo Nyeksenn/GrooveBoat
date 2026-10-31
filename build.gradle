@@ -9,7 +9,7 @@ repositories {
 
 ext {
     ebeanVersion = "17.5.0"
-    javaGiVersion = "0.14.1"
+    javaGiVersion = "1.0.0-RC3"
 }
 
 dependencies {
@@ -46,23 +46,6 @@ jar {
     }
 }
 
-abstract class CompileUiFiles extends DefaultTask {
-    private ExecOperations execOperations
-
-    @Inject
-    CompileUiFiles(ExecOperations execOperations) {
-        this.execOperations = execOperations
-    }
-
-    @TaskAction
-    void doTaskAction() {
-        execOperations.exec {
-            setWorkingDir(project.file("src/main/resources"))
-            commandLine 'glib-compile-resources', 'grooveboat.gresource.xml'
-        }
-    }
-}
-
 tasks.register('generateMigrations', JavaExec) {
     group = 'migration'
     description = 'Generate database migrations'
@@ -81,32 +64,40 @@ tasks.register('compileSass', Exec) {
     commandLine 'sass', '--no-source-map', 'main.scss:../css/main.css'
 }
 
-tasks.register('compileResources', CompileUiFiles) {
+tasks.register('compileResources', Exec) {
+    description = 'Compile the gresource bundle'
+    group = 'build'
     dependsOn compileSass
+
+    workingDir = file('src/main/resources')
+    commandLine 'glib-compile-resources', 'grooveboat.gresource.xml'
 }
 
 tasks.named('classes') {
     dependsOn compileResources
 }
 
+// src/test only holds MigrationGenerator, no tests
+tasks.named('test') {
+    failOnNoDiscoveredTests = false
+}
+
 
 // Compiles the GSettings schema into the build dir so `run` works without installing it system-wide
 // (install_settings.sh is still needed for running the app any other way).
+tasks.register('copySchemas', Copy) {
+    from 'src/main/resources/io.github.Nyeksenn.grooveboat.gschema.xml'
+    into layout.buildDirectory.dir('schemas')
+}
+
 tasks.register('compileSchemas', Exec) {
     description = 'Compile the GSettings schema for development runs'
     group = 'build'
+    dependsOn copySchemas
 
     def schemaDir = layout.buildDirectory.dir('schemas')
     inputs.file('src/main/resources/io.github.Nyeksenn.grooveboat.gschema.xml')
     outputs.dir(schemaDir)
-    doFirst {
-        def dir = schemaDir.get().asFile
-        dir.mkdirs()
-        project.copy {
-            from 'src/main/resources/io.github.Nyeksenn.grooveboat.gschema.xml'
-            into dir
-        }
-    }
     commandLine 'glib-compile-schemas', schemaDir.get().asFile.absolutePath
 }
 

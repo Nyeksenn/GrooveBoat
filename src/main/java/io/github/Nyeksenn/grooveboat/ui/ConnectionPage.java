@@ -93,7 +93,7 @@ public class ConnectionPage extends NavigationPage {
                 GLib.idleAddOnce(() -> {
                     connectionNextButton.setSensitive(true);
                     dialog.setCandidate(backend);
-                    activateActionIfExists("navigation.push", Variant.string("credentials-page"));
+                    activateActionVariant("navigation.push", Variant.string("credentials-page"));
                 });
                 return;
             }

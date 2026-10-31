@@ -39,7 +39,7 @@ public class SongCard extends Box {
 
     @GtkCallback(name = "song-clicked")
     public void songClicked(int n_press, double x, double y) {
-        activateActionIfExists("app.play-song", Variant.string(songId));
+        activateActionVariant("app.play-song", Variant.string(songId));
     }
 
     @GtkCallback(name = "song-right-clicked")

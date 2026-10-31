@@ -96,7 +96,7 @@ public class CredentialsPage extends NavigationPage {
                 AppSettings.saveSession(backend.type(), backend.baseUrl(), username, session.userId());
                 GLib.idleAddOnce(() -> {
                     app.startSession(backend);
-                    activateActionIfExists("win.close-setup", null);
+                    activateActionVariant("win.close-setup", null);
                 });
             } catch (AuthenticationException e) {
                 fail("Username or password wrong", true);

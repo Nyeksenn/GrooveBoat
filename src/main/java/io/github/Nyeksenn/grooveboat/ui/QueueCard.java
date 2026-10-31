@@ -34,7 +34,7 @@ public class QueueCard extends Box {
 
     @GtkCallback(name = "remove-from-queue")
     public void removeFromQueue() {
-        activateActionIfExists("app.remove-song", Variant.int32(index));
+        activateActionVariant("app.remove-song", Variant.int32(index));
     }
 
     public QueueCard() {

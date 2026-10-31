@@ -59,7 +59,7 @@ public class MiniPlayer extends Box {
         computePoint(miniPlaySkip, clickPoint, nextPoint);
 
         if (!(miniPlayToggle.contains(playPoint.readX(), playPoint.readY()) || miniPlayPrevious.contains(previousPoint.readX(), previousPoint.readY()) || miniPlaySkip.contains(nextPoint.readX(), nextPoint.readY()))) {
-            activateActionIfExists("navigation.push", Variant.string("sidebar"));
+            activateActionVariant("navigation.push", Variant.string("sidebar"));
         }
     }
 
