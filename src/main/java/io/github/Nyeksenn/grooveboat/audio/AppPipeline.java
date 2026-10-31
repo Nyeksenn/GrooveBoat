@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -228,7 +229,7 @@ public final class AppPipeline {
 
     /** @param timestampUs position in microseconds */
     public boolean seek(long timestampUs) {
-        return playbin.seek(1.0, Format.TIME, SeekFlags.FLUSH, SeekType.SET, timestampUs * 1000, SeekType.NONE,
+        return playbin.seek(1.0, Format.TIME, Set.of(SeekFlags.FLUSH, SeekFlags.ACCURATE), SeekType.SET, timestampUs * 1000, SeekType.NONE,
                 CLOCK_TIME_NONE.getValue());
     }
 
@@ -248,13 +249,14 @@ public final class AppPipeline {
 
     /** @return position within the current track in microseconds, or -1 when unknown */
     public long queryPosition() {
-        var pos = new Out<Long>();
-        var success = playbin.query(posQuery);
-        posQuery.parsePosition(null, pos);
-        if (success) {
+        // The ticker (scheduler thread) and the main thread both ask; a Query object isn't thread-safe.
+        synchronized (posQuery) {
+            if (!playbin.query(posQuery)) {
+                return -1L;
+            }
+            var pos = new Out<Long>();
+            posQuery.parsePosition(null, pos);
             return pos.get() / 1000L;
-        } else {
-            return -1L;
         }
     }
 

@@ -33,7 +33,7 @@ public class SecretKeeper implements AutoCloseable {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 var attributes = Secret.attributesBuild(SCHEMA, "user", username, "protocol", protocol, "server", server, null);
-                return Secret.passwordStoreSync(SCHEMA, attributes, Secret.COLLECTION_DEFAULT, label, password, null);
+                return Secret.passwordStorevSync(SCHEMA, attributes, Secret.COLLECTION_DEFAULT, label, password, null);
             } catch (GErrorException e) {
                 return false;
             }
@@ -44,7 +44,7 @@ public class SecretKeeper implements AutoCloseable {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 var attributes = Secret.attributesBuild(SCHEMA, "user", username, "protocol", protocol, "server", server, null);
-                return Secret.passwordLookupSync(SCHEMA, attributes, null);
+                return Secret.passwordLookupvSync(SCHEMA, attributes, null);
             } catch (GErrorException e) {
                 return null;
             }
@@ -56,7 +56,7 @@ public class SecretKeeper implements AutoCloseable {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 var attributes = Secret.attributesBuild(SCHEMA, "user", username, "protocol", protocol, "server", server, null);
-                return Secret.passwordClearSync(SCHEMA, attributes, null);
+                return Secret.passwordClearvSync(SCHEMA, attributes, null);
             } catch (GErrorException e) {
                 return false;
             }

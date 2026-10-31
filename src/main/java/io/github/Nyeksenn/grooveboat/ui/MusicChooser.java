@@ -73,8 +73,8 @@ public class MusicChooser extends NavigationPage {
             GLib.idleAddOnce(() -> {
                 done.set(true);
                 refreshProgressBar.setVisible(false);
-                win.activateActionIfExists("win.reload-albums", null);
-                win.activateActionIfExists("win.reload-artists", null);
+                win.activateActionVariant("win.reload-albums", null);
+                win.activateActionVariant("win.reload-artists", null);
             });
         });
     }

@@ -13,7 +13,7 @@ Adding a widget touches three places: the template file, an entry in the gresour
 
 ## Resource bundle
 
-Templates, the compiled stylesheet and the symbolic icons are packed into one gresource bundle during the Gradle build. Styles are written in SCSS and compiled to CSS before the bundle is built. Icons are registered under the application's resource path so they can be referred to by icon name. The stylesheet is installed at application priority so it overrides the theme defaults.
+Templates, the compiled stylesheet and the symbolic icons are packed into one gresource bundle by Gradle (`gradlew run`) or Meson (Flatpak) from `data/`. Styles are written in SCSS (`data/scss`) and compiled to the committed `data/css/main.css`. Icons are registered under the application's resource path so they can be referred to by icon name. The stylesheet is installed at application priority so it overrides the theme defaults.
 
 ## Window structure
 

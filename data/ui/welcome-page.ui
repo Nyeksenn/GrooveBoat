@@ -7,13 +7,13 @@
         <property name="content">
           <object class="AdwStatusPage">
             <property name="icon-name">build-configure-symbolic</property>
-            <property name="title">Welcome to GrooveBoat!</property>
+            <property name="title" translatable="yes">Welcome to GrooveBoat!</property>
             <property name="child">
               <object class="GtkLabel" id="setup-welcome-label">
                 <property name="use-markup">true</property>
                 <property name="wrap">true</property>
                 <property name="justify">GTK_JUSTIFY_LEFT</property>
-                <property name="label">
+                <property name="label" translatable="yes">
 Let's connect you to your music server in just three quick steps:
 
 1. Choose your server type

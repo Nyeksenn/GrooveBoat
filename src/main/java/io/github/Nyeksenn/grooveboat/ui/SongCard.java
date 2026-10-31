@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
+import static org.javagi.util.Intl.i18n;
 import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
 import org.gnome.gdk.Rectangle;
 import org.gnome.gio.Menu;
@@ -39,7 +40,7 @@ public class SongCard extends Box {
 
     @GtkCallback(name = "song-clicked")
     public void songClicked(int n_press, double x, double y) {
-        activateActionIfExists("app.play-song", Variant.string(songId));
+        activateActionVariant("app.play-song", Variant.string(songId));
     }
 
     @GtkCallback(name = "song-right-clicked")
@@ -53,7 +54,7 @@ public class SongCard extends Box {
         // Cards are recycled by list views: replace the entry instead of adding another one per bind.
         songContextMenu.removeAll();
         var item = new MenuItem();
-        item.setLabel("Add to queue");
+        item.setLabel(i18n("Add to queue"));
         item.setActionAndTargetValue("app.queue-song", Variant.string(songId));
         songContextMenu.appendItem(item);
         this.songId = songId;

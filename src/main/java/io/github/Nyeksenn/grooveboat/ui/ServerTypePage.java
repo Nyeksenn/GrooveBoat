@@ -14,7 +14,7 @@ public class ServerTypePage extends NavigationPage {
 
     private void choose(BackendType type) {
         SetupDialog.of(this).setBackendType(type);
-        activateActionIfExists("navigation.push", Variant.string("connection-page"));
+        activateActionVariant("navigation.push", Variant.string("connection-page"));
     }
 
     @GtkCallback(name = "opensubsonic-selected")

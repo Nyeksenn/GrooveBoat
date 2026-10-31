@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <template class="QueueItem" parent="GtkBox">
-    <property name="halign">center</property>
+    <property name="halign">fill</property>
+    <property name="hexpand">true</property>
     <property name="valign">center</property>
     <style>
       <class name="queue-item"/>

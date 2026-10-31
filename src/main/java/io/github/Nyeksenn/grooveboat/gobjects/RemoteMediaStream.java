@@ -99,7 +99,16 @@ public final class RemoteMediaStream extends MediaStream {
         logger.info("Seek to {} µs", timestamp);
         if (pipeline.seek(timestamp)) {
             seekSuccess();
+            update(timestamp);
             setPlaying(true);
+            // The position scale pauses this stream's pipeline and ticker directly while it is dragged, without
+            // changing GTK's playing state, so setPlaying(true) above can be a no-op. Resume explicitly.
+            if (!detached) {
+                pipeline.setState(State.PLAYING);
+            }
+            if (!timestampUpdateRunning()) {
+                startTimestampUpdate();
+            }
         } else {
             seekFailed();
         }

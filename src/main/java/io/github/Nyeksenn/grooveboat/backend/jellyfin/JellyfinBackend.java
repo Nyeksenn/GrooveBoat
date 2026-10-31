@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.backend.jellyfin;
 
+import static org.javagi.util.Intl.i18n;
 import io.github.Nyeksenn.grooveboat.backend.*;
 import org.semver4j.Semver;
 import org.slf4j.Logger;
@@ -161,22 +162,22 @@ public final class JellyfinBackend implements MusicBackend {
                         .timeout(REQUEST_TIMEOUT).header("Accept", "application/json").GET().build(),
                 HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() != 200) {
-            return ServerInfo.incompatible("Not a Jellyfin server");
+            return ServerInfo.incompatible(i18n("Not a Jellyfin server"));
         }
         JsonNode info;
         try {
             info = JSON.readTree(response.body());
         } catch (JacksonException e) {
-            return ServerInfo.incompatible("Not a Jellyfin server");
+            return ServerInfo.incompatible(i18n("Not a Jellyfin server"));
         }
         var product = info.path("ProductName").asString("");
         var version = info.path("Version").asString("");
         if (!product.toLowerCase().contains("jellyfin") || version.isEmpty()) {
-            return ServerInfo.incompatible("Not a Jellyfin server");
+            return ServerInfo.incompatible(i18n("Not a Jellyfin server"));
         }
         var semver = Semver.coerce(version);
         if (semver == null || semver.isLowerThan(MIN_VERSION)) {
-            return ServerInfo.incompatible("Jellyfin " + version + " is too old, " + MIN_VERSION + " or newer is required");
+            return ServerInfo.incompatible(String.format(i18n("Jellyfin %s is too old, %s or newer is required"), version, MIN_VERSION));
         }
         return ServerInfo.compatible(info.path("ServerName").asString(product), version);
     }
@@ -207,6 +208,15 @@ public final class JellyfinBackend implements MusicBackend {
         var response = send(request(uri("/Users/" + session.userId(), null), session.credential(), REQUEST_TIMEOUT)
                 .GET().build(), HttpResponse.BodyHandlers.ofString());
         parse(response);
+        this.token = session.credential();
+        this.userId = session.userId();
+    }
+
+    @Override
+    public void restoreUnverified(Session session) throws AuthenticationException {
+        if (session.credential() == null || session.userId() == null || session.userId().isEmpty()) {
+            throw new AuthenticationException("No stored Jellyfin session");
+        }
         this.token = session.credential();
         this.userId = session.userId();
     }

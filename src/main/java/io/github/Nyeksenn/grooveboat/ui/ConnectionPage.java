@@ -1,8 +1,10 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
+import static org.javagi.util.Intl.i18n;
 import io.github.Nyeksenn.grooveboat.backend.BackendFactory;
 import io.github.Nyeksenn.grooveboat.backend.BackendSupport;
 import io.github.Nyeksenn.grooveboat.backend.BackendType;
+import io.github.Nyeksenn.grooveboat.backend.MusicBackend;
 import io.github.Nyeksenn.grooveboat.backend.ServerInfo;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.gnome.adw.EntryRow;
@@ -53,7 +55,9 @@ public class ConnectionPage extends NavigationPage {
     private void fail(String message) {
         GLib.idleAddOnce(() -> {
             connectionNextButton.setSensitive(true);
-            connectionOverlay.addToast(new Toast(message));
+            var toast = new Toast(message);
+            toast.setUseMarkup(false);
+            connectionOverlay.addToast(toast);
             entryUrl.addCssClass("error");
         });
     }
@@ -79,35 +83,39 @@ public class ConnectionPage extends NavigationPage {
 
         connectionNextButton.setSensitive(false);
         exec.submit(() -> {
-            var backend = BackendFactory.create(type, url);
+            MusicBackend backend = null;
             ServerInfo info;
             try {
+                backend = BackendFactory.create(type, url);
                 info = backend.probe();
-            } catch (IOException e) {
+            } catch (IOException | RuntimeException e) {
+                // RuntimeExceptions (bad URL, unexpected response) must not leave the button disabled.
                 logger.warn("Couldn't reach server: {}", e.getMessage());
                 info = null;
             }
 
             if (info != null && info.compatible()) {
-                logger.info("Found {} {} at {}", info.name(), info.version(), backend.host());
+                final var found = backend;
+                logger.info("Found {} {} at {}", info.name(), info.version(), found.host());
                 GLib.idleAddOnce(() -> {
                     connectionNextButton.setSensitive(true);
-                    dialog.setCandidate(backend);
-                    activateActionIfExists("navigation.push", Variant.string("credentials-page"));
+                    dialog.setCandidate(found);
+                    activateActionVariant("navigation.push", Variant.string("credentials-page"));
                 });
                 return;
             }
-            backend.close();
+            if (backend != null) {
+                backend.close();
+            }
 
             // Wrong server type picked? Point the user at the right one.
             var other = type.other();
             if (probeQuietly(other, url).compatible()) {
-                fail("This looks like a " + other.displayName() + " server. Go back and choose "
-                        + other.displayName() + ".");
+                fail(String.format(i18n("This looks like a %1$s server. Go back and choose %1$s."), other.displayName()));
             } else if (info == null) {
-                fail("Unable to reach server");
+                fail(i18n("Unable to reach server"));
             } else {
-                fail(info.reason() != null ? info.reason() : "Incompatible server");
+                fail(info.reason() != null ? info.reason() : i18n("Incompatible server"));
             }
         });
     }
@@ -117,9 +125,10 @@ public class ConnectionPage extends NavigationPage {
         onMap(() -> {
             var type = SetupDialog.of(this).getBackendType();
             if (type != null) {
-                connectionGroup.setTitle(type.displayName() + " Server");
-                connectionGroup.setDescription("Enter the address of your " + type.displayName()
-                        + " server, for example https://music.example.com");
+                connectionGroup.setTitle(String.format(i18n("%s Server"), type.displayName()));
+                connectionGroup.setDescription(String.format(
+                        i18n("Enter the address of your %s server, for example https://music.example.com"),
+                        type.displayName()));
             }
             entryUrl.grabFocus();
         });

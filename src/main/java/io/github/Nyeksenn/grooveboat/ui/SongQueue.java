@@ -47,7 +47,12 @@ public final class SongQueue extends Bin {
     }
 
     public void itemSelectionChanged(ParamSpec paramSpec) {
-        queueListView.scrollTo(currentSelection.getSelected(), Set.of(ListScrollFlags.FOCUS), null);
+        var selected = currentSelection.getSelected();
+        // Nothing is selected while the queue is empty or being rebuilt.
+        if (selected < 0 || selected >= currentSelection.getNItems()) {
+            return;
+        }
+        queueListView.scrollTo(selected, Set.of(ListScrollFlags.FOCUS), null);
     }
 
     @InstanceInit

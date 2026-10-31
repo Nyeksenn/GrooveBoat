@@ -43,6 +43,14 @@ public interface MusicBackend extends AutoCloseable {
      */
     void restore(Session session) throws IOException;
 
+    /**
+     * Takes over a stored session without contacting the server, for starting while the server can't be reached.
+     * Library calls fail with an {@link IOException} until the server answers again.
+     *
+     * @throws AuthenticationException when there is no stored credential
+     */
+    void restoreUnverified(Session session) throws AuthenticationException;
+
     /** Albums created on the server after {@code since}, newest first. */
     List<RemoteAlbum> albumsNewerThan(Instant since) throws IOException;
 

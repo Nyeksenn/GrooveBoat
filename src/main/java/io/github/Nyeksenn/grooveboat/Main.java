@@ -1,7 +1,6 @@
 package io.github.Nyeksenn.grooveboat;
 
-import io.ebean.DatabaseFactory;
-import io.ebean.config.DatabaseConfig;
+import io.ebean.Database;
 import io.github.Nyeksenn.grooveboat.audio.QueueStore;
 import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
 import io.github.Nyeksenn.grooveboat.ui.*;
@@ -12,6 +11,7 @@ import org.gnome.gio.Resource;
 import org.javagi.base.GErrorException;
 import org.javagi.gobject.types.Types;
 import org.javagi.gtk.types.TemplateTypes;
+import org.javagi.util.Intl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,8 +22,21 @@ import java.util.Properties;
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
+    /** Set by `./gradlew run`: loads resources from the build directory and skips installed translations. */
+    public static final boolean DEVEL_PROFILE = "devel".equalsIgnoreCase(System.getenv("PROFILE"));
+    public static final String APPLICATION_ID = "io.github.Nyeksenn.grooveboat";
+    public static final String GETTEXT_DOMAIN = "grooveboat";
+    public static final String LOCALE_DIR = "/app/share/locale";
+    public static final String RESOURCE_DIR = DEVEL_PROFILE ? "build/generated" : "/app/share/" + APPLICATION_ID;
+
     public static void main(String[] args) {
-        var cfg = new DatabaseConfig();
+        // Initialize gettext (installed translations only exist in the flatpak)
+        if (!DEVEL_PROFILE) {
+            Intl.bindtextdomain(GETTEXT_DOMAIN, LOCALE_DIR);
+        }
+        Intl.textdomain(GETTEXT_DOMAIN);
+
+        var cfg = Database.builder();
         var properties = new Properties();
         properties.put("ebean.migration.run", "true");
         properties.put("datasource.db.username", "gb");
@@ -42,15 +55,14 @@ public class Main {
         cfg.setDdlCreateOnly(false);
         cfg.setDefaultServer(true);
         cfg.setPackages(List.of("io.github.Nyeksenn.grooveboat.entities"));
-        DatabaseFactory.create(cfg);
+        cfg.build();
 
         // Make sure GstAudio is loaded to avoid getType returning null
         GstAudio.javagi$ensureInitialized();
         AppSettings.migrate();
 
         try {
-            var resource = Resource.load(
-                    "src/main/resources/grooveboat.gresource");
+            var resource = Resource.load(RESOURCE_DIR + "/" + APPLICATION_ID + ".gresource");
             resource.resourcesRegister();
             TemplateTypes.register(MusicChooser.class);
             TemplateTypes.register(AlbumListView.class);

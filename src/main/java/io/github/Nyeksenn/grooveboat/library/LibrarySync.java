@@ -4,7 +4,9 @@ import io.ebean.DB;
 import io.ebean.Database;
 import io.ebean.DuplicateKeyException;
 import io.github.Nyeksenn.grooveboat.backend.MusicBackend;
+import io.github.Nyeksenn.grooveboat.backend.RemoteAlbum;
 import io.github.Nyeksenn.grooveboat.backend.RemoteArtistRef;
+import io.github.Nyeksenn.grooveboat.backend.RemoteSong;
 import io.github.Nyeksenn.grooveboat.entities.AlbumModel;
 import io.github.Nyeksenn.grooveboat.entities.ArtistModel;
 import io.github.Nyeksenn.grooveboat.entities.SongModel;
@@ -22,6 +24,7 @@ import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -47,6 +50,8 @@ public final class LibrarySync implements AutoCloseable {
     private final Database db = DB.getDefault();
     private final ExecutorService exec = Executors.newVirtualThreadPerTaskExecutor();
     private final ReentrantLock syncLock = new ReentrantLock();
+    /** Held while song rows are built and written, so a logout can wait for them before wiping the tables. */
+    private final ReentrantLock saveLock = new ReentrantLock();
     private volatile boolean cancelled = false;
 
     public LibrarySync(MusicBackend backend) {
@@ -79,6 +84,13 @@ public final class LibrarySync implements AutoCloseable {
         try {
             checkCancelled();
             var settings = AppSettings.get();
+            var lastRefresh = fullRefresh
+                    ? Instant.EPOCH
+                    : Instant.ofEpochSecond(settings.getUint64(AppSettings.LAST_SYNC));
+
+            // Fetch before wiping anything: a failed full refresh (e.g. server unreachable) keeps the cache.
+            var fetched = backend.albumsNewerThan(lastRefresh);
+            checkCancelled();
             if (fullRefresh) {
                 settings.setUint64(AppSettings.LAST_SYNC, 0L);
                 try {
@@ -87,13 +99,14 @@ public final class LibrarySync implements AutoCloseable {
                     logger.warn("Couldn't truncate tables");
                 }
             }
-            var lastRefresh = Instant.ofEpochSecond(settings.getUint64(AppSettings.LAST_SYNC));
-            var syncStarted = Instant.now();
-
-            var newAlbums = backend.albumsNewerThan(lastRefresh);
+            // The cutoff has second precision, so albums from the last synced second can come back.
+            var known = new HashSet<String>();
+            if (!fullRefresh && !fetched.isEmpty()) {
+                known.addAll(db.find(AlbumModel.class).findIds().stream().map(Object::toString).toList());
+            }
+            var newAlbums = fetched.stream().filter(a -> !known.contains(a.id())).toList();
             logger.info("Found {} new albums", newAlbums.size());
             if (newAlbums.isEmpty()) {
-                settings.setUint64(AppSettings.LAST_SYNC, syncStarted.getEpochSecond());
                 // The artist page shows album artists' images; fetch those still missing (e.g. after the repair
                 // migration cleared broken paths) without querying every artist again.
                 updateArtists(true);
@@ -121,7 +134,11 @@ public final class LibrarySync implements AutoCloseable {
             var albumModels = futures.stream().map(CompletableFuture::join).toList();
             checkCancelled();
             db.saveAll(albumModels);
-            settings.setUint64(AppSettings.LAST_SYNC, syncStarted.getEpochSecond());
+            // The newest album's server timestamp, not the local clock: the two can differ.
+            var newest = newAlbums.stream().map(RemoteAlbum::created).max(Instant::compareTo).orElse(Instant.EPOCH);
+            if (newest.getEpochSecond() > lastRefresh.getEpochSecond()) {
+                settings.setUint64(AppSettings.LAST_SYNC, newest.getEpochSecond());
+            }
 
             updateArtists(false);
         } catch (CancellationRequested e) {
@@ -200,11 +217,23 @@ public final class LibrarySync implements AutoCloseable {
 
     /** Returns the songs of an album, fetching and upserting them from the server when the cache is incomplete. */
     public List<SongModel> getSongs(String albumId) {
+        List<RemoteSong> songList;
         try {
             checkCancelled();
-            var songList = backend.songsOfAlbum(albumId);
-            var songsSaved = new QSongModel().album.id.equalTo(albumId)
-                    .orderBy().discNumber.asc().track.asc().findList();
+            songList = backend.songsOfAlbum(albumId);
+        } catch (IOException e) {
+            // Offline or server trouble: whatever the cache has is better than an empty page.
+            logger.warn("Couldn't retrieve songs for album {}: {}", albumId, e.getMessage());
+            return cachedSongs(albumId);
+        } catch (Exception e) {
+            logger.warn("Loading songs failed: {}", e.getMessage());
+            return new ArrayList<>();
+        }
+        // Everything below reads and writes the cache. A logout waits for this lock before wiping the tables.
+        saveLock.lock();
+        try {
+            checkCancelled();
+            var songsSaved = cachedSongs(albumId);
 
             if (songsSaved.size() == songList.size()) {
                 return songsSaved;
@@ -245,13 +274,16 @@ public final class LibrarySync implements AutoCloseable {
             checkCancelled();
             db.saveAll(songModelList);
             return songModelList;
-        } catch (IOException e) {
-            logger.warn("Couldn't retrieve songs for album {}: {}", albumId, e.getMessage());
-            return new ArrayList<>();
         } catch (Exception e) {
             logger.warn("Loading songs failed: {}", e.getMessage());
             return new ArrayList<>();
+        } finally {
+            saveLock.unlock();
         }
+    }
+
+    private static List<SongModel> cachedSongs(String albumId) {
+        return new QSongModel().album.id.equalTo(albumId).orderBy().discNumber.asc().track.asc().findList();
     }
 
     /**
@@ -261,12 +293,19 @@ public final class LibrarySync implements AutoCloseable {
      */
     public boolean cancelAndAwait(Duration timeout) {
         cancelled = true;
+        var deadline = System.nanoTime() + timeout.toNanos();
         try {
-            if (syncLock.tryLock(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
-                syncLock.unlock();
-                return true;
+            // Both the album sync and in-flight song saves have to be done before the caller wipes the tables.
+            if (!syncLock.tryLock(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
+                return false;
             }
-            return false;
+            syncLock.unlock();
+            var remaining = Math.max(0L, deadline - System.nanoTime());
+            if (!saveLock.tryLock(remaining, TimeUnit.NANOSECONDS)) {
+                return false;
+            }
+            saveLock.unlock();
+            return true;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return false;

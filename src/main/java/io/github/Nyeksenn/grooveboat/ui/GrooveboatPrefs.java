@@ -37,7 +37,7 @@ public class GrooveboatPrefs extends PreferencesDialog {
     @GtkCallback(name = "logout-clicked")
     public void logoutClicked() {
         // Activate while still attached to the window, so the action resolves; then get out of the way.
-        activateActionIfExists("app.logout", null);
+        activateActionVariant("app.logout", null);
         close();
     }
 

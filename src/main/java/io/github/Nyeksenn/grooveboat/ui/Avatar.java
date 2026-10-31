@@ -18,7 +18,7 @@ public class Avatar extends Button {
 
     @GtkCallback(name = "account-menu-clicked")
     public void accountMenuClicked() {
-        activateActionIfExists("app.account-settings", null);
+        activateActionVariant("app.account-settings", null);
     }
 
     @InstanceInit
