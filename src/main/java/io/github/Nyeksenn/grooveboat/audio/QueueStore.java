@@ -18,6 +18,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.foreign.Arena;
+import java.util.ArrayList;
+import java.util.List;
 
 public class QueueStore extends GObject {
     private final GrooveboatApp app;
@@ -47,6 +49,8 @@ public class QueueStore extends GObject {
         if (followingSwitch) {
             return;
         }
+        // Prepare the follow-up first: the pipeline may ask for it as soon as the new song starts downloading.
+        refreshNext();
         var selectedItem = model.getItem(selection.getSelected());
         if (selectedItem != null && app.hasSession()) {
             app.getStream().load(selectedItem);
@@ -57,7 +61,6 @@ public class QueueStore extends GObject {
                 app.getStream().setPlaying(true);
             }
         }
-        refreshNext();
     }
 
     /**
@@ -137,6 +140,32 @@ public class QueueStore extends GObject {
         initialized = false;
     }
 
+    /**
+     * Queue items for all songs of an album, fetched from the server when the cache doesn't have them all yet.
+     * Runs off the main thread.
+     */
+    private List<SongListItem> albumItems(String albumId) {
+        var library = app.getLibrary();
+        var album = new QAlbumModel().id.equalTo(albumId).findOne();
+        if (library == null || album == null) {
+            return List.of();
+        }
+        var texture = loader.load(album.getId());
+        var items = new ArrayList<SongListItem>();
+        for (var song : library.getSongs(albumId)) {
+            items.add(new SongListItem(
+                    song.getTitle(),
+                    song.getId(),
+                    song.getDisplayArtist(),
+                    album.getTitle(),
+                    song.getDuration(),
+                    song.getContentType(),
+                    texture
+            ));
+        }
+        return items;
+    }
+
     private void setupActions() {
         var exec = app.executor;
 
@@ -213,23 +242,13 @@ public class QueueStore extends GObject {
                         // Read now: callback arguments are only valid during the callback.
                         final var albumId = parameter.getString(null);
                         exec.submit(() -> {
-                            var album = new QAlbumModel().id.equalTo(albumId).findOne();
-                            if (album != null) {
-                                GLib.idleAddOnce(model::removeAll);
-                                var songs = album.getSongs();
-                                var texture = loader.load(album.getId());
-                                for (var song : songs) {
-                                    var item = new SongListItem(
-                                            song.getTitle(),
-                                            song.getId(),
-                                            song.getDisplayArtist(),
-                                            song.getAlbum().getTitle(),
-                                            song.getDuration(),
-                                            song.getContentType(),
-                                            texture
-                                    );
-                                    GLib.idleAddOnce(() -> model.append(item));
-                                }
+                            var items = albumItems(albumId);
+                            if (!items.isEmpty()) {
+                                GLib.idleAddOnce(() -> {
+                                    // Empty first, so the selection starts over at the album's first song.
+                                    model.removeAll();
+                                    model.splice(0, 0, items.toArray(SongListItem[]::new));
+                                });
                             }
                         });
                     }
@@ -246,22 +265,10 @@ public class QueueStore extends GObject {
                         // Read now: callback arguments are only valid during the callback.
                         final var albumId = parameter.getString(null);
                         exec.submit(() -> {
-                            var album = new QAlbumModel().id.equalTo(albumId).findOne();
-                            if (album != null) {
-                                var texture = loader.load(album.getId());
-                                var songs = album.getSongs();
-                                for (var song : songs) {
-                                    var item = new SongListItem(
-                                            song.getTitle(),
-                                            song.getId(),
-                                            song.getDisplayArtist(),
-                                            song.getAlbum().getTitle(),
-                                            song.getDuration(),
-                                            song.getContentType(),
-                                            texture
-                                    );
-                                    GLib.idleAddOnce(() -> model.append(item));
-                                }
+                            var items = albumItems(albumId);
+                            if (!items.isEmpty()) {
+                                GLib.idleAddOnce(() -> model.splice(model.getNItems(), 0,
+                                        items.toArray(SongListItem[]::new)));
                             }
                         });
                     }

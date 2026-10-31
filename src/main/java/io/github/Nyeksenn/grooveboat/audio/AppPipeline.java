@@ -46,6 +46,8 @@ public final class AppPipeline {
     private final Element playbin;
     private final Bus bus;
     private volatile Supplier<String> nextUriSupplier = () -> null;
+    /** Whether a track has been loaded since the last {@link #stop}, i.e. the sink may hold its audio. */
+    private boolean loaded = false;
 
     public AppPipeline() {
         Gst.init(null);
@@ -104,16 +106,39 @@ public final class AppPipeline {
     /**
      * Plays {@code uri} from the start, replacing whatever was playing, and prerolls it (state PAUSED).
      * The URI may contain credentials and is never logged.
+     *
+     * @param whileStopped runs after the old track's streaming threads have stopped and before the new URI is set,
+     *                     so no about-to-finish of the old track can interleave with it
      */
-    public synchronized void playUri(String uri) {
+    public synchronized void playUri(String uri, Runnable whileStopped) {
+        if (loaded) {
+            flushOutput();
+        }
         playbin.setState(State.READY);
+        // Whatever the old track left on the bus (stream-start, eos, buffering) no longer applies.
+        bus.setFlushing(true);
+        bus.setFlushing(false);
+        whileStopped.run();
         playbin.setProperty("uri", uri);
         playbin.setState(State.PAUSED);
+        loaded = true;
+    }
+
+    /**
+     * Discards audio the sink has buffered but not yet played. Going straight to READY leaves it in the sink (and
+     * the sound server), where it pops when the next track starts. Pausing first stops output; the flushing seek
+     * then sends flush-start/flush-stop through the sink, which clears its ring buffer.
+     */
+    private void flushOutput() {
+        playbin.setState(State.PAUSED);
+        playbin.seek(1.0, Format.TIME, SeekFlags.FLUSH, SeekType.SET, 0L, SeekType.NONE,
+                CLOCK_TIME_NONE.getValue());
     }
 
     /** Stops playback; the pipeline stays ready for the next {@link #playUri}. */
     public synchronized void stop() {
         playbin.setState(State.READY);
+        loaded = false;
     }
 
     public StateChangeReturn setState(State state) {

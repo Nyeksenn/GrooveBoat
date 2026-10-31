@@ -45,6 +45,11 @@ public final class RemoteMediaStream extends MediaStream {
     private final AtomicReference<Track> next = new AtomicReference<>();
     /** Track the pipeline has accepted for a gapless switch but that hasn't started yet. */
     private final AtomicReference<Track> switching = new AtomicReference<>();
+    /**
+     * Set by {@link #load} until the loaded song's own stream-start arrives. A short or quickly downloaded song can
+     * trigger about-to-finish before it even starts; its stream-start must not be taken for the gapless switch.
+     */
+    private boolean awaitingLoadStart = false;
     /** While set, play/pause calls from GTK only update GTK's state and don't touch the pipeline. */
     private boolean detached = false;
     private ScheduledFuture<?> future;
@@ -152,12 +157,14 @@ public final class RemoteMediaStream extends MediaStream {
             throw new IllegalStateException("No active session. Can't load a track.");
         }
         cancelTimestampUpdate();
-        release(switching.getAndSet(null));
         release(current);
         current = track;
         logger.info("Loading {}", track.source());
         unprepareDetached();
-        pipeline.playUri(track.source().uri());
+        // Drop a pending switch only once the old song's streaming threads are stopped, which happens before the
+        // new URI is set; otherwise its about-to-finish could still slip one in.
+        pipeline.playUri(track.source().uri(), () -> release(switching.getAndSet(null)));
+        awaitingLoadStart = true;
         // This takes microseconds
         streamPrepared(true, false, true, durationUs(item));
     }
@@ -185,6 +192,10 @@ public final class RemoteMediaStream extends MediaStream {
      * returns its song, so the queue can follow; otherwise returns {@code null}.
      */
     public SongListItem onStreamStart() {
+        if (awaitingLoadStart) {
+            awaitingLoadStart = false;
+            return null;
+        }
         var track = switching.getAndSet(null);
         if (track == null) {
             return null;
@@ -218,6 +229,7 @@ public final class RemoteMediaStream extends MediaStream {
     /** After a playback error: stop the pipeline without GTK's pause restarting the failing download. */
     public void fail() {
         cancelTimestampUpdate();
+        awaitingLoadStart = false;
         pipeline.stop();
         detached = true;
         try {
@@ -231,6 +243,7 @@ public final class RemoteMediaStream extends MediaStream {
     /** Stops playback entirely and releases all play sessions, e.g. on logout. */
     public void stop() {
         cancelTimestampUpdate();
+        awaitingLoadStart = false;
         next.set(null);
         release(switching.getAndSet(null));
         release(current);

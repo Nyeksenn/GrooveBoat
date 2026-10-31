@@ -8,7 +8,7 @@ Songs follow each other **gaplessly**. The next song is handed to the player bef
 
 The player is a single `playbin3`, GStreamer's own high-level player element, created at startup and kept for the whole process. It is restricted to audio, so containers with embedded cover art don't get video branches. playbin3 builds and replaces its internal elements itself (the source, HLS demuxer, demuxers, decoders, audio sink); the app only ever changes its URL.
 
-- **Starting a song** means setting the player to ready, setting the new URL, and prerolling to paused.
+- **Starting a song** means setting the player to ready, setting the new URL, and prerolling to paused. If a song was loaded before, the player first pauses and does a flushing seek. That clears the audio the sink still holds, which would otherwise pop at the start of the new song. Once at ready, it flushes the bus, so messages the old song left behind (stream-start, end-of-stream, buffering) are dropped.
 - **Stopping** returns it to ready.
 - **Gapless continuation:** shortly before the current song runs out of data, playbin3 emits *about-to-finish* on one of its streaming threads. The player then asks a supplier for the next URL. If it gets one, it sets it right away, and playbin3 moves on to that song without a gap. When the new song reaches the audio sink, playbin3 posts a *stream-start* message. If the supplier has nothing, the player ends with end-of-stream.
 - **Seeking, position and volume:** time-based seeks, position queries (relative to the current song), and volume and mute through playbin3's own properties. GTK's cubic volume scale is converted to playbin3's linear one.
@@ -47,7 +47,7 @@ For Jellyfin, *releasing* a playback source tells the server to stop the segment
 
 The stream tracks three songs: the **current** one, the **next** one prepared for gapless playback, and the one the player has accepted for a **switch** that hasn't started yet. Each comes with its playback source and the backend that has to release it.
 
-- **Loading a song** (the user picked something, or a manual skip): play sessions for the current and any pending song are released, a new source is built, the player starts it, and the stream is marked as prepared with the song's duration from the cache.
+- **Loading a song** (the user picked something, or a manual skip): play sessions for the current and any pending song are released, a new source is built, the player starts it, and the stream is marked as prepared with the song's duration from the cache. The pending switch is dropped only after the old song's streaming threads have stopped, so its about-to-finish can't sneak one in. The stream then waits for the loaded song's own stream-start and ignores it. A short or quickly downloaded song can emit about-to-finish before it even starts, and its stream-start must not be mistaken for the gapless switch; otherwise the queue would highlight the following song while this one plays.
 - **Preparing the next song:** the queue tells the stream which song follows. The stream builds its source in advance, so the player's supplier on the streaming thread only has to take it, and records it as the pending switch.
 - **Following a gapless switch:** on stream-start, the pending song becomes current and the previous source is released. The stream re-prepares itself with the new song's duration. GTK's way to change the duration briefly marks the stream as paused; while this happens the stream is *detached*, so those calls don't reach the player, and the playing state is restored afterwards.
 - **Play, pause, seek and volume** go straight to the player. Play starts the position ticker and pause stops it.
@@ -64,15 +64,16 @@ The queue is a GObject that holds a list store of song list items and a single-s
 - *Queue song* and *queue album* append to it.
 - *Remove song* removes the entry at a given position.
 
-Each action reads its parameter immediately, because callback arguments are only valid during the callback. The lookup itself then runs on the background pool: it reads entities from the cache, gets the album texture, builds list items, and posts the list-store changes back to the UI thread.
+Each action reads its parameter immediately, because callback arguments are only valid during the callback. The lookup itself then runs on the background pool: it reads entities from the cache, gets the album texture, builds list items, and posts the list-store changes back to the UI thread. The album actions get their songs through the library sync, which fetches them from the server if the cache doesn't have them all yet (songs are cached lazily per album, so an album that was never opened has none).
 
 **Advancing:** *play next* (the action, and the end-of-stream fallback) restarts the current song in loop mode, or otherwise selects the following song, and reports whether there was one. *Play previous* selects the song before the current one.
 
 **When the selection changes** because of the user, a manual skip or end-of-stream, and a session is active, the queue:
 
-1. loads the selected song into the media stream;
-2. emits its *initialize-song* signal with the selected item;
-3. starts playback, except for the first song after startup or after the queue was cleared, so a restored song is ready but does not start on its own.
+1. tells the stream which song follows (see below), before loading, because the player may ask for it as soon as the new song starts downloading;
+2. loads the selected song into the media stream;
+3. emits its *initialize-song* signal with the selected item;
+4. starts playback, except for the first song after startup or after the queue was cleared, so a restored song is ready but does not start on its own.
 
 **Next-song bookkeeping:** whenever the selection, the queue contents or loop mode change, the queue tells the stream which song follows: the same song in loop mode, the next entry otherwise, or none at the end of the queue.
 

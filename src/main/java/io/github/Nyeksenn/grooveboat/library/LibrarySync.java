@@ -156,7 +156,9 @@ public final class LibrarySync implements AutoCloseable {
                     DB.sqlUpdate(ARTIST_UPSERT)
                             .setParameter("id", remote.id())
                             .setParameter("name", truncate(remote.name(), 200))
-                            .setParameter("artistImagePath", imagePath == null ? null : imagePath.toString())
+                            // Ebean maps Path columns as file URIs and reads them back with Paths.get(URI); a
+                            // plain path here made every later load of this artist fail.
+                            .setParameter("artistImagePath", imagePath == null ? null : imagePath.toUri().toString())
                             .execute();
                 } catch (IOException e) {
                     logger.warn("Couldn't retrieve artist {}", artist.getName());
@@ -195,7 +197,8 @@ public final class LibrarySync implements AutoCloseable {
         try {
             checkCancelled();
             var songList = backend.songsOfAlbum(albumId);
-            var songsSaved = new QSongModel().album.id.equalTo(albumId).findList();
+            var songsSaved = new QSongModel().album.id.equalTo(albumId)
+                    .orderBy().discNumber.asc().track.asc().findList();
 
             if (songsSaved.size() == songList.size()) {
                 return songsSaved;

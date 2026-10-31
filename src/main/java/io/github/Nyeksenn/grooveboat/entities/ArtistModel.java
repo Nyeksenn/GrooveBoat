@@ -75,11 +75,13 @@ public class ArtistModel extends BaseModel {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         ArtistModel that = (ArtistModel) o;
-        return Objects.equals(id, that.id) && Objects.equals(name, that.name) && Objects.equals(artistImagePath, that.artistImagePath) && Objects.equals(albums, that.albums) && Objects.equals(songs, that.songs);
+        // Leaves out the album and song collections: comparing them lazy-loads both sides, and the song side
+        // compares its artists again.
+        return Objects.equals(id, that.id) && Objects.equals(name, that.name) && Objects.equals(artistImagePath, that.artistImagePath);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, artistImagePath, albums, songs);
+        return Objects.hash(id, name, artistImagePath);
     }
 }

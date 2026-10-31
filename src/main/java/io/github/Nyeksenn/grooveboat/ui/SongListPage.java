@@ -93,8 +93,12 @@ public class SongListPage extends NavigationPage {
 
             this.executor.submit(() -> {
                 var songs = library.getSongs(albumId);
+                if (songs.isEmpty()) {
+                    logger.warn("No songs for album {}", albumId);
+                    return;
+                }
                 try {
-                    var texture = albumTextureLoader.load(songs.getFirst().getAlbum().getId());
+                    var texture = albumTextureLoader.load(albumId);
                     for (var song : songs) {
                         var songListItem = new SongListItem(
                                 song.getTitle(),
