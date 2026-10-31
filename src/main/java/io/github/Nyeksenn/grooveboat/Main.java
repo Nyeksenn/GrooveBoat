@@ -1,8 +1,6 @@
 package io.github.Nyeksenn.grooveboat;
 
-import io.ebean.DatabaseFactory;
-import io.ebean.config.DatabaseConfig;
-import io.ebean.platform.h2.H2Platform;
+import io.ebean.Database;
 import io.github.Nyeksenn.grooveboat.audio.QueueStore;
 import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
 import io.github.Nyeksenn.grooveboat.ui.*;
@@ -38,7 +36,7 @@ public class Main {
         }
         Intl.textdomain(GETTEXT_DOMAIN);
 
-        var cfg = new DatabaseConfig();
+        var cfg = Database.builder();
         var properties = new Properties();
         properties.put("ebean.migration.run", "true");
         properties.put("datasource.db.username", "gb");
@@ -52,14 +50,12 @@ public class Main {
         properties.put("datasource.db.databaseUrl", dbUrl);
 
         cfg.loadFromProperties(properties);
-        // Set explicitly: the shadow jar can't reliably merge the platform ServiceLoader entries
-        cfg.setDatabasePlatform(new H2Platform());
         cfg.setDdlGenerate(false);
         cfg.setDdlRun(false);
         cfg.setDdlCreateOnly(false);
         cfg.setDefaultServer(true);
         cfg.setPackages(List.of("io.github.Nyeksenn.grooveboat.entities"));
-        DatabaseFactory.create(cfg);
+        cfg.build();
 
         // Make sure GstAudio is loaded to avoid getType returning null
         GstAudio.javagi$ensureInitialized();
