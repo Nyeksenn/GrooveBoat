@@ -19,7 +19,11 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.foreign.Arena;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class QueueStore extends GObject {
     private final GrooveboatApp app;
@@ -33,6 +37,12 @@ public class QueueStore extends GObject {
     private boolean followingSwitch = false;
     /** Set while restarting the current song on purpose (loop mode), which re-notifies an unchanged selection. */
     private boolean forceReload = false;
+    private RepeatMode repeat = RepeatMode.NONE;
+    private boolean shuffle = false;
+    /** Shuffled play order (by identity); only maintained while shuffle is on. */
+    private final List<SongListItem> order = new ArrayList<>();
+    private final Random random = new Random();
+    private final List<Runnable> modeListeners = new CopyOnWriteArrayList<>();
 
     @Signal
     public interface InitializeSong {
@@ -70,25 +80,167 @@ public class QueueStore extends GObject {
         }
     }
 
+    public ListStore<SongListItem> getModel() {
+        return model;
+    }
+
+    public RepeatMode getRepeat() {
+        return repeat;
+    }
+
+    public boolean isShuffle() {
+        return shuffle;
+    }
+
+    /** Called (on the main thread) after repeat or shuffle changed. */
+    public void addModeListener(Runnable listener) {
+        modeListeners.add(listener);
+    }
+
+    public void removeModeListener(Runnable listener) {
+        modeListeners.remove(listener);
+    }
+
+    public void setRepeat(RepeatMode mode) {
+        if (mode == repeat) {
+            return;
+        }
+        repeat = mode;
+        refreshNext();
+        modeListeners.forEach(Runnable::run);
+    }
+
+    public void setShuffle(boolean enabled) {
+        if (enabled == shuffle) {
+            return;
+        }
+        shuffle = enabled;
+        order.clear();
+        refreshNext();
+        modeListeners.forEach(Runnable::run);
+    }
+
+    /** The selected song, or {@code null}. */
+    public SongListItem currentItem() {
+        var idx = selection.getSelected();
+        return idx == GTK_INVALID_LIST_POSITION ? null : model.getItem(idx);
+    }
+
+    /** Queue entries in play order: the list order, or the shuffled order while shuffle is on. */
+    private List<SongListItem> playOrder() {
+        if (shuffle) {
+            reconcileOrder();
+            return order;
+        }
+        var list = new ArrayList<SongListItem>();
+        for (int i = 0; i < model.getNItems(); i++) {
+            list.add(model.getItem(i));
+        }
+        return list;
+    }
+
+    private static int identityIndex(List<SongListItem> list, SongListItem item) {
+        for (int i = 0; i < list.size(); i++) {
+            if (list.get(i) == item) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     /**
-     * Tells the stream which song follows the current one, for gapless playback: the same song in loop mode,
-     * otherwise the next queue entry (or none at the end of the queue).
+     * Brings the shuffled order in line with the queue: entries that left are dropped, new entries are inserted at
+     * random places after the current song.
+     */
+    private void reconcileOrder() {
+        var present = Collections.newSetFromMap(new IdentityHashMap<SongListItem, Boolean>());
+        int n = (int) model.getNItems();
+        for (int i = 0; i < n; i++) {
+            present.add(model.getItem(i));
+        }
+        order.removeIf(item -> !present.contains(item));
+        if (order.size() == n) {
+            return;
+        }
+        var current = currentItem();
+        if (current != null && identityIndex(order, current) < 0 && order.isEmpty()) {
+            order.add(current);
+        }
+        var inOrder = Collections.newSetFromMap(new IdentityHashMap<SongListItem, Boolean>());
+        inOrder.addAll(order);
+        int curPos = current == null ? -1 : identityIndex(order, current);
+        for (int i = 0; i < n; i++) {
+            var item = model.getItem(i);
+            if (inOrder.add(item)) {
+                order.add(curPos + 1 + random.nextInt(order.size() - curPos), item);
+            }
+        }
+    }
+
+    /** The song a skip-forward would play (wrapping in repeat-playlist mode), or {@code null}. */
+    private SongListItem itemAfterCurrent() {
+        var current = currentItem();
+        if (current == null) {
+            return null;
+        }
+        var list = playOrder();
+        int i = identityIndex(list, current);
+        if (i >= 0 && i + 1 < list.size()) {
+            return list.get(i + 1);
+        }
+        return repeat == RepeatMode.PLAYLIST && !list.isEmpty() ? list.get(0) : null;
+    }
+
+    private SongListItem itemBeforeCurrent() {
+        var current = currentItem();
+        if (current == null) {
+            return null;
+        }
+        var list = playOrder();
+        int i = identityIndex(list, current);
+        if (i > 0) {
+            return list.get(i - 1);
+        }
+        return repeat == RepeatMode.PLAYLIST && !list.isEmpty() ? list.get(list.size() - 1) : null;
+    }
+
+    public boolean canGoNext() {
+        return itemAfterCurrent() != null;
+    }
+
+    public boolean canGoPrevious() {
+        return itemBeforeCurrent() != null;
+    }
+
+    /** The song that follows when the current one ends on its own: repeated, next, or none. */
+    private SongListItem followingItem() {
+        return repeat == RepeatMode.TRACK ? currentItem() : itemAfterCurrent();
+    }
+
+    /** Selects a queue entry (and thereby plays it). */
+    public void select(SongListItem item) {
+        for (int i = 0; i < model.getNItems(); i++) {
+            if (model.getItem(i) == item) {
+                if (item == currentItem()) {
+                    restartCurrent();
+                } else {
+                    selection.selectItem(i, true);
+                }
+                return;
+            }
+        }
+    }
+
+    /**
+     * Tells the stream which song follows the current one, for gapless playback: the same song in repeat-track
+     * mode, otherwise the next entry (wrapping in repeat-playlist mode, none at the end of the queue).
      */
     public void refreshNext() {
         var stream = app.getStream();
         if (stream == null || !app.hasSession()) {
             return;
         }
-        var idx = selection.getSelected();
-        SongListItem nextItem = null;
-        if (idx != GTK_INVALID_LIST_POSITION) {
-            if (app.shouldLoop) {
-                nextItem = model.getItem(idx);
-            } else if (idx + 1 < model.getNItems()) {
-                nextItem = model.getItem(idx + 1);
-            }
-        }
-        stream.setNext(nextItem);
+        stream.setNext(followingItem());
     }
 
     /** Moves the selection to a song the stream already switched to gaplessly, without reloading it. */
@@ -108,30 +260,47 @@ public class QueueStore extends GObject {
         refreshNext();
     }
 
+    private void restartCurrent() {
+        forceReload = true;
+        try {
+            selection.emitNotify("selected", null);
+        } finally {
+            forceReload = false;
+        }
+    }
+
     /**
-     * Manual or end-of-stream advance: restarts the current song in loop mode, otherwise selects the next one.
+     * Advances to the next song.
      *
-     * @return {@code false} when the queue has no next song
+     * @param endOfSong {@code true} when the current song ended on its own, which in repeat-track mode restarts it;
+     *                  a manual skip passes {@code false} and moves on
+     * @return {@code false} when there is no next song
      */
-    public boolean advance(boolean loop) {
-        var idx = selection.getSelected();
-        if (idx == GTK_INVALID_LIST_POSITION) {
+    public boolean advance(boolean endOfSong) {
+        var current = currentItem();
+        if (current == null) {
             return false;
         }
-        if (loop) {
-            forceReload = true;
-            try {
-                selection.emitNotify("selected", null);
-            } finally {
-                forceReload = false;
-            }
+        if (endOfSong && repeat == RepeatMode.TRACK) {
+            restartCurrent();
             return true;
         }
-        if (idx + 1 < model.getNItems()) {
-            selection.selectItem(idx + 1, true);
-            return true;
+        var next = itemAfterCurrent();
+        if (next == null) {
+            return false;
         }
-        return false;
+        select(next);
+        return true;
+    }
+
+    /** Skips back; returns {@code false} when there is no previous song. */
+    public boolean previous() {
+        var prev = itemBeforeCurrent();
+        if (prev == null) {
+            return false;
+        }
+        select(prev);
+        return true;
     }
 
     public void loadState() {
@@ -172,7 +341,9 @@ public class QueueStore extends GObject {
                     album.getTitle(),
                     song.getDuration(),
                     song.getContentType(),
-                    texture
+                    texture,
+                    album.getId(),
+                    album.getCoverPath()
             ));
         }
         return items;
@@ -202,7 +373,9 @@ public class QueueStore extends GObject {
                                         song.getAlbum().getTitle(),
                                         song.getDuration(),
                                         song.getContentType(),
-                                        texture
+                                        texture,
+                                        song.getAlbum().getId(),
+                                        song.getAlbum().getCoverPath()
                                 );
                                 GLib.idleAddOnce(() -> {
                                     model.removeAll();
@@ -235,7 +408,9 @@ public class QueueStore extends GObject {
                                         song.getAlbum().getTitle(),
                                         song.getDuration(),
                                         song.getContentType(),
-                                        texture
+                                        texture,
+                                        song.getAlbum().getId(),
+                                        song.getAlbum().getCoverPath()
                                 );
                                 GLib.idleAddOnce(() -> model.append(item));
                             }
@@ -314,12 +489,7 @@ public class QueueStore extends GObject {
         );
         entries[6] = new ActionEntry(
                 "play-previous",
-                (_, _) -> {
-                    var selectedIdx = selection.getSelected();
-                    if (selectedIdx > 0) {
-                        selection.selectItem(selectedIdx - 1, true);
-                    }
-                },
+                (_, _) -> previous(),
                 null,
                 null,
                 null,

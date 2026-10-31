@@ -638,6 +638,41 @@
   },
   {
     "type": "file",
+    "url": "https://repo.maven.apache.org/maven2/com/github/hypfvieh/dbus-java-core/5.2.2/dbus-java-core-5.2.2.jar",
+    "sha512": "4d2b5932a9b0beee15e405a818578e5a050222283be0aec6efe695c23456520f6db6957b71b83e8015b8e21cb7a3ffb43bf4aec1b9aba215ba3734e43e9e9edb",
+    "dest": "build/repository/com/github/hypfvieh/dbus-java-core/5.2.2",
+    "dest-filename": "dbus-java-core-5.2.2.jar"
+  },
+  {
+    "type": "file",
+    "url": "https://repo.maven.apache.org/maven2/com/github/hypfvieh/dbus-java-core/5.2.2/dbus-java-core-5.2.2.pom",
+    "sha512": "3fc42424d945f479b5e2d7656d34f26d6eb0d3e70b23ca9139d984f24ac4615b3bb8d8b386bef11b0bf567d21c896d59b2fdd672ffc41070caa746a87f11d756",
+    "dest": "build/repository/com/github/hypfvieh/dbus-java-core/5.2.2",
+    "dest-filename": "dbus-java-core-5.2.2.pom"
+  },
+  {
+    "type": "file",
+    "url": "https://repo.maven.apache.org/maven2/com/github/hypfvieh/dbus-java-parent/5.2.2/dbus-java-parent-5.2.2.pom",
+    "sha512": "cf8651fc5ee45551b7b473a511a27a92941172b94a15a17e4dc557de9e6198eabe4b8a1225c273e9dc694da26b08b75588628c8d1a545a77a5e0be0d3458551f",
+    "dest": "build/repository/com/github/hypfvieh/dbus-java-parent/5.2.2",
+    "dest-filename": "dbus-java-parent-5.2.2.pom"
+  },
+  {
+    "type": "file",
+    "url": "https://repo.maven.apache.org/maven2/com/github/hypfvieh/dbus-java-transport-native-unixsocket/5.2.2/dbus-java-transport-native-unixsocket-5.2.2.jar",
+    "sha512": "be2813a4ba1c80bf6ddb9a7bc21ed03123afe73553cb0bf97932e37e40191713a591f7ccef08892f56c3d7eedc0c5961dcf494bd85eccf0f12df46ff876b51ce",
+    "dest": "build/repository/com/github/hypfvieh/dbus-java-transport-native-unixsocket/5.2.2",
+    "dest-filename": "dbus-java-transport-native-unixsocket-5.2.2.jar"
+  },
+  {
+    "type": "file",
+    "url": "https://repo.maven.apache.org/maven2/com/github/hypfvieh/dbus-java-transport-native-unixsocket/5.2.2/dbus-java-transport-native-unixsocket-5.2.2.pom",
+    "sha512": "c8d477fe9bebf569138a85c8a8e9dc06482fd1f745810252abefb42aa229079427669d1aea37c2333214da8805d6ac8ab1fa2e56ad2d3246fec1fc1e10472dc9",
+    "dest": "build/repository/com/github/hypfvieh/dbus-java-transport-native-unixsocket/5.2.2",
+    "dest-filename": "dbus-java-transport-native-unixsocket-5.2.2.pom"
+  },
+  {
+    "type": "file",
     "url": "https://plugins.gradle.org/m2/com/google/code/gson/gson-parent/2.14.0/gson-parent-2.14.0.pom",
     "sha512": "8f2498a254bcb6aa92563a3fdec533039055e1559a91a49be354b1cc4ffb39de2623a2c590308930d34eddf929567463baeafa0e91baf98c2bb0495260bba8d4",
     "dest": "build/repository/com/google/code/gson/gson-parent/2.14.0",
@@ -2458,7 +2493,7 @@
   },
   {
     "type": "file",
-    "url": "https://plugins.gradle.org/m2/org/junit/junit-bom/5.13.4/junit-bom-5.13.4.pom",
+    "url": "https://repo.maven.apache.org/maven2/org/junit/junit-bom/5.13.4/junit-bom-5.13.4.pom",
     "sha512": "ec795b2f32982c1af8dccef57553aa9d959c13ee829aebd6459ba22b4ef434aeb4184aa89f63ad2f0d8c45d59cd020a15cd976ddb4bf20f1044b492a406e029e",
     "dest": "build/repository/org/junit/junit-bom/5.13.4",
     "dest-filename": "junit-bom-5.13.4.pom"
@@ -2521,17 +2556,17 @@
   },
   {
     "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36.jar",
-    "sha512": "f9b033fc019a44f98b16048da7e2b59edd4a6a527ba60e358f65ab88e0afae03a9340f1b3e8a543d49fa542290f499c5594259affa1ff3e6e7bf3b428d4c610b",
-    "dest": "build/repository/org/slf4j/slf4j-api/1.7.36",
-    "dest-filename": "slf4j-api-1.7.36.jar"
+    "url": "https://repo.maven.apache.org/maven2/org/slf4j/slf4j-api/2.0.17/slf4j-api-2.0.17.jar",
+    "sha512": "9a3e79db6666a6096a3021bb2e1d918f30f589d8de51d6b600f8ebd92515a510ae2d8f87919cc2dfa8365d64f10194cac8dfa0fb950160eef0e9da06f6caaeb9",
+    "dest": "build/repository/org/slf4j/slf4j-api/2.0.17",
+    "dest-filename": "slf4j-api-2.0.17.jar"
   },
   {
     "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36.pom",
-    "sha512": "22d22770b09854b13f601c39bdb4e8329c8a47f4399a567ab047c8ecf50e638949cda01913f01896cf6d76bb479fa4d7f8c6046274290ce8b1d014e580338768",
-    "dest": "build/repository/org/slf4j/slf4j-api/1.7.36",
-    "dest-filename": "slf4j-api-1.7.36.pom"
+    "url": "https://repo.maven.apache.org/maven2/org/slf4j/slf4j-api/2.0.17/slf4j-api-2.0.17.pom",
+    "sha512": "462872ccda241179a77ebc89c3f7be93870fffae344e09d3cccc33d6448336dc77affc9572f420d7da788b3f0eb072b7facc9b7e609b33742ed48f4bb467cb70",
+    "dest": "build/repository/org/slf4j/slf4j-api/2.0.17",
+    "dest-filename": "slf4j-api-2.0.17.pom"
   },
   {
     "type": "file",
@@ -2549,6 +2584,13 @@
   },
   {
     "type": "file",
+    "url": "https://repo.maven.apache.org/maven2/org/slf4j/slf4j-bom/2.0.17/slf4j-bom-2.0.17.pom",
+    "sha512": "cb2db4597b98b9981959413e3ffcd5882f8e267d3d51f989c396807c36893296065cbe443a173029e8d3a0851eced25f5149dc2dafa0dd2c29fca737180a7029",
+    "dest": "build/repository/org/slf4j/slf4j-bom/2.0.17",
+    "dest-filename": "slf4j-bom-2.0.17.pom"
+  },
+  {
+    "type": "file",
     "url": "https://repo.maven.apache.org/maven2/org/slf4j/slf4j-bom/2.0.20/slf4j-bom-2.0.20.pom",
     "sha512": "9e2c4e1c87bac7d6ac11e3f45820a0d2d98caab35f955bbb6ebd0c9729d493b7d37e8082e988ac20f5b1a91d7bc1be7d173ee56a5ced1a089324d1f9bd080ba2",
     "dest": "build/repository/org/slf4j/slf4j-bom/2.0.20",
@@ -2556,10 +2598,10 @@
   },
   {
     "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/org/slf4j/slf4j-parent/1.7.36/slf4j-parent-1.7.36.pom",
-    "sha512": "b83c1978e4f1b1edccf05276455f9d5c3aadda1c07736113cba4e484e4f01bcc306b52431aa9bb814ad669440652b206a7235c86dfc21c35c43cb7434f0a0c8f",
-    "dest": "build/repository/org/slf4j/slf4j-parent/1.7.36",
-    "dest-filename": "slf4j-parent-1.7.36.pom"
+    "url": "https://repo.maven.apache.org/maven2/org/slf4j/slf4j-parent/2.0.17/slf4j-parent-2.0.17.pom",
+    "sha512": "5b16a209843c18a478a0a16dff83ae1c75eedbdeadc15a958d536a36631d4d39a9998e085c165a79ced8ad187f021e2f3cd4068856ca174db35657ef5a473c5a",
+    "dest": "build/repository/org/slf4j/slf4j-parent/2.0.17",
+    "dest-filename": "slf4j-parent-2.0.17.pom"
   },
   {
     "type": "file",

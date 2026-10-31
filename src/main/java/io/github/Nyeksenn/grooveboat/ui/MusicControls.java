@@ -1,5 +1,7 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
+import static org.javagi.util.Intl.i18n;
+
 import org.gnome.glib.GLib;
 import org.gnome.gtk.*;
 import org.javagi.gobject.annotations.InstanceInit;
@@ -19,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/music-controls.ui", name = "MusicControls")
 public class MusicControls extends Box {
     private static final Logger logger = LoggerFactory.getLogger(MusicControls.class);
+    private final Runnable modeListener = this::syncModeButtons;
     private MediaStream ms;
     private GrooveboatApp app;
     private Adjustment adjustment;
@@ -33,7 +36,10 @@ public class MusicControls extends Box {
     public Scale playbackPositionScale;
 
     @GtkChild(name = "loop-button")
-    public ToggleButton loopButton;
+    public Button loopButton;
+
+    @GtkChild(name = "shuffle-button")
+    public ToggleButton shuffleButton;
 
     @GtkChild(name = "skip-back-button")
     public Button skipBackButton;
@@ -99,20 +105,39 @@ public class MusicControls extends Box {
         ms.setVolume(value);
     }
 
-    @GtkCallback(name = "loop-toggled")
-    public void loopToggled() {
-        var shouldLoop = loopButton.getActive();
+    @GtkCallback(name = "loop-clicked")
+    public void loopClicked() {
         assert app != null;
+        app.queueStore.setRepeat(app.queueStore.getRepeat().cycle());
+    }
 
-        app.setLoop(shouldLoop);
-        if (shouldLoop) {
-            loopButton.setIconName("arrows-loop-tall-symbolic");
-        } else {
-            loopButton.setIconName("arrows-loop-tall-disabled-symbolic");
+    @GtkCallback(name = "shuffle-toggled")
+    public void shuffleToggled() {
+        assert app != null;
+        app.queueStore.setShuffle(shuffleButton.getActive());
+    }
+
+    /** Shows the queue's repeat and shuffle state; also called when MPRIS changes them. */
+    private void syncModeButtons() {
+        var queue = app.queueStore;
+        loopButton.setIconName(switch (queue.getRepeat()) {
+            case NONE -> "arrows-loop-tall-disabled-symbolic";
+            case PLAYLIST -> "arrows-loop-tall-symbolic";
+            case TRACK -> "media-playlist-repeat-song-symbolic";
+        });
+        loopButton.setTooltipText(switch (queue.getRepeat()) {
+            case NONE -> i18n("Repeat: Off");
+            case PLAYLIST -> i18n("Repeat: All");
+            case TRACK -> i18n("Repeat: Current Song");
+        });
+        if (shuffleButton.getActive() != queue.isShuffle()) {
+            shuffleButton.setActive(queue.isShuffle());
         }
     }
 
     private void setupBindings() {
+        // Volume changes from outside the slider (MPRIS) show up on it too.
+        ms.bindProperty("volume", volumeButton, "value").syncCreate().build();
         ms.<Boolean, String>bindProperty("playing", playButton, "icon-name").transformTo((playing) -> {
             if (playing) {
                 return "pause-symbolic";
@@ -152,6 +177,13 @@ public class MusicControls extends Box {
             this.app = (GrooveboatApp) win.getApplication();
             this.scheduler = app.scheduler;
             this.volumeButton.setIcons(volumeIcons);
+            app.queueStore.addModeListener(modeListener);
+            syncModeButtons();
+        });
+        onUnrealize(() -> {
+            if (app != null) {
+                app.queueStore.removeModeListener(modeListener);
+            }
         });
     }
 

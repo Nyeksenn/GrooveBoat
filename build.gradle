@@ -31,6 +31,8 @@ dependencies {
     implementation "io.ebean:ebean-ddl-generator:${ebeanVersion}"
     implementation "io.ebean:ebean-platform-h2:${ebeanVersion}"
     implementation 'com.h2database:h2:2.5.252'
+    implementation 'com.github.hypfvieh:dbus-java-core:5.2.2'
+    implementation 'com.github.hypfvieh:dbus-java-transport-native-unixsocket:5.2.2'
     implementation 'commons-validator:commons-validator:1.11.0'
     implementation 'org.semver4j:semver4j:6.0.0'
 

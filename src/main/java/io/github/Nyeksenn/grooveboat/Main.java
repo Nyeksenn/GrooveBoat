@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Properties;
+import org.gnome.glib.GLib;
 
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
@@ -30,6 +31,12 @@ public class Main {
     public static final String RESOURCE_DIR = DEVEL_PROFILE ? "build/generated" : "/app/share/" + APPLICATION_ID;
 
     public static void main(String[] args) {
+        // java-gi hands the Java arguments to GLib as argv, so without these, GLib takes the first argument (e.g.
+        // "--gapplication-service" when D-Bus-activated) as the program name, which the audio sink then reports to
+        // PipeWire/PulseAudio as the app name. Must be set before GTK initializes.
+        GLib.setPrgname("grooveboat");
+        GLib.setApplicationName("GrooveBoat");
+
         // Initialize gettext (installed translations only exist in the flatpak)
         if (!DEVEL_PROFILE) {
             Intl.bindtextdomain(GETTEXT_DOMAIN, LOCALE_DIR);
