@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="QueueItem" parent="GtkBox">
+    <property name="halign">fill</property>
+    <property name="hexpand">true</property>
+    <property name="valign">center</property>
+    <style>
+      <class name="queue-item"/>
+    </style>
+    <child>
+      <object class="GtkBox">
+        <property name="orientation">horizontal</property>
+        <property name="valign">center</property>
+        <property name="hexpand">true</property>
+        <property name="spacing">15</property>
+        <child>
+          <object class="RoundedImage" id="album-cover">
+            <property name="halign">start</property>
+            <property name="pixel-size">40</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="halign">start</property>
+            <property name="valign">center</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkLabel" id="song-title-label">
+                <property name="halign">start</property>
+                <property name="ellipsize">end</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel" id="album-artist-label">
+                <property name="ellipsize">end</property>
+                <property name="halign">start</property>
+                <style>
+                  <class name="dimmed"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton">
+            <property name="halign">end</property>
+            <property name="hexpand">true</property>
+            <property name="child">
+              <object class="GtkImage">
+                <property name="icon-name">minus-symbolic</property>
+                <property name="pixel-size">20</property>
+              </object>
+            </property>
+            <signal name="clicked" handler="remove-from-queue"/>
+            <style>
+              <class name="flat"/>
+            </style>
+          </object>
+        </child>
+      </object>
+    </child>
+    <style>
+      <class name="card"/>
+      <class name="padded"/>
+    </style>
+  </template>
+</interface>

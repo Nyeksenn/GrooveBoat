@@ -1,15 +1,22 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
 plugins {
     id 'application'
-    id("io.ebean") version "17.1.1"
+    id 'io.ebean' version '19.6.0'
+    id 'io.github.jwharm.flatpak-gradle-generator' version '1.8.0'
+    id 'com.gradleup.shadow' version '9.6.1'
 }
 
 repositories {
+    maven { url = 'build/repository' } // used by flatpak-builder
     mavenCentral()
 }
 
+def appId = 'io.github.Nyeksenn.grooveboat'
+
 ext {
-    ebeanVersion = "17.5.0"
-    javaGiVersion = "0.14.1"
+    ebeanVersion = "19.6.0"
+    javaGiVersion = "1.0.0-RC3"
 }
 
 dependencies {
@@ -18,49 +25,47 @@ dependencies {
     implementation "org.java-gi:gtk:${javaGiVersion}"
     implementation "org.java-gi:adw:${javaGiVersion}"
     implementation "org.java-gi:secret:${javaGiVersion}"
-    implementation 'tools.jackson.core:jackson-databind:3.0.1'
-    implementation 'tools.jackson.module:jackson-module-blackbird:3.0.1'
+    implementation 'tools.jackson.core:jackson-databind:3.2.4'
+    implementation 'tools.jackson.module:jackson-module-blackbird:3.2.4'
     implementation "io.ebean:ebean:${ebeanVersion}"
     implementation "io.ebean:ebean-ddl-generator:${ebeanVersion}"
-    implementation "io.ebean:ebean-test:${ebeanVersion}"
-    implementation 'com.h2database:h2:2.4.240'
-    implementation 'commons-validator:commons-validator:1.10.0'
+    implementation "io.ebean:ebean-platform-h2:${ebeanVersion}"
+    implementation 'com.h2database:h2:2.5.252'
+    implementation 'commons-validator:commons-validator:1.11.0'
     implementation 'org.semver4j:semver4j:6.0.0'
 
+    testImplementation "io.ebean:ebean-test:${ebeanVersion}"
+
     annotationProcessor "io.ebean:querybean-generator:${ebeanVersion}"
-    runtimeOnly 'org.slf4j:slf4j-api:2.0.17'
-    runtimeOnly 'ch.qos.logback:logback-classic:1.5.20'
+    runtimeOnly 'org.slf4j:slf4j-api:2.0.20'
+    runtimeOnly 'ch.qos.logback:logback-classic:1.6.6'
 }
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
-    }
+// No toolchain: the flatpak build uses whatever JDK the SDK extension provides (25 or newer).
+tasks.withType(JavaCompile).configureEach {
+    options.release = 25
 }
 
-jar {
-    manifest {
-        attributes 'Implementation-Title': 'GrooveBoat',
-                'Implementation-Version': '1.0',
-                'Main-Class': 'Main'
-    }
+// Generate a file with all dependency urls for the offline flatpak build
+tasks.flatpakGradleGenerator {
+    outputFile.set(file("$rootDir/data/maven-dependencies.json"))
+    downloadDirectory.set('build/repository')
+    // The ebean plugin resolves the test classpath during compileJava, so test dependencies are needed too
 }
 
-abstract class CompileUiFiles extends DefaultTask {
-    private ExecOperations execOperations
-
-    @Inject
-    CompileUiFiles(ExecOperations execOperations) {
-        this.execOperations = execOperations
+tasks.named('shadowJar') {
+    archiveFileName = 'grooveboat.jar'
+    // Service files must reach the merge transformer, but Shadow drops duplicates before that unless they are
+    // included. Other duplicates (license files) stay excluded, or the jar gets duplicate entries.
+    filesMatching('META-INF/services/**') {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
+    mergeServiceFiles()
+}
 
-    @TaskAction
-    void doTaskAction() {
-        execOperations.exec {
-            setWorkingDir(project.file("src/main/resources"))
-            commandLine 'glib-compile-resources', 'grooveboat.gresource.xml'
-        }
-    }
+// src/test only holds MigrationGenerator, no tests
+tasks.named('test') {
+    failOnNoDiscoveredTests = false
 }
 
 tasks.register('generateMigrations', JavaExec) {
@@ -73,27 +78,68 @@ tasks.register('generateMigrations', JavaExec) {
 }
 
 
+// Development only: the generated data/css/main.css is committed, so the flatpak build doesn't need sass.
 tasks.register('compileSass', Exec) {
     description = 'Compile SASS files to CSS'
     group = 'build'
 
-    workingDir = file('src/main/resources/scss')
+    inputs.dir('data/scss')
+    outputs.file('data/css/main.css')
+    workingDir = file('data/scss')
     commandLine 'sass', '--no-source-map', 'main.scss:../css/main.css'
 }
 
-tasks.register('compileResources', CompileUiFiles) {
+// Development only: the flatpak build compiles the gresource bundle with Meson.
+tasks.register('compileResources', Exec) {
+    description = 'Compile the gresource bundle for development runs'
+    group = 'build'
     dependsOn compileSass
+
+    inputs.dir('data')
+    outputs.file("build/generated/${appId}.gresource")
+    doFirst { file('build/generated').mkdirs() }
+    commandLine 'glib-compile-resources',
+            '--sourcedir=data',
+            "--target=build/generated/${appId}.gresource",
+            "data/${appId}.gresource.xml"
 }
 
-tasks.named('classes') {
-    dependsOn compileResources
+// Compiles the GSettings schema into the build dir so `run` works without installing it system-wide.
+tasks.register('copySchemas', Copy) {
+    from "data/${appId}.gschema.xml"
+    into layout.buildDirectory.dir('schemas')
 }
 
+tasks.register('compileSchemas', Exec) {
+    description = 'Compile the GSettings schema for development runs'
+    group = 'build'
+    dependsOn copySchemas
+
+    def schemaDir = layout.buildDirectory.dir('schemas')
+    inputs.file("data/${appId}.gschema.xml")
+    outputs.dir(schemaDir)
+    commandLine 'glib-compile-schemas', schemaDir.get().asFile.absolutePath
+}
 
 tasks.named('run') {
-    jvmArgs += "--enable-native-access=ALL-UNNAMED"
+    dependsOn compileResources, compileSchemas
+    // The "devel" profile loads the gresource from build/generated and skips gettext
+    environment 'PROFILE', 'devel'
+    environment 'GSETTINGS_SCHEMA_DIR', layout.buildDirectory.dir('schemas').get().asFile.absolutePath
 }
 
 application {
-    mainClass = "io.github.Nyeksenn.grooveboat.Main"
+    applicationName = 'grooveboat'
+    mainClass = 'io.github.Nyeksenn.grooveboat.Main'
+
+    // Allow native access
+    applicationDefaultJvmArgs += '--enable-native-access=ALL-UNNAMED'
+
+    // Add common library directories to the library lookup path
+    if (Os.isFamily(Os.FAMILY_MAC))
+        applicationDefaultJvmArgs += ['-Djavagi.path=/opt/homebrew/lib', '-XstartOnFirstThread']
+    else if (Os.isFamily(Os.FAMILY_WINDOWS))
+        applicationDefaultJvmArgs += ['-Djavagi.path=C:/msys64/mingw64/bin']
+    else
+        applicationDefaultJvmArgs += ['-Djavagi.path=/usr/lib/x86_64-linux-gnu:/lib64:/usr/lib64:/lib:/usr/lib']
 }

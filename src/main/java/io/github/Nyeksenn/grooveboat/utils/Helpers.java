@@ -7,9 +7,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public final class Helpers {
     public static String getUserDataPath() {
@@ -41,45 +39,6 @@ public final class Helpers {
         }
     }
 
-    private static final Map<String, String> IANA_TO_GSTREAMER;
-
-    static {
-        Map<String, String> map = new HashMap<>(128); // Pre-sized for efficiency
-
-        // Audio formats
-        map.put("audio/flac", "audio/x-flac");
-        map.put("audio/vorbis", "audio/x-vorbis");
-        map.put("audio/wav", "audio/x-wav");
-        map.put("audio/x-wav", "audio/x-wav");
-        map.put("audio/wave", "audio/x-wav");
-        map.put("audio/vnd.wave", "audio/x-wav");
-        map.put("audio/speex", "audio/x-speex");
-        map.put("audio/x-ms-wma", "audio/x-wma");
-        map.put("audio/basic", "audio/x-mulaw");
-
-        // Video formats
-        map.put("video/h264", "video/x-h264");
-
-
-        IANA_TO_GSTREAMER = Map.copyOf(map); // Java 10+ immutable copy
-    }
-
-    public static String toGStreamerType(String ianaType) {
-        if (ianaType == null) {
-            return null;
-        }
-
-        // Normalize to lowercase for case-insensitive matching
-        String normalized = ianaType.toLowerCase().trim();
-
-        // Return mapped type or original if no mapping exists
-        return IANA_TO_GSTREAMER.getOrDefault(normalized, ianaType);
-    }
-
-    public static boolean hasMapping(String ianaType) {
-        return ianaType != null && IANA_TO_GSTREAMER.containsKey(ianaType.toLowerCase().trim());
-    }
-
     public static final List<String> TABLES = Arrays.asList(
             "PUBLIC.ALBUM",
             "PUBLIC.ALBUM_ARTISTS",
@@ -94,15 +53,17 @@ public final class Helpers {
             Connection connection = transaction.connection();
 
             try (Statement stmt = connection.createStatement()) {
-
+                // H2 applies this setting to the whole database, so it must be switched back on even when a
+                // TRUNCATE fails.
                 stmt.execute("SET REFERENTIAL_INTEGRITY FALSE");
-
-                for (String tbl : TABLES) {
-                    String sql = "TRUNCATE TABLE " + tbl + " RESTART IDENTITY";
-                    stmt.execute(sql);
+                try {
+                    for (String tbl : TABLES) {
+                        String sql = "TRUNCATE TABLE " + tbl + " RESTART IDENTITY";
+                        stmt.execute(sql);
+                    }
+                } finally {
+                    stmt.execute("SET REFERENTIAL_INTEGRITY TRUE");
                 }
-
-                stmt.execute("SET REFERENTIAL_INTEGRITY TRUE");
             }
 
             connection.commit();

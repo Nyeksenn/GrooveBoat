@@ -1,12 +1,17 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
-import io.github.Nyeksenn.grooveboat.client.Subsonic;
+import static org.javagi.util.Intl.i18n;
+import io.github.Nyeksenn.grooveboat.backend.BackendFactory;
+import io.github.Nyeksenn.grooveboat.backend.BackendSupport;
+import io.github.Nyeksenn.grooveboat.backend.BackendType;
+import io.github.Nyeksenn.grooveboat.backend.MusicBackend;
+import io.github.Nyeksenn.grooveboat.backend.ServerInfo;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.gnome.adw.EntryRow;
 import org.gnome.adw.NavigationPage;
+import org.gnome.adw.PreferencesGroup;
 import org.gnome.adw.Toast;
 import org.gnome.adw.ToastOverlay;
-import org.gnome.gio.Settings;
 import org.gnome.glib.GLib;
 import org.gnome.glib.Variant;
 import org.gnome.gtk.Button;
@@ -14,7 +19,6 @@ import org.javagi.gobject.annotations.InstanceInit;
 import org.javagi.gtk.annotations.GtkCallback;
 import org.javagi.gtk.annotations.GtkChild;
 import org.javagi.gtk.annotations.GtkTemplate;
-import org.semver4j.Semver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,14 +26,13 @@ import java.io.IOException;
 import java.lang.foreign.MemorySegment;
 import java.util.concurrent.ExecutorService;
 
+/** Setup step that checks the server URL with the chosen backend's probe. */
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/connection-page.ui", name = "ConnectionPage")
 public class ConnectionPage extends NavigationPage {
-    private final Settings settings = new Settings("io.github.Nyeksenn.grooveboat");
     private static final Logger logger = LoggerFactory.getLogger(ConnectionPage.class);
-    private final UrlValidator validator = new UrlValidator();
-    private final Semver minVersion = new Semver("1.16.1");
+    private final UrlValidator validator = new UrlValidator(new String[]{"http", "https"},
+            UrlValidator.ALLOW_LOCAL_URLS);
     private ExecutorService exec;
-    private Subsonic subsonic;
 
     @GtkChild(name = "connection-next-button")
     public Button connectionNextButton;
@@ -37,65 +40,102 @@ public class ConnectionPage extends NavigationPage {
     @GtkChild(name = "connection-overlay")
     public ToastOverlay connectionOverlay;
 
+    @GtkChild(name = "connection-group")
+    public PreferencesGroup connectionGroup;
+
     @GtkChild(name = "entry-url")
     public EntryRow entryUrl;
 
     @GtkCallback(name = "host-url-changed")
     public void hostUrlChanged() {
         connectionNextButton.setVisible(true);
-        //connectionNextButton.grabFocus();
+        entryUrl.removeCssClass("error");
+    }
+
+    private void fail(String message) {
+        GLib.idleAddOnce(() -> {
+            connectionNextButton.setSensitive(true);
+            var toast = new Toast(message);
+            toast.setUseMarkup(false);
+            connectionOverlay.addToast(toast);
+            entryUrl.addCssClass("error");
+        });
+    }
+
+    private static ServerInfo probeQuietly(BackendType type, String url) {
+        try (var backend = BackendFactory.create(type, url)) {
+            return backend.probe();
+        } catch (IOException | RuntimeException e) {
+            return ServerInfo.incompatible(e.getMessage());
+        }
     }
 
     @GtkCallback(name = "url-validation")
     public void urlValidation() {
-        assert exec != null;
-        assert subsonic != null;
+        var dialog = SetupDialog.of(this);
+        var type = dialog.getBackendType();
+        var url = BackendSupport.normalizeBaseUrl(entryUrl.getText());
 
-        var url = entryUrl.getText();
+        if (!validator.isValid(url)) {
+            fail("URL invalid");
+            return;
+        }
 
-        var future = exec.submit(() -> {
-            if (validator.isValid(url)) {
-                subsonic.newClient(url, "jdoe", "");
-                try {
-                    var resp = subsonic.ping();
-                    if (resp.status().equals("failed")) {
-                        var version = new Semver(resp.version());
-                        if (resp.openSubsonic() && (version.isGreaterThanOrEqualTo(minVersion))) {
-                            settings.setString("url", url);
-                            GLib.idleAddOnce(() -> activateActionIfExists("navigation.push", Variant.string("credentials-page")));
-                        } else {
-                            GLib.idleAddOnce(() -> {
-                                connectionOverlay.addToast(new Toast("Incompatible Server"));
-                                entryUrl.addCssClass("error");
-                            });
-                        }
-                    } else {
-                        throw new IOException("Server Error");
-                    }
-                } catch (IOException e) {
-                    logger.warn("Couldn't reach server: {}", e.getMessage());
-                    GLib.idleAddOnce(() -> {
-                        connectionOverlay.addToast(new Toast("Unable to reach server"));
-                        entryUrl.addCssClass("error");
-                    });
-                }
-            } else {
+        connectionNextButton.setSensitive(false);
+        exec.submit(() -> {
+            MusicBackend backend = null;
+            ServerInfo info;
+            try {
+                backend = BackendFactory.create(type, url);
+                info = backend.probe();
+            } catch (IOException | RuntimeException e) {
+                // RuntimeExceptions (bad URL, unexpected response) must not leave the button disabled.
+                logger.warn("Couldn't reach server: {}", e.getMessage());
+                info = null;
+            }
+
+            if (info != null && info.compatible()) {
+                final var found = backend;
+                logger.info("Found {} {} at {}", info.name(), info.version(), found.host());
                 GLib.idleAddOnce(() -> {
-                    connectionOverlay.addToast(new Toast("URL invalid"));
-                    entryUrl.addCssClass("error");
+                    connectionNextButton.setSensitive(true);
+                    dialog.setCandidate(found);
+                    activateActionVariant("navigation.push", Variant.string("credentials-page"));
                 });
+                return;
+            }
+            if (backend != null) {
+                backend.close();
+            }
+
+            // Wrong server type picked? Point the user at the right one.
+            var other = type.other();
+            if (probeQuietly(other, url).compatible()) {
+                fail(String.format(i18n("This looks like a %1$s server. Go back and choose %1$s."), other.displayName()));
+            } else if (info == null) {
+                fail(i18n("Unable to reach server"));
+            } else {
+                fail(info.reason() != null ? info.reason() : i18n("Incompatible server"));
             }
         });
     }
 
     @InstanceInit
     public void init() {
+        onMap(() -> {
+            var type = SetupDialog.of(this).getBackendType();
+            if (type != null) {
+                connectionGroup.setTitle(String.format(i18n("%s Server"), type.displayName()));
+                connectionGroup.setDescription(String.format(
+                        i18n("Enter the address of your %s server, for example https://music.example.com"),
+                        type.displayName()));
+            }
+            entryUrl.grabFocus();
+        });
         onRealize(() -> {
             var win = (GrooveboatWindow) getRoot();
             var app = (GrooveboatApp) win.getApplication();
             this.exec = app.executor;
-            this.subsonic = app.subsonic;
-            entryUrl.grabFocus();
         });
     }
 

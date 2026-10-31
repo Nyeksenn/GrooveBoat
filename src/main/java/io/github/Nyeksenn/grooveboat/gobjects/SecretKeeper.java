@@ -24,11 +24,16 @@ public class SecretKeeper implements AutoCloseable {
         return SecretKeeper.Holder.INSTANCE;
     }
 
-    public CompletableFuture<Boolean> storePassword(String username, String protocol, String server, String password) throws GErrorException {
+    /**
+     * Stores the session credential (a password or an access token, depending on the backend).
+     *
+     * @param label shown to the user in their keyring manager
+     */
+    public CompletableFuture<Boolean> storePassword(String username, String protocol, String server, String password, String label) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 var attributes = Secret.attributesBuild(SCHEMA, "user", username, "protocol", protocol, "server", server, null);
-                return Secret.passwordStoreSync(SCHEMA, attributes, Secret.COLLECTION_DEFAULT, "GrooveBoat Server Password", password, null);
+                return Secret.passwordStorevSync(SCHEMA, attributes, Secret.COLLECTION_DEFAULT, label, password, null);
             } catch (GErrorException e) {
                 return false;
             }
@@ -39,10 +44,21 @@ public class SecretKeeper implements AutoCloseable {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 var attributes = Secret.attributesBuild(SCHEMA, "user", username, "protocol", protocol, "server", server, null);
-                attributes.insert("user", username);
-                return Secret.passwordLookupSync(SCHEMA, attributes, null);
+                return Secret.passwordLookupvSync(SCHEMA, attributes, null);
             } catch (GErrorException e) {
                 return null;
+            }
+        }, exec);
+    }
+
+    /** Removes the stored credential. Completes with whether an entry was removed. */
+    public CompletableFuture<Boolean> clearPassword(String username, String protocol, String server) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                var attributes = Secret.attributesBuild(SCHEMA, "user", username, "protocol", protocol, "server", server, null);
+                return Secret.passwordClearvSync(SCHEMA, attributes, null);
+            } catch (GErrorException e) {
+                return false;
             }
         }, exec);
     }

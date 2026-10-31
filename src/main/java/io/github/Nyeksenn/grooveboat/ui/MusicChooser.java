@@ -16,8 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.foreign.MemorySegment;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/music-chooser.ui", name = "MusicChooser")
 @RegisteredType(name = "MusicChooser")
@@ -53,9 +52,43 @@ public class MusicChooser extends NavigationPage {
         albumSearchbar.setSearchMode(!albumSearchbar.getSearchMode());
     }
 
+    /** Runs a library sync in the background while the progress bar pulses on the main loop. */
+    private void runRefresh(GrooveboatApp app, GrooveboatWindow win, boolean full) {
+        var library = app.getLibrary();
+        if (library == null || refreshProgressBar.getVisible()) {
+            return;
+        }
+        refreshProgressBar.setFraction(0.0);
+        refreshProgressBar.setVisible(true);
+        var done = new AtomicBoolean(false);
+        GLib.timeoutAdd(GLib.PRIORITY_DEFAULT, 200, () -> {
+            if (done.get()) {
+                return GLib.SOURCE_REMOVE;
+            }
+            refreshProgressBar.pulse();
+            return GLib.SOURCE_CONTINUE;
+        });
+        app.executor.submit(() -> {
+            library.refresh(full);
+            GLib.idleAddOnce(() -> {
+                done.set(true);
+                refreshProgressBar.setVisible(false);
+                win.activateActionVariant("win.reload-albums", null);
+                win.activateActionVariant("win.reload-artists", null);
+            });
+        });
+    }
+
+    private boolean initialized = false;
+
     @InstanceInit
     public void init() {
         onRealize(() -> {
+            // Realized again whenever the window crosses the size breakpoint; set up only once.
+            if (initialized) {
+                return;
+            }
+            initialized = true;
             var win = (GrooveboatWindow) getRoot();
             var app = (GrooveboatApp) win.getApplication();
 
@@ -63,37 +96,11 @@ public class MusicChooser extends NavigationPage {
             albumSearchbar.bindProperty("search-mode-enabled", buttonSearch, "active").build();
 
             var refreshAction = new SimpleAction("refresh-data", null);
-            refreshAction.onActivate((_) -> {
-                try (var timer = Executors.newSingleThreadScheduledExecutor()) {
-                    timer.scheduleAtFixedRate(() -> {refreshProgressBar.pulse();}, 0, 200, TimeUnit.MILLISECONDS);
-                    refreshProgressBar.setVisible(true);
-                    app.executor.submit(() -> {
-                        app.subsonic.refreshRemoteData(false);
-                        GLib.idleAddOnce(() -> {
-                            win.activateActionIfExists("win.reload-albums", null);
-                            refreshProgressBar.setVisible(false);
-                        });
-                    });
-                }
-                refreshProgressBar.setFraction(0.0);
-            });
+            refreshAction.onActivate((_) -> runRefresh(app, win, false));
             app.addAction(refreshAction);
 
             var fullRefreshAction = new SimpleAction("full-refresh", null);
-            fullRefreshAction.onActivate((_) -> {
-                try (var timer = Executors.newSingleThreadScheduledExecutor()) {
-                    timer.scheduleAtFixedRate(() -> {refreshProgressBar.pulse();}, 0, 200, TimeUnit.MILLISECONDS);
-                    refreshProgressBar.setVisible(true);
-                    app.executor.submit(() -> {
-                        app.subsonic.refreshRemoteData(true);
-                        GLib.idleAddOnce(() -> {
-                            win.activateActionIfExists("win.reload-albums", null);
-                            refreshProgressBar.setVisible(false);
-                        });
-                    });
-                }
-                refreshProgressBar.setFraction(0.0);
-            });
+            fullRefreshAction.onActivate((_) -> runRefresh(app, win, true));
             app.addAction(fullRefreshAction);
         });
     }

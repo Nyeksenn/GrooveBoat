@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="ArtistAlbumSection" parent="GtkBox">
+    <property name="orientation">vertical</property>
+    <property name="spacing">12</property>
+    <child>
+      <object class="GtkBox">
+        <property name="orientation">horizontal</property>
+        <property name="spacing">12</property>
+        <child>
+          <object class="RoundedImage" id="album-cover">
+            <property name="pixel-size">64</property>
+            <property name="valign">center</property>
+            <property name="radius">6.0</property>
+            <style>
+              <class name="album-border"/>
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="orientation">vertical</property>
+            <property name="valign">center</property>
+            <property name="hexpand">true</property>
+            <child>
+              <object class="GtkLabel" id="album-title">
+                <property name="halign">start</property>
+                <property name="ellipsize">end</property>
+                <style>
+                  <class name="title-4"/>
+                </style>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel" id="album-year">
+                <property name="halign">start</property>
+                <style>
+                  <class name="dimmed"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwSplitButton">
+            <property name="valign">center</property>
+            <property name="icon-name">media-playback-start-symbolic</property>
+            <property name="menu-model">album-queue-menu</property>
+            <signal name="clicked" handler="play-album-clicked"/>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkListBox" id="song-list">
+        <property name="selection-mode">none</property>
+        <style>
+          <class name="boxed-list"/>
+        </style>
+      </object>
+    </child>
+  </template>
+
+  <menu id="album-queue-menu"/>
+</interface>

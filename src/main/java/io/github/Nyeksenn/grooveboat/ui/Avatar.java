@@ -18,13 +18,13 @@ public class Avatar extends Button {
 
     @GtkCallback(name = "account-menu-clicked")
     public void accountMenuClicked() {
-        activateActionIfExists("app.account-settings", null);
+        activateActionVariant("app.account-settings", null);
     }
 
     @InstanceInit
     public void init() {
-        var username = settings.getString("username");
-        this.gbAvatar.setText(username);
+        // Read on map: the window is built before setup has saved a username.
+        onMap(() -> this.gbAvatar.setText(settings.getString("username")));
     }
 
     public Avatar() {

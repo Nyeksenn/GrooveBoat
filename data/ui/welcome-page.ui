@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="WelcomePage" parent="AdwNavigationPage">
+    <property name="title" translatable="yes">Setup</property>
+    <property name="child">
+      <object class="AdwToolbarView">
+        <property name="content">
+          <object class="AdwStatusPage">
+            <property name="icon-name">build-configure-symbolic</property>
+            <property name="title" translatable="yes">Welcome to GrooveBoat!</property>
+            <property name="child">
+              <object class="GtkLabel" id="setup-welcome-label">
+                <property name="use-markup">true</property>
+                <property name="wrap">true</property>
+                <property name="justify">GTK_JUSTIFY_LEFT</property>
+                <property name="label" translatable="yes">
+Let's connect you to your music server in just three quick steps:
+
+1. Choose your server type
+2. Enter your server address
+3. Add your login credentials
+
+GrooveBoat works with Jellyfin and with OpenSubsonic servers like Navidrome, Gonic
+and Airsonic-Advanced.
+
+Ready? Let's get started!
+                </property>
+                <style>
+                  <class name="document"/>
+                </style>
+              </object>
+            </property>
+          </object>
+        </property>
+        <child type="bottom">
+          <object class="GtkActionBar">
+            <property name="margin-start">30</property>
+            <property name="margin-end">30</property>
+            <property name="margin-bottom">15</property>
+            <property name="margin-top">15</property>
+            <child type="start">
+              <object class="GtkButton">
+                <property name="label" translatable="yes">Quit</property>
+                <property name="action-name">app.quit</property>
+                <style>
+                  <class name="destructive-action"/>
+                  <class name="raised"/>
+                </style>
+              </object>
+            </child>
+            <child type="end">
+              <object class="GtkButton" id="connection-next">
+                <property name="label" translatable="yes">Next</property>
+                <property name="action-name">navigation.push</property>
+                <property name="action-target">'server-type-page'</property>
+                <style>
+                  <class name="raised"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </property>
+  </template>
+</interface>

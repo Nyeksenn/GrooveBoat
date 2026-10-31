@@ -1,0 +1,25 @@
+# List of source files containing translatable strings.
+# Please keep this file sorted alphabetically.
+data/io.github.Nyeksenn.grooveboat.desktop.in
+data/io.github.Nyeksenn.grooveboat.metainfo.xml.in
+data/ui/album-list.ui
+data/ui/artist-list.ui
+data/ui/artist-songs.ui
+data/ui/connection-page.ui
+data/ui/credentials-page.ui
+data/ui/headerbar-menu.ui
+data/ui/music-chooser.ui
+data/ui/prefs.ui
+data/ui/server-type-page.ui
+data/ui/song-list.ui
+data/ui/welcome-page.ui
+data/ui/window.ui
+src/main/java/io/github/Nyeksenn/grooveboat/backend/jellyfin/JellyfinBackend.java
+src/main/java/io/github/Nyeksenn/grooveboat/backend/subsonic/SubsonicBackend.java
+src/main/java/io/github/Nyeksenn/grooveboat/ui/ArtistAlbumSection.java
+src/main/java/io/github/Nyeksenn/grooveboat/ui/ConnectionPage.java
+src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java
+src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatApp.java
+src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java
+src/main/java/io/github/Nyeksenn/grooveboat/ui/SongCard.java
+src/main/java/io/github/Nyeksenn/grooveboat/ui/SongListPage.java

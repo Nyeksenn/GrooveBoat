@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.Nyeksenn.grooveboat</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <!-- TODO: set the real project license (no license file exists in the repository yet) -->
+  <project_license>LicenseRef-proprietary</project_license>
+
+  <name>GrooveBoat</name>
+  <summary>Play music from your own server</summary>
+  <description>
+    <p>GrooveBoat is a music player for Jellyfin and OpenSubsonic servers such as Navidrome, Gonic and Airsonic-Advanced. Browse your albums, build a play queue and listen with gapless playback.</p>
+  </description>
+
+  <developer id="io.github.Nyeksenn">
+    <name>Clemens Albrecht</name>
+  </developer>
+
+  <translation type="gettext">grooveboat</translation>
+  <launchable type="desktop-id">io.github.Nyeksenn.grooveboat.desktop</launchable>
+  <content_rating type="oars-1.1" />
+
+  <releases>
+    <release version="0.1.0" date="2026-10-31">
+      <description translate="no">
+        <p>Initial Flatpak release.</p>
+      </description>
+    </release>
+  </releases>
+</component>

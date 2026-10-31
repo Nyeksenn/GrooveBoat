@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="ServerTypePage" parent="AdwNavigationPage">
+    <property name="title" translatable="yes">Server Type</property>
+    <property name="child">
+      <object class="AdwToolbarView">
+        <property name="content">
+          <object class="AdwPreferencesPage">
+            <child>
+              <object class="AdwPreferencesGroup">
+                <property name="title" translatable="yes">Which server do you use?</property>
+                <property name="description" translatable="yes">To switch to another server type later, log out first.</property>
+                <child>
+                  <object class="AdwActionRow" id="opensubsonic-row">
+                    <property name="title" translatable="yes">OpenSubsonic</property>
+                    <property name="subtitle" translatable="yes">Navidrome, Gonic, Airsonic-Advanced and other OpenSubsonic servers</property>
+                    <property name="activatable">true</property>
+                    <signal name="activated" handler="opensubsonic-selected"/>
+                    <child type="suffix">
+                      <object class="GtkImage">
+                        <property name="icon-name">go-next-symbolic</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwActionRow" id="jellyfin-row">
+                    <property name="title" translatable="yes">Jellyfin</property>
+                    <property name="subtitle" translatable="yes">Jellyfin media server, version 10.9 or newer</property>
+                    <property name="activatable">true</property>
+                    <signal name="activated" handler="jellyfin-selected"/>
+                    <child type="suffix">
+                      <object class="GtkImage">
+                        <property name="icon-name">go-next-symbolic</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </property>
+        <child type="bottom">
+          <object class="GtkActionBar">
+            <property name="margin-start">30</property>
+            <property name="margin-end">30</property>
+            <property name="margin-bottom">15</property>
+            <property name="margin-top">15</property>
+            <child type="start">
+              <object class="GtkButton">
+                <property name="label" translatable="yes">Back</property>
+                <property name="action-name">navigation.pop</property>
+                <style>
+                  <class name="raised"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </property>
+  </template>
+</interface>
