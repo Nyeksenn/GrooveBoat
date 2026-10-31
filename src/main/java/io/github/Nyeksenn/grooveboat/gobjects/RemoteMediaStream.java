@@ -50,6 +50,12 @@ public final class RemoteMediaStream extends MediaStream {
      * trigger about-to-finish before it even starts; its stream-start must not be taken for the gapless switch.
      */
     private boolean awaitingLoadStart = false;
+    /**
+     * Set when the loaded song's own stream-start arrives: the pipeline starts a loaded song silent, and the position
+     * ticker fades it in once its position moves. Not armed earlier, because until then a position query can still
+     * report the old song's position.
+     */
+    private volatile boolean fadeInPending = false;
     /** While set, play/pause calls from GTK only update GTK's state and don't touch the pipeline. */
     private boolean detached = false;
     private ScheduledFuture<?> future;
@@ -165,6 +171,7 @@ public final class RemoteMediaStream extends MediaStream {
         // new URI is set; otherwise its about-to-finish could still slip one in.
         pipeline.playUri(track.source().uri(), () -> release(switching.getAndSet(null)));
         awaitingLoadStart = true;
+        fadeInPending = false;
         // This takes microseconds
         streamPrepared(true, false, true, durationUs(item));
     }
@@ -194,6 +201,7 @@ public final class RemoteMediaStream extends MediaStream {
     public SongListItem onStreamStart() {
         if (awaitingLoadStart) {
             awaitingLoadStart = false;
+            fadeInPending = true;
             return null;
         }
         var track = switching.getAndSet(null);
@@ -230,6 +238,7 @@ public final class RemoteMediaStream extends MediaStream {
     public void fail() {
         cancelTimestampUpdate();
         awaitingLoadStart = false;
+        fadeInPending = false;
         pipeline.stop();
         detached = true;
         try {
@@ -244,6 +253,7 @@ public final class RemoteMediaStream extends MediaStream {
     public void stop() {
         cancelTimestampUpdate();
         awaitingLoadStart = false;
+        fadeInPending = false;
         next.set(null);
         release(switching.getAndSet(null));
         release(current);
@@ -263,6 +273,11 @@ public final class RemoteMediaStream extends MediaStream {
     public void updatePosition() {
         if (isPrepared()) {
             var pos = pipeline.queryPosition();
+            if (pos > 0L && fadeInPending) {
+                // The sink is rendering the new song: bring the volume up.
+                fadeInPending = false;
+                pipeline.fadeIn();
+            }
             if (pos >= 0L) {
                 GLib.idleAddOnce(() -> {
                     if (isPrepared()) {

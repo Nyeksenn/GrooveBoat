@@ -85,7 +85,12 @@ public class MiniPlayer extends Box {
             this.app = app;
             songConnection = app.queueStore.connect("initialize-song", (QueueStore.InitializeSong) this::initStream);
 
-            // One stream for the app's lifetime: bind it once.
+            // One stream for the app's lifetime: bind it once, although the widget is realized again whenever
+            // the window crosses the size breakpoint.
+            if (this.stream != null) {
+                initStream(stream.getCurrentItem());
+                return;
+            }
             this.stream = app.getStream();
             stream.<Boolean, String>bindProperty("playing", miniPlayToggle, "icon-name").transformTo((playing) -> {
                 if (playing) {

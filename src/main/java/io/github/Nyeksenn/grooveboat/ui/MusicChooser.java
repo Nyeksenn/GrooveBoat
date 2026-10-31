@@ -78,9 +78,16 @@ public class MusicChooser extends NavigationPage {
         });
     }
 
+    private boolean initialized = false;
+
     @InstanceInit
     public void init() {
         onRealize(() -> {
+            // Realized again whenever the window crosses the size breakpoint; set up only once.
+            if (initialized) {
+                return;
+            }
+            initialized = true;
             var win = (GrooveboatWindow) getRoot();
             var app = (GrooveboatApp) win.getApplication();
 

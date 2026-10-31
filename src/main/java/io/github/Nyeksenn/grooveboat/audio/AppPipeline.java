@@ -11,6 +11,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import static org.freedesktop.gstreamer.gst.Gst.CLOCK_TIME_NONE;
@@ -46,8 +50,26 @@ public final class AppPipeline {
     private final Element playbin;
     private final Bus bus;
     private volatile Supplier<String> nextUriSupplier = () -> null;
-    /** Whether a track has been loaded since the last {@link #stop}, i.e. the sink may hold its audio. */
+    /** Whether a track has been loaded since the last {@link #stop}, i.e. there is one that may be audible. */
     private boolean loaded = false;
+    /** The state last requested through this class, to tell whether audio is audible right now. */
+    private volatile State targetState = State.READY;
+
+    // ---- Volume and fades. The effective volume is the user's volume times a fade gain.
+    private static final int FADE_OUT_STEPS = 6;
+    private static final long FADE_OUT_STEP_MS = 5L;
+    private static final int FADE_IN_STEPS = 12;
+    private static final long FADE_IN_STEP_MS = 10L;
+    private final Object volumeLock = new Object();
+    private final ScheduledExecutorService fader = Executors.newSingleThreadScheduledExecutor(r -> {
+        var t = new Thread(r, "gst-fader");
+        t.setDaemon(true);
+        return t;
+    });
+    private double userVolume = 1.0;
+    private boolean userMuted = false;
+    private double gain = 1.0;
+    private ScheduledFuture<?> fadeTask;
 
     public AppPipeline() {
         Gst.init(null);
@@ -111,37 +133,96 @@ public final class AppPipeline {
      *                     so no about-to-finish of the old track can interleave with it
      */
     public synchronized void playUri(String uri, Runnable whileStopped) {
-        if (loaded) {
-            flushOutput();
+        cancelFade();
+        if (loaded && targetState == State.PLAYING) {
+            fadeOut();
         }
-        playbin.setState(State.READY);
-        // Whatever the old track left on the bus (stream-start, eos, buffering) no longer applies.
-        bus.setFlushing(true);
-        bus.setFlushing(false);
+        // The new track starts silent; fadeIn() brings it up once it is audibly playing, which hides decoder
+        // start-up transients.
+        setGain(0.0);
+        // A manual switch goes all the way to NULL: that disposes the audio sink together with its sound server
+        // stream, and with it the audio of the old track that was buffered there but not yet played. At READY the
+        // stream survives (a flushing seek didn't reliably clear it either), and that audio came out when the new
+        // track started. Going to NULL also flushes the bus, so messages the old track left behind (stream-start,
+        // eos, buffering) are dropped.
+        playbin.setState(State.NULL);
         whileStopped.run();
         playbin.setProperty("uri", uri);
-        playbin.setState(State.PAUSED);
+        setState(State.PAUSED);
         loaded = true;
     }
 
+    /** Ramps the old track down so cutting it off doesn't click. Blocks for about 30 ms. */
+    private void fadeOut() {
+        double start;
+        synchronized (volumeLock) {
+            start = gain;
+        }
+        for (int i = FADE_OUT_STEPS - 1; i >= 0; i--) {
+            setGain(start * i / FADE_OUT_STEPS);
+            try {
+                Thread.sleep(FADE_OUT_STEP_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+        }
+    }
+
     /**
-     * Discards audio the sink has buffered but not yet played. Going straight to READY leaves it in the sink (and
-     * the sound server), where it pops when the next track starts. Pausing first stops output; the flushing seek
-     * then sends flush-start/flush-stop through the sink, which clears its ring buffer.
+     * Ramps the volume back up after {@link #playUri}. Call it once the new track is audibly playing; thread-safe.
      */
-    private void flushOutput() {
-        playbin.setState(State.PAUSED);
-        playbin.seek(1.0, Format.TIME, SeekFlags.FLUSH, SeekType.SET, 0L, SeekType.NONE,
-                CLOCK_TIME_NONE.getValue());
+    public void fadeIn() {
+        synchronized (volumeLock) {
+            cancelFade();
+            var steps = new int[]{0};
+            fadeTask = fader.scheduleAtFixedRate(() -> {
+                synchronized (volumeLock) {
+                    steps[0]++;
+                    gain = Math.min(1.0, (double) steps[0] / FADE_IN_STEPS);
+                    applyVolume();
+                    if (steps[0] >= FADE_IN_STEPS && fadeTask != null) {
+                        fadeTask.cancel(false);
+                        fadeTask = null;
+                    }
+                }
+            }, 0L, FADE_IN_STEP_MS, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    private void cancelFade() {
+        synchronized (volumeLock) {
+            if (fadeTask != null) {
+                fadeTask.cancel(false);
+                fadeTask = null;
+            }
+        }
+    }
+
+    private void setGain(double value) {
+        synchronized (volumeLock) {
+            gain = value;
+            applyVolume();
+        }
+    }
+
+    /** Must hold {@link #volumeLock}. */
+    private void applyVolume() {
+        playbin.setProperty("volume", userVolume * gain);
+        playbin.setProperty("mute", userMuted);
     }
 
     /** Stops playback; the pipeline stays ready for the next {@link #playUri}. */
     public synchronized void stop() {
-        playbin.setState(State.READY);
+        setState(State.READY);
         loaded = false;
+        // Nothing will fade in after a stop; the next track starts at full volume again.
+        cancelFade();
+        setGain(1.0);
     }
 
     public StateChangeReturn setState(State state) {
+        targetState = state;
         return playbin.setState(state);
     }
 
@@ -158,8 +239,11 @@ public final class AppPipeline {
      */
     public void setVolume(double volume, boolean muted) {
         var linear = StreamVolume.convertVolume(StreamVolumeFormat.CUBIC, StreamVolumeFormat.LINEAR, volume);
-        playbin.setProperty("volume", linear);
-        playbin.setProperty("mute", muted);
+        synchronized (volumeLock) {
+            userVolume = linear;
+            userMuted = muted;
+            applyVolume();
+        }
     }
 
     /** @return position within the current track in microseconds, or -1 when unknown */
@@ -179,6 +263,7 @@ public final class AppPipeline {
     }
 
     public void quit() {
+        fader.shutdownNow();
         if (playbin != null) {
             playbin.setState(State.NULL);
         }

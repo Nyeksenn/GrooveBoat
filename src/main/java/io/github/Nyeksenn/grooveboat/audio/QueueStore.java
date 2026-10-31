@@ -247,7 +247,7 @@ public class QueueStore extends GObject {
                                 GLib.idleAddOnce(() -> {
                                     // Empty first, so the selection starts over at the album's first song.
                                     model.removeAll();
-                                    model.splice(0, 0, items.toArray(SongListItem[]::new));
+                                    items.forEach(model::append);
                                 });
                             }
                         });
@@ -267,8 +267,7 @@ public class QueueStore extends GObject {
                         exec.submit(() -> {
                             var items = albumItems(albumId);
                             if (!items.isEmpty()) {
-                                GLib.idleAddOnce(() -> model.splice(model.getNItems(), 0,
-                                        items.toArray(SongListItem[]::new)));
+                                GLib.idleAddOnce(() -> items.forEach(model::append));
                             }
                         });
                     }

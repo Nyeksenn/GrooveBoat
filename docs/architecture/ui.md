@@ -44,6 +44,8 @@ The window defines a breakpoint for narrow widths:
 - **Narrow.** The mini player and a bottom view-switcher bar are shown, and the switcher is removed from the header.
 - **Wide.** The switcher returns to the header and the mini player is hidden.
 
+Crossing the breakpoint collapses or expands the split view, which unrealizes and realizes its content again. Widgets that do one-time setup on realize (the album grid loading its albums, the chooser adding its actions and bindings, the mini player binding the stream) guard it so it runs only once. Handlers that are disconnected on unrealize are connected again on each realize.
+
 ## Lists and models
 
 Collections are always shown through GTK list models built from GObject list items:
