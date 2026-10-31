@@ -26,6 +26,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 import static io.github.Nyeksenn.grooveboat.backend.BackendSupport.HTTP;
@@ -211,6 +212,15 @@ public final class SubsonicBackend implements MusicBackend {
     }
 
     @Override
+    public void restoreUnverified(Session session) throws AuthenticationException {
+        if (session.credential() == null) {
+            throw new AuthenticationException("No stored password");
+        }
+        this.username = session.username();
+        this.password = session.credential();
+    }
+
+    @Override
     public void logout() {
         // Subsonic has no server-side sessions.
     }
@@ -222,6 +232,17 @@ public final class SubsonicBackend implements MusicBackend {
             return List.of();
         }
         return artists.stream().map(a -> new RemoteArtistRef(a.id(), a.name())).toList();
+    }
+
+    private static Instant parseCreated(String value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return Instant.parse(value);
+        } catch (DateTimeParseException e) {
+            return null;
+        }
     }
 
     @Override
@@ -246,12 +267,14 @@ public final class SubsonicBackend implements MusicBackend {
                 throw new IOException("Couldn't parse album list: " + e.getMessage());
             }
             for (var album : page) {
-                var created = Instant.parse(album.created());
-                if (!created.isAfter(since)) {
+                var created = parseCreated(album.created());
+                // Albums without a usable timestamp are always included; the sync skips ones it already has.
+                if (created != null && !created.isAfter(since)) {
                     return albums;
                 }
                 albums.add(new RemoteAlbum(album.id(), album.name(), album.songCount(), album.year(),
-                        Duration.ofSeconds(album.duration()), album.coverArt(), refs(album.artists()), created));
+                        Duration.ofSeconds(album.duration()), album.coverArt(), refs(album.artists()),
+                        created == null ? Instant.EPOCH : created));
             }
             if (page.size() < ALBUM_PAGE_SIZE) {
                 return albums;

@@ -4,6 +4,7 @@ import static org.javagi.util.Intl.i18n;
 import io.github.Nyeksenn.grooveboat.backend.BackendFactory;
 import io.github.Nyeksenn.grooveboat.backend.BackendSupport;
 import io.github.Nyeksenn.grooveboat.backend.BackendType;
+import io.github.Nyeksenn.grooveboat.backend.MusicBackend;
 import io.github.Nyeksenn.grooveboat.backend.ServerInfo;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.gnome.adw.EntryRow;
@@ -54,7 +55,9 @@ public class ConnectionPage extends NavigationPage {
     private void fail(String message) {
         GLib.idleAddOnce(() -> {
             connectionNextButton.setSensitive(true);
-            connectionOverlay.addToast(new Toast(message));
+            var toast = new Toast(message);
+            toast.setUseMarkup(false);
+            connectionOverlay.addToast(toast);
             entryUrl.addCssClass("error");
         });
     }
@@ -80,25 +83,30 @@ public class ConnectionPage extends NavigationPage {
 
         connectionNextButton.setSensitive(false);
         exec.submit(() -> {
-            var backend = BackendFactory.create(type, url);
+            MusicBackend backend = null;
             ServerInfo info;
             try {
+                backend = BackendFactory.create(type, url);
                 info = backend.probe();
-            } catch (IOException e) {
+            } catch (IOException | RuntimeException e) {
+                // RuntimeExceptions (bad URL, unexpected response) must not leave the button disabled.
                 logger.warn("Couldn't reach server: {}", e.getMessage());
                 info = null;
             }
 
             if (info != null && info.compatible()) {
-                logger.info("Found {} {} at {}", info.name(), info.version(), backend.host());
+                final var found = backend;
+                logger.info("Found {} {} at {}", info.name(), info.version(), found.host());
                 GLib.idleAddOnce(() -> {
                     connectionNextButton.setSensitive(true);
-                    dialog.setCandidate(backend);
+                    dialog.setCandidate(found);
                     activateActionVariant("navigation.push", Variant.string("credentials-page"));
                 });
                 return;
             }
-            backend.close();
+            if (backend != null) {
+                backend.close();
+            }
 
             // Wrong server type picked? Point the user at the right one.
             var other = type.other();

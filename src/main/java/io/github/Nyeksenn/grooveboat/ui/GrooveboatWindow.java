@@ -5,6 +5,7 @@ import io.github.Nyeksenn.grooveboat.audio.AppPipeline;
 import io.github.Nyeksenn.grooveboat.backend.AuthenticationException;
 import io.github.Nyeksenn.grooveboat.backend.BackendFactory;
 import io.github.Nyeksenn.grooveboat.backend.Session;
+import io.github.Nyeksenn.grooveboat.entities.query.QAlbumModel;
 import io.github.Nyeksenn.grooveboat.gobjects.SecretKeeper;
 import io.github.Nyeksenn.grooveboat.utils.AppSettings;
 import org.gnome.adw.AlertDialog;
@@ -72,7 +73,14 @@ public class GrooveboatWindow extends ApplicationWindow {
     }
 
     public void showToast(String message) {
-        toastOverlay.addToast(new Toast(message));
+        var toast = new Toast(message);
+        // Messages can contain song titles, which may include markup characters.
+        toast.setUseMarkup(false);
+        toastOverlay.addToast(toast);
+    }
+
+    private static boolean hasCachedLibrary() {
+        return new QAlbumModel().setMaxRows(1).exists();
     }
 
     // ---- Session
@@ -109,7 +117,22 @@ public class GrooveboatWindow extends ApplicationWindow {
             try {
                 var backend = BackendFactory.create(type.get(), url);
                 var credential = secrets.lookupPassword(username, backend.scheme(), backend.host()).join();
-                backend.restore(new Session(username, credential, userId));
+                var session = new Session(username, credential, userId);
+                var offline = false;
+                try {
+                    backend.restore(session);
+                } catch (AuthenticationException e) {
+                    throw e;
+                } catch (IOException e) {
+                    // Server unreachable: start from the cache if there is one, instead of a dead end.
+                    if (!hasCachedLibrary()) {
+                        throw e;
+                    }
+                    logger.warn("Server unreachable, starting from the cached library: {}", e.getMessage());
+                    backend.restoreUnverified(session);
+                    offline = true;
+                }
+                final var startedOffline = offline;
                 GLib.idleAddOnce(() -> {
                     if (app.hasSession()) {
                         // A concurrent retry got there first.
@@ -118,12 +141,15 @@ public class GrooveboatWindow extends ApplicationWindow {
                         app.startSession(backend);
                     }
                     syncAndShowContent();
+                    if (startedOffline) {
+                        showToast(i18n("Can't reach the server. Showing your cached library."));
+                    }
                 });
             } catch (AuthenticationException e) {
                 logger.warn("Stored session rejected: {}", e.getMessage());
                 GLib.idleAddOnce(() -> showError(i18n("Session Expired"),
                         String.format(i18n("The server no longer accepts the stored login for %s. "
-                                + "Log out and sign in again."), username), false));
+                                + "Log out and sign in again."), GLib.markupEscapeText(username, -1)), false));
             } catch (IOException | RuntimeException e) {
                 logger.warn("Connection failed: {}", e.getMessage());
                 GLib.idleAddOnce(() -> showError(i18n("Connection Error"),

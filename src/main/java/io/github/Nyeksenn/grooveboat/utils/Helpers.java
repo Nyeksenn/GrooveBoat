@@ -53,15 +53,17 @@ public final class Helpers {
             Connection connection = transaction.connection();
 
             try (Statement stmt = connection.createStatement()) {
-
+                // H2 applies this setting to the whole database, so it must be switched back on even when a
+                // TRUNCATE fails.
                 stmt.execute("SET REFERENTIAL_INTEGRITY FALSE");
-
-                for (String tbl : TABLES) {
-                    String sql = "TRUNCATE TABLE " + tbl + " RESTART IDENTITY";
-                    stmt.execute(sql);
+                try {
+                    for (String tbl : TABLES) {
+                        String sql = "TRUNCATE TABLE " + tbl + " RESTART IDENTITY";
+                        stmt.execute(sql);
+                    }
+                } finally {
+                    stmt.execute("SET REFERENTIAL_INTEGRITY TRUE");
                 }
-
-                stmt.execute("SET REFERENTIAL_INTEGRITY TRUE");
             }
 
             connection.commit();

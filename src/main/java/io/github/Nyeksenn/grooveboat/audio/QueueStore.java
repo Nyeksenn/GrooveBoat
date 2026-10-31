@@ -31,6 +31,8 @@ public class QueueStore extends GObject {
     private static final int GTK_INVALID_LIST_POSITION = -1;
     /** Set while the selection follows a gapless switch, so the already playing song isn't reloaded. */
     private boolean followingSwitch = false;
+    /** Set while restarting the current song on purpose (loop mode), which re-notifies an unchanged selection. */
+    private boolean forceReload = false;
 
     @Signal
     public interface InitializeSong {
@@ -52,6 +54,11 @@ public class QueueStore extends GObject {
         // Prepare the follow-up first: the pipeline may ask for it as soon as the new song starts downloading.
         refreshNext();
         var selectedItem = model.getItem(selection.getSelected());
+        // Removing an earlier queue entry shifts the selected index without changing the song: keep playing.
+        var stream = app.getStream();
+        if (!forceReload && selectedItem != null && stream != null && selectedItem == stream.getCurrentItem()) {
+            return;
+        }
         if (selectedItem != null && app.hasSession()) {
             app.getStream().load(selectedItem);
             emit("initialize-song", selectedItem);
@@ -112,7 +119,12 @@ public class QueueStore extends GObject {
             return false;
         }
         if (loop) {
-            selection.emitNotify("selected", null);
+            forceReload = true;
+            try {
+                selection.emitNotify("selected", null);
+            } finally {
+                forceReload = false;
+            }
             return true;
         }
         if (idx + 1 < model.getNItems()) {
@@ -294,7 +306,7 @@ public class QueueStore extends GObject {
         // These are play actions
         entries[5] = new ActionEntry(
                 "play-next",
-                (_, parameter) -> advance(parameter.getBoolean()),
+                (_, parameter) -> advance(parameter != null && parameter.getBoolean()),
                 VariantTypes.BOOLEAN.dupString(),
                 null,
                 null,

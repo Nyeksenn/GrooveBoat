@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: grooveboat 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-31 14:41+0100\n"
+"POT-Creation-Date: 2026-10-31 15:27+0100\n"
 "PO-Revision-Date: 2026-10-31 14:28+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -128,7 +128,7 @@ msgid "Artists"
 msgstr "Artists"
 
 #: data/ui/music-chooser.ui:118 data/ui/prefs.ui:55 data/ui/window.ui:77
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:172
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:198
 msgid "Log Out"
 msgstr "Log Out"
 
@@ -227,7 +227,7 @@ msgid "Loading"
 msgstr "Loading"
 
 #: data/ui/window.ui:58
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:129
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:155
 msgid "Connection Error"
 msgstr "Connection Error"
 
@@ -258,16 +258,16 @@ msgstr "Not a Jellyfin server"
 msgid "Jellyfin %s is too old, %s or newer is required"
 msgstr "Jellyfin %s is too old, %s or newer is required"
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/backend/subsonic/SubsonicBackend.java:174
-#: src/main/java/io/github/Nyeksenn/grooveboat/backend/subsonic/SubsonicBackend.java:186
+#: src/main/java/io/github/Nyeksenn/grooveboat/backend/subsonic/SubsonicBackend.java:175
+#: src/main/java/io/github/Nyeksenn/grooveboat/backend/subsonic/SubsonicBackend.java:187
 msgid "Not a Subsonic server"
 msgstr "Not a Subsonic server"
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/backend/subsonic/SubsonicBackend.java:177
+#: src/main/java/io/github/Nyeksenn/grooveboat/backend/subsonic/SubsonicBackend.java:178
 msgid "Server is not OpenSubsonic compatible"
 msgstr "Server is not OpenSubsonic compatible"
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/backend/subsonic/SubsonicBackend.java:180
+#: src/main/java/io/github/Nyeksenn/grooveboat/backend/subsonic/SubsonicBackend.java:181
 #, java-printf-format
 msgid "Server API version %s is too old"
 msgstr "Server API version %s is too old"
@@ -277,57 +277,57 @@ msgstr "Server API version %s is too old"
 msgid "Queue album"
 msgstr "Queue album"
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/ConnectionPage.java:106
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/ConnectionPage.java:114
 #, java-printf-format
 msgid "This looks like a %1$s server. Go back and choose %1$s."
 msgstr "This looks like a %1$s server. Go back and choose %1$s."
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/ConnectionPage.java:108
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:106
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/ConnectionPage.java:116
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:108
 msgid "Unable to reach server"
 msgstr "Unable to reach server"
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/ConnectionPage.java:110
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/ConnectionPage.java:118
 msgid "Incompatible server"
 msgstr "Incompatible server"
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/ConnectionPage.java:120
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/ConnectionPage.java:128
 #, java-printf-format
 msgid "%s Server"
 msgstr "%s Server"
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/ConnectionPage.java:122
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/ConnectionPage.java:130
 #, java-printf-format
 msgid ""
 "Enter the address of your %s server, for example https://music.example.com"
 msgstr ""
 "Enter the address of your %s server, for example https://music.example.com"
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:67
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:69
 msgid "GrooveBoat OpenSubsonic Password"
 msgstr "GrooveBoat OpenSubsonic Password"
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:68
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:70
 msgid "GrooveBoat Jellyfin Access Token"
 msgstr "GrooveBoat Jellyfin Access Token"
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:78
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:80
 msgid "Go back and enter the server address first"
 msgstr "Go back and enter the server address first"
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:82
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:84
 msgid "Enter a username"
 msgstr "Enter a username"
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:94
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:96
 msgid "Couldn't save the login to the keyring"
 msgstr "Couldn't save the login to the keyring"
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:103
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:105
 msgid "Username or password wrong"
 msgstr "Username or password wrong"
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:109
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java:111
 msgid "Login failed"
 msgstr "Login failed"
 
@@ -340,11 +340,11 @@ msgstr "Logging Out"
 msgid "Couldn't play “%s”"
 msgstr "Couldn't play “%s”"
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:84
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:92
 msgid "Missing GStreamer Plugins"
 msgstr "Missing GStreamer Plugins"
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:85
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:93
 #, java-printf-format
 msgid ""
 "GrooveBoat needs these GStreamer elements to play music: %s. Install the "
@@ -353,15 +353,19 @@ msgstr ""
 "GrooveBoat needs these GStreamer elements to play music: %s. Install the "
 "matching packages and restart the app."
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:102
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:110
 msgid "Connecting"
 msgstr "Connecting"
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:124
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:145
+msgid "Can't reach the server. Showing your cached library."
+msgstr "Can't reach the server. Showing your cached library."
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:150
 msgid "Session Expired"
 msgstr "Session Expired"
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:125
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:151
 #, java-printf-format
 msgid ""
 "The server no longer accepts the stored login for %s. Log out and sign in "
@@ -370,7 +374,7 @@ msgstr ""
 "The server no longer accepts the stored login for %s. Log out and sign in "
 "again."
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:130
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:156
 #, java-printf-format
 msgid ""
 "Unable to reach the %s server. Please check your internet connection and try "
@@ -379,11 +383,11 @@ msgstr ""
 "Unable to reach the %s server. Please check your internet connection and try "
 "again."
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:137
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:163
 msgid "Loading Library"
 msgstr "Loading Library"
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:164
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:190
 #, java-printf-format
 msgid ""
 "This clears the local library cache, the queue and the stored login. The "
@@ -394,7 +398,7 @@ msgstr ""
 "music on your %s server is not affected. You can then sign in to the same or "
 "another server."
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:167
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:193
 msgid ""
 "This clears the local library cache, the queue and the stored login. The "
 "music on your server is not affected. You can then sign in to the same or "
@@ -404,11 +408,11 @@ msgstr ""
 "music on your server is not affected. You can then sign in to the same or "
 "another server."
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:170
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:196
 msgid "Log Out?"
 msgstr "Log Out?"
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:171
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:197
 msgid "Cancel"
 msgstr "Cancel"
 

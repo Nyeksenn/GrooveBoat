@@ -54,7 +54,9 @@ public class CredentialsPage extends NavigationPage {
     private void fail(String message, boolean credentialsWrong) {
         GLib.idleAddOnce(() -> {
             finishButton.setSensitive(true);
-            credentialsOverlay.addToast(new Toast(message));
+            var toast = new Toast(message);
+            toast.setUseMarkup(false);
+            credentialsOverlay.addToast(toast);
             if (credentialsWrong) {
                 entryUsername.addCssClass("error");
                 entryPassword.addCssClass("error");

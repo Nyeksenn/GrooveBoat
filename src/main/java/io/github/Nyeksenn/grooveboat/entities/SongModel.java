@@ -137,7 +137,7 @@ public class SongModel extends BaseModel {
 
     public String getDisplayArtistPango() {
         var artist = getDisplayArtist();
-        return artist.replace("&", "&amp;");
+        return artist.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
     public SongModel(String songId, String title, int track, int year, Duration duration, int bitRate, String contentType, int discNumber, List<ArtistModel> songArtists, AlbumModel album) {

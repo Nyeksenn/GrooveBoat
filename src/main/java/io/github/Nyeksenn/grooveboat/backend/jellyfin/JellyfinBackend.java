@@ -213,6 +213,15 @@ public final class JellyfinBackend implements MusicBackend {
     }
 
     @Override
+    public void restoreUnverified(Session session) throws AuthenticationException {
+        if (session.credential() == null || session.userId() == null || session.userId().isEmpty()) {
+            throw new AuthenticationException("No stored Jellyfin session");
+        }
+        this.token = session.credential();
+        this.userId = session.userId();
+    }
+
+    @Override
     public void logout() {
         if (token == null) {
             return;

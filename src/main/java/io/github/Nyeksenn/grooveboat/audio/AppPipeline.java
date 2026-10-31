@@ -249,13 +249,14 @@ public final class AppPipeline {
 
     /** @return position within the current track in microseconds, or -1 when unknown */
     public long queryPosition() {
-        var pos = new Out<Long>();
-        var success = playbin.query(posQuery);
-        posQuery.parsePosition(null, pos);
-        if (success) {
+        // The ticker (scheduler thread) and the main thread both ask; a Query object isn't thread-safe.
+        synchronized (posQuery) {
+            if (!playbin.query(posQuery)) {
+                return -1L;
+            }
+            var pos = new Out<Long>();
+            posQuery.parsePosition(null, pos);
             return pos.get() / 1000L;
-        } else {
-            return -1L;
         }
     }
 
