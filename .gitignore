@@ -1,6 +1,8 @@
 # Created by https://www.toptal.com/developers/gitignore/api/linux,sublimetext,java,gradle
 # Edit at https://www.toptal.com/developers/gitignore?templates=linux,sublimetext,java,gradle
 
+.env
+
 ### Java ###
 # Compiled class file
 *.class
