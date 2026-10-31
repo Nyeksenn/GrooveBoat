@@ -5,6 +5,7 @@ import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
 import io.github.Nyeksenn.grooveboat.gobjects.SongListItem;
 import org.gnome.gtk.Box;
 import org.gnome.gtk.Label;
+import org.javagi.gobject.SignalConnection;
 import org.javagi.gobject.annotations.InstanceInit;
 import org.javagi.gobject.annotations.RegisteredType;
 import org.javagi.gtk.annotations.GtkChild;
@@ -35,13 +36,13 @@ public class MusicPlayer extends Box {
     public SongQueue songQueue;
 
     private GrooveboatApp app;
+    private SignalConnection<?> songConnection;
 
     private void initializeMediaStream(SongListItem songItem) {
         if (songItem != null) {
             this.playerAlbumArtist.setLabel(songItem.getArtistName());
             this.playerSongName.setLabel(songItem.getSongName());
             this.playerAlbumPicture.setTexture(songItem.getCoverArt());
-            this.mediaControls.setMediaStream(app.getStream());
         }
     }
 
@@ -56,18 +57,25 @@ public class MusicPlayer extends Box {
 
     @InstanceInit
     public void init() {
+        this.onUnrealize(() -> {
+            if (songConnection != null) {
+                songConnection.disconnect();
+                songConnection = null;
+            }
+        });
         this.onRealize(() -> {
             var win = (GrooveboatWindow) getRoot();
             assert win != null;
 
             var app = (GrooveboatApp) win.getApplication();
             this.app = app;
+            this.mediaControls.setMediaStream(app.getStream());
 
             if (!app.queueStore.getSelection().isEmpty()) {
                 initializePlayer(app.queueStore.getSelection().getSelectedItem());
             }
 
-            app.queueStore.connect("initialize-song", (QueueStore.InitializeSong) this::initializeMediaStream);
+            songConnection = app.queueStore.connect("initialize-song", (QueueStore.InitializeSong) this::initializeMediaStream);
         });
     }
 

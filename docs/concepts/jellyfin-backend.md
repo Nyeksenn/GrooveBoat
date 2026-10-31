@@ -1,6 +1,6 @@
 # Concept: Jellyfin Backend
 
-Status: draft
+Status: implemented (see [Implementation notes](#implementation-notes))
 Scope: add Jellyfin as a second server backend next to OpenSubsonic. The user picks the backend once, in the setup dialog. Switching backend requires logging out, and logging out resets the app to a clean first-run state. As part of the same work, playback moves from pushing a raw HTTP byte stream by hand to GStreamer playing HLS playlists directly.
 
 ## Goals
@@ -18,9 +18,9 @@ Scope: add Jellyfin as a second server backend next to OpenSubsonic. The user pi
 - Features specific to Jellyfin that have no equivalent in the current app (playlists, favourites, playback reporting). The design should allow them later but does not include them.
 - **Transcoding, for now.** The client always asks for the original audio, never a re-encoded version, and has no codec, bitrate or quality settings. The local GStreamer pipeline is assumed to decode every audio format in the library. Servers may still *repackage* the original audio into HLS segments (copying the stream without re-encoding), because that keeps the original quality. Transcoding can be added later as an option, through the same playback URL operation, without changing the pipeline.
 
-## Current state
+## Starting point
 
-The app is tied to Subsonic in these places (see [Overview: backend coupling](../architecture/overview.md#backend-coupling)):
+Before this change, the app was tied to Subsonic in these places:
 
 - `SubsonicClient` and the `deserializer` records know the Subsonic protocol.
 - The `Subsonic` facade mixes two jobs: talking to the server, and writing to the database (sync, artist resolution, upserting songs). Widgets, the setup pages and the preferences dialog hold a reference to its concrete type.
@@ -260,4 +260,23 @@ The project has no automated tests, so each phase is checked by hand against:
 - The minimum Jellyfin server version to support.
 - Whether Jellyfin's "Quick Connect" (log in by approving a code on another device) should be offered as well as username and password.
 - Whether logout should also remove the H2 database files rather than only truncating tables, in case a later migration needs a truly fresh database.
-- Whether to switch from the URI decode bin to a full playbin later. A playbin would make gapless playback possible, using its "about to finish" signal to queue the next track's URL, but it would replace the custom converter → resampler → sink chain.
+- ~~Whether to switch from the URI decode bin to a full playbin later.~~ Done: see the playback redesign below.
+
+## Implementation notes
+
+Where the implementation differs from or adds to this concept:
+
+- **Minimum Jellyfin version:** set to 10.9.0. The prototype ran against Jellyfin 12.3.0.
+- **Authentication:** Jellyfin 12.x rejects the legacy `X-Emby-Token` header, so every request sends the `Authorization: MediaBrowser …` header. In URLs, the server accepts `ApiKey` but not `api_key`. Jellyfin repeats `ApiKey` in every variant and segment URL, which the prototype confirmed.
+- **Media source:** the media source ID is assumed to be the item ID. That held for every track on the test server; tracks with several versions would play the default one.
+- **Duration:** the player keeps using the duration stored in the cache instead of switching to the pipeline's duration once the stream is ready. GTK's media stream sets the duration only once, and the stored values matched the HLS playlists in testing.
+- **Playback errors:** shown as a toast in the window, then the queue moves to the next song.
+- **Development runs:** `./gradlew run` compiles the GSettings schema into the build directory and points the app at it, so the new keys work without reinstalling the schema system-wide.
+- **Not yet tested against a real server:** the OpenSubsonic backend (it was refactored behind the new interface and now streams the raw original format), and the interactive setup and logout flows in the GUI. The Jellyfin backend, library sync, HLS playback and seeking, and the local reset were checked against the test server.
+- **Playback redesign (after the first implementation):** the hand-built pipeline that recreated its URI decode bin for every song was replaced by a single `playbin3`, and the per-song media stream by one media stream for the app's lifetime. Songs now follow each other gaplessly through playbin3's *about-to-finish* signal. This fixed three problems found while testing:
+  - the GTK main loop froze when playback started: java-gi's message-type decoding never returns for GStreamer's extended message types;
+  - track changes sometimes stalled in an endless preroll;
+  - random java-gi toggle-reference crashes, traced to proxies created per state-changed message.
+
+  The details are in [Playback](../architecture/playback.md).
+- **java-gi version:** 1.0.0-RC3 was evaluated. It does not fix the message-type decoding loop, and it has the same toggle-reference crash under the old design. Migrating needs only small changes: the libsecret calls move to their `…vSync` variants, and `activateActionIfExists` becomes `activateActionVariant`. It also releases callback arguments strictly, which exposed queue actions that read their parameter after the callback had returned; those are fixed. The project stays on 0.14.1 for now.

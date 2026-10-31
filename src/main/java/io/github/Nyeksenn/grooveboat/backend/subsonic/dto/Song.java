@@ -1,4 +1,4 @@
-package io.github.Nyeksenn.grooveboat.deserializer;
+package io.github.Nyeksenn.grooveboat.backend.subsonic.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 

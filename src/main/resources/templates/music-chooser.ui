@@ -134,5 +134,15 @@
         <attribute name="action">app.full-refresh</attribute>
       </item>
     </section>
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">Preferences</attribute>
+        <attribute name="action">app.account-settings</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">Log Out</attribute>
+        <attribute name="action">app.logout</attribute>
+      </item>
+    </section>
   </menu>
 </interface>

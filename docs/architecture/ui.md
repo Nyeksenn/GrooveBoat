@@ -7,7 +7,7 @@ Every non-trivial widget is a Java class paired with a GtkBuilder `.ui` template
 - **Template.** The class is annotated with the resource path of its template and, if it appears inside other templates, a registered type name.
 - **Children.** Named children of the template are injected into annotated fields.
 - **Callbacks.** Signal handlers named in the template are linked to annotated methods.
-- **Initialisation.** An instance-init method runs when the object is built. Most widgets put their real setup in a realise handler instead, because only then can they reach the window, and through it the application.
+- **Initialisation.** An instance-init method runs when the object is built. Most widgets put their real setup in a realise handler instead, because only then can they reach the window, and through it the application. Anything that depends on the current session, such as the username shown in the avatar or the server type named on the connection page, is read when the widget is mapped, because the window can be built before setup has finished.
 
 Adding a widget touches three places: the template file, an entry in the gresource manifest, and (for widgets used inside other templates) a type registration at startup.
 
@@ -17,19 +17,25 @@ Templates, the compiled stylesheet and the symbolic icons are packed into one gr
 
 ## Window structure
 
-The main window is a libadwaita application window whose top level is a stack with three pages:
+The main window is a libadwaita application window. Its content is a toast overlay, used for playback errors and similar messages, around a stack with three pages:
 
-- **Loading**: shown while the app connects and syncs at startup.
-- **Error**: shown when the stored connection details fail.
+- **Loading**: shown while the app connects, syncs or logs out. Its title says which.
+- **Error**: shown for missing GStreamer plugins, an expired session or an unreachable server. Title and description are set for the case. It has Retry (only where retrying can help) and Log Out buttons.
 - **Content**: the main interface.
 
 The content page is a navigation split, with the *music chooser* on one side and the full *music player* on the other.
 
-**Music chooser.** A header bar with a view switcher, a search bar and a refresh progress bar. Below it are the library views. The album view is a grid of album cards with its own navigation view: clicking a card pushes a song list page for that album, which loads its songs lazily through the server facade and offers play-album and queue-album.
+**Music chooser.** A header bar with the account avatar, the main menu, a view switcher, a search bar and a refresh progress bar. The main menu holds Refresh, Full Refresh, Preferences and Log Out. Below it are the library views. The album view is a grid of album cards with its own navigation view: clicking a card pushes a song list page for that album, which loads its songs lazily through the library sync and offers play-album and queue-album.
 
 **Music player.** The large cover, the song title and artist, the transport controls and the queue list.
 
 **Mini player.** A compact bar at the bottom of the chooser. Clicking it, anywhere except on its buttons, navigates to the full player.
+
+## Dialogs
+
+- **Setup** (`SetupDialog`): a non-closable dialog with a navigation view through welcome, server type, connection and credentials pages. The pages find the dialog by walking up the widget tree, and share the chosen server type and the probed backend through it. See [Startup and Lifecycle](lifecycle.md#first-run-setup).
+- **Preferences** (`GrooveboatPrefs`): opened from the avatar or the main menu. It shows the session's server type, address, server version (queried in the background) and username, all read-only, and a Log Out button. Connection details can't be edited, because a session's server is fixed.
+- **Log out confirmation**: an alert dialog explaining that the local cache, queue and stored login will be cleared and that the server's library is not affected.
 
 ## Adaptive layout
 
@@ -50,8 +56,14 @@ Collections are always shown through GTK list models built from GObject list ite
 
 The UI and the domain layers mostly talk through GActions rather than direct method calls:
 
-- **Application scope.** Queue and playback actions (play, queue, remove, next, previous, toggle play), refresh and full refresh, account settings, quit.
-- **Window scope.** Reloading the album grid; closing the setup dialog.
+- **Application scope.** Queue and playback actions (play, queue, remove, next, previous, toggle play), refresh and full refresh, account settings, logout, quit.
+- **Window scope.** Reloading the album grid, retrying the connection, closing the setup dialog.
 - **Widget scope.** Navigation pushes inside navigation views.
 
 Menu items and buttons in templates refer to these actions by name, with the target value (a song or album ID) attached to the item.
+
+## Widget lifetime
+
+Logout replaces the main window with a new one, so widgets must not leave anything behind that outlives their window. The queue store, its selection model, the media stream and the application live for the whole process. Property bindings from the stream to a widget end on their own when the widget is destroyed. Widgets that connect handlers to them (the player and mini player to the *initialize-song* signal, the queue view to the selection) keep the connection and disconnect it when they are unrealised. Without that, the old window's widgets would keep reacting to the new session after they were destroyed.
+
+Application actions registered by a widget (refresh and full refresh, from the music chooser) are registered again by the new window's widget, which replaces the old ones.

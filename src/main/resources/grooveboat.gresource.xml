@@ -14,6 +14,7 @@
     <file compressed="true" alias="queue-item.ui" preprocess="xml-stripblanks">templates/queue-item.ui</file>
     <file compressed="true" alias="avatar.ui" preprocess="xml-stripblanks">templates/avatar.ui</file>
     <file compressed="true" alias="welcome-page.ui" preprocess="xml-stripblanks">templates/welcome-page.ui</file>
+    <file compressed="true" alias="server-type-page.ui" preprocess="xml-stripblanks">templates/server-type-page.ui</file>
     <file compressed="true" alias="connection-page.ui" preprocess="xml-stripblanks">templates/connection-page.ui</file>
     <file compressed="true" alias="credentials-page.ui" preprocess="xml-stripblanks">templates/credentials-page.ui</file>
     <file compressed="true" alias="music-controls.ui" preprocess="xml-stripblanks">templates/music-controls.ui</file>

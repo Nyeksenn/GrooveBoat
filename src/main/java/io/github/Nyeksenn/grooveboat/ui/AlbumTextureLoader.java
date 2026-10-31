@@ -33,7 +33,7 @@ public class AlbumTextureLoader {
     private Texture fetchTexture(String albumId) {
         var alb = QAlbumModel.alias();
         var album = new QAlbumModel().select(alb.id, alb.coverPath).id.equalTo(albumId).findOne();
-        if (album != null) {
+        if (album != null && album.getCoverPath() != null) {
             try {
                 return Texture.fromFilename(album.getCoverPath().toString());
             } catch (GErrorException e) {
@@ -51,6 +51,11 @@ public class AlbumTextureLoader {
 
     public Texture load(String albumId) {
         return map.computeIfAbsent(albumId, this::fetchTexture);
+    }
+
+    /** Drops all cached textures, e.g. on logout. */
+    public void clear() {
+        map.clear();
     }
 
     public Map<String, Texture> getMap() {

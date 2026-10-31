@@ -90,8 +90,30 @@ tasks.named('classes') {
 }
 
 
+// Compiles the GSettings schema into the build dir so `run` works without installing it system-wide
+// (install_settings.sh is still needed for running the app any other way).
+tasks.register('compileSchemas', Exec) {
+    description = 'Compile the GSettings schema for development runs'
+    group = 'build'
+
+    def schemaDir = layout.buildDirectory.dir('schemas')
+    inputs.file('src/main/resources/io.github.Nyeksenn.grooveboat.gschema.xml')
+    outputs.dir(schemaDir)
+    doFirst {
+        def dir = schemaDir.get().asFile
+        dir.mkdirs()
+        project.copy {
+            from 'src/main/resources/io.github.Nyeksenn.grooveboat.gschema.xml'
+            into dir
+        }
+    }
+    commandLine 'glib-compile-schemas', schemaDir.get().asFile.absolutePath
+}
+
 tasks.named('run') {
+    dependsOn compileSchemas
     jvmArgs += "--enable-native-access=ALL-UNNAMED"
+    environment 'GSETTINGS_SCHEMA_DIR', layout.buildDirectory.dir('schemas').get().asFile.absolutePath
 }
 
 application {

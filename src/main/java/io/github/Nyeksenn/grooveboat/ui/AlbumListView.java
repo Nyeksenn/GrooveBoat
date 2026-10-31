@@ -1,6 +1,5 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
-import io.github.Nyeksenn.grooveboat.client.Subsonic;
 import io.github.Nyeksenn.grooveboat.entities.query.QAlbumModel;
 import io.github.Nyeksenn.grooveboat.gobjects.AlbumFilter;
 import io.github.Nyeksenn.grooveboat.gobjects.AlbumListItem;
@@ -31,7 +30,6 @@ public class AlbumListView extends Box {
     private final AlbumFilter filter = new AlbumFilter();
     private ListStore<AlbumListItem> store;
     private SortListModel<AlbumListItem> sortedModel;
-    private Subsonic subsonic;
     private ExecutorService executor;
 
     @GtkChild(name = "album-grid-view")

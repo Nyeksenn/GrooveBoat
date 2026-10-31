@@ -3,9 +3,9 @@ package io.github.Nyeksenn.grooveboat;
 import io.ebean.DatabaseFactory;
 import io.ebean.config.DatabaseConfig;
 import io.github.Nyeksenn.grooveboat.audio.QueueStore;
-import io.github.Nyeksenn.grooveboat.client.SubsonicClient;
 import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
 import io.github.Nyeksenn.grooveboat.ui.*;
+import io.github.Nyeksenn.grooveboat.utils.AppSettings;
 import io.github.Nyeksenn.grooveboat.utils.Helpers;
 import org.freedesktop.gstreamer.audio.GstAudio;
 import org.gnome.gio.Resource;
@@ -46,7 +46,7 @@ public class Main {
 
         // Make sure GstAudio is loaded to avoid getType returning null
         GstAudio.javagi$ensureInitialized();
-        SubsonicClient.ensureInitialized();
+        AppSettings.migrate();
 
         try {
             var resource = Resource.load(
@@ -58,6 +58,7 @@ public class Main {
             TemplateTypes.register(SongListPage.class);
             TemplateTypes.register(Avatar.class);
             TemplateTypes.register(WelcomePage.class);
+            TemplateTypes.register(ServerTypePage.class);
             TemplateTypes.register(ConnectionPage.class);
             TemplateTypes.register(CredentialsPage.class);
             TemplateTypes.register(MusicControls.class);

@@ -1,0 +1,277 @@
+package io.github.Nyeksenn.grooveboat.gobjects;
+
+import io.github.Nyeksenn.grooveboat.audio.AppPipeline;
+import io.github.Nyeksenn.grooveboat.backend.MusicBackend;
+import io.github.Nyeksenn.grooveboat.backend.PlaybackSource;
+import org.freedesktop.gstreamer.gst.State;
+import org.gnome.glib.GLib;
+import org.gnome.gtk.MediaStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+
+/**
+ * The application's one GTK media stream. It exists for the whole process and is bound to the player widgets once;
+ * tracks are loaded into it rather than creating a stream per song.
+ * <p>
+ * Gapless playback: the queue tells the stream which song follows ({@link #setNext}). When the pipeline asks for the
+ * next URI shortly before the current track ends, the prepared track is handed over; when the pipeline reports that
+ * the new track has started ({@link #onStreamStart}), the stream switches its duration and position over without
+ * pausing.
+ * <p>
+ * All methods except the next-URI supplier run on the GTK main thread.
+ */
+public final class RemoteMediaStream extends MediaStream {
+    private static final Logger logger = LoggerFactory.getLogger(RemoteMediaStream.class);
+
+    /** A song together with the playback URL built for it and the backend that has to release it. */
+    private record Track(SongListItem item, PlaybackSource source, MusicBackend backend) {
+    }
+
+    private final Supplier<MusicBackend> backend;
+    private final AppPipeline pipeline;
+    private final ExecutorService executor;
+    private final ScheduledExecutorService scheduler;
+
+    private Track current;
+    /** Prepared follow-up track, offered to the pipeline in about-to-finish. */
+    private final AtomicReference<Track> next = new AtomicReference<>();
+    /** Track the pipeline has accepted for a gapless switch but that hasn't started yet. */
+    private final AtomicReference<Track> switching = new AtomicReference<>();
+    /** While set, play/pause calls from GTK only update GTK's state and don't touch the pipeline. */
+    private boolean detached = false;
+    private ScheduledFuture<?> future;
+
+    public RemoteMediaStream(Supplier<MusicBackend> backend, AppPipeline pipeline, ExecutorService executor,
+                             ScheduledExecutorService scheduler) {
+        this.backend = backend;
+        this.pipeline = pipeline;
+        this.executor = executor;
+        this.scheduler = scheduler;
+        pipeline.setNextUriSupplier(this::takeNextUri);
+    }
+
+    // ---- GTK virtual methods
+
+    // The position ticker follows the user's play/pause state. It deliberately doesn't watch the pipeline's
+    // state-changed messages: playbin3 posts them for every internal element, and reading their source creates a
+    // java-gi proxy per message for elements that are torn down at any time.
+    @Override
+    public void pause() {
+        cancelTimestampUpdate();
+        if (!detached) {
+            pipeline.setState(State.PAUSED);
+        }
+    }
+
+    @Override
+    public boolean play() {
+        if (!detached) {
+            pipeline.setState(State.PLAYING);
+            logger.info("Now playing");
+        }
+        if (!timestampUpdateRunning()) {
+            startTimestampUpdate();
+        }
+        return true;
+    }
+
+    @Override
+    public void seek(long timestamp) {
+        logger.info("Seek to {} µs", timestamp);
+        if (pipeline.seek(timestamp)) {
+            seekSuccess();
+            setPlaying(true);
+        } else {
+            seekFailed();
+        }
+    }
+
+    @Override
+    protected void updateAudio(boolean muted, double volume) {
+        pipeline.setVolume(volume, muted);
+    }
+
+    // ---- Tracks
+
+    private static long durationUs(SongListItem item) {
+        return item.getDuration().toNanos() / 1000L;
+    }
+
+    private Track build(SongListItem item) {
+        var b = backend.get();
+        if (b == null) {
+            return null;
+        }
+        return new Track(item, b.playbackSource(item.getSongId(), item.getContentType()), b);
+    }
+
+    private void release(Track track) {
+        if (track == null) {
+            return;
+        }
+        try {
+            executor.submit(() -> track.backend().releasePlayback(track.source()));
+        } catch (RejectedExecutionException e) {
+            // Shutting down; the server cleans up idle sessions itself.
+        }
+    }
+
+    /** Resets GTK's prepared state without the pipeline seeing a pause. */
+    private void unprepareDetached() {
+        if (isPrepared()) {
+            detached = true;
+            try {
+                streamUnprepared();
+            } finally {
+                detached = false;
+            }
+        }
+    }
+
+    /** The song currently loaded, or {@code null}. */
+    public SongListItem getCurrentItem() {
+        return current == null ? null : current.item();
+    }
+
+    public boolean isSwitching() {
+        return switching.get() != null;
+    }
+
+    /** Loads a song from the start, replacing the current one, and prerolls it paused. */
+    public void load(SongListItem item) {
+        var track = build(item);
+        if (track == null) {
+            throw new IllegalStateException("No active session. Can't load a track.");
+        }
+        cancelTimestampUpdate();
+        release(switching.getAndSet(null));
+        release(current);
+        current = track;
+        logger.info("Loading {}", track.source());
+        unprepareDetached();
+        pipeline.playUri(track.source().uri());
+        // This takes microseconds
+        streamPrepared(true, false, true, durationUs(item));
+    }
+
+    /**
+     * Sets the song that follows the current one for gapless playback, or {@code null} for none. Building the URL
+     * needs no network access; unused play sessions are never seen by the server.
+     */
+    public void setNext(SongListItem item) {
+        next.set(item == null ? null : build(item));
+    }
+
+    /** Called by the pipeline on a streaming thread in about-to-finish. */
+    private String takeNextUri() {
+        var track = next.getAndSet(null);
+        if (track == null) {
+            return null;
+        }
+        switching.set(track);
+        return track.source().uri();
+    }
+
+    /**
+     * Handles the pipeline's stream-start. After a gapless switch it moves the stream over to the new track and
+     * returns its song, so the queue can follow; otherwise returns {@code null}.
+     */
+    public SongListItem onStreamStart() {
+        var track = switching.getAndSet(null);
+        if (track == null) {
+            return null;
+        }
+        logger.info("Gapless switch to {}", track.source());
+        release(current);
+        current = track;
+        var wasPlaying = getPlaying();
+        unprepareDetached();
+        streamPrepared(true, false, true, durationUs(track.item()));
+        if (wasPlaying) {
+            detached = true;
+            try {
+                setPlaying(true);
+            } finally {
+                detached = false;
+            }
+        }
+        update(Math.max(0L, pipeline.queryPosition()));
+        return track.item();
+    }
+
+    /** The queue ran out: stop at the end and rewind, so play starts the last song again. */
+    public void endOfQueue() {
+        setPlaying(false);
+        if (pipeline.seek(0L)) {
+            update(0L);
+        }
+    }
+
+    /** After a playback error: stop the pipeline without GTK's pause restarting the failing download. */
+    public void fail() {
+        cancelTimestampUpdate();
+        pipeline.stop();
+        detached = true;
+        try {
+            setPlaying(false);
+        } finally {
+            detached = false;
+        }
+        release(switching.getAndSet(null));
+    }
+
+    /** Stops playback entirely and releases all play sessions, e.g. on logout. */
+    public void stop() {
+        cancelTimestampUpdate();
+        next.set(null);
+        release(switching.getAndSet(null));
+        release(current);
+        current = null;
+        pipeline.stop();
+        detached = true;
+        try {
+            setPlaying(false);
+        } finally {
+            detached = false;
+        }
+        unprepareDetached();
+    }
+
+    // ---- Position
+
+    public void updatePosition() {
+        if (isPrepared()) {
+            var pos = pipeline.queryPosition();
+            if (pos >= 0L) {
+                GLib.idleAddOnce(() -> {
+                    if (isPrepared()) {
+                        update(pos);
+                    }
+                });
+            }
+        }
+    }
+
+    public void startTimestampUpdate() {
+        future = scheduler.scheduleAtFixedRate(this::updatePosition, 0L, 30L, TimeUnit.MILLISECONDS);
+    }
+
+    public void cancelTimestampUpdate() {
+        if (future != null) {
+            future.cancel(true);
+            future = null;
+        }
+    }
+
+    public boolean timestampUpdateRunning() {
+        return future != null;
+    }
+}
