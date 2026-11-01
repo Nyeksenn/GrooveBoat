@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: grooveboat 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-01 15:06+0100\n"
+"POT-Creation-Date: 2026-11-01 15:19+0100\n"
 "PO-Revision-Date: 2026-10-31 14:28+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -132,11 +132,11 @@ msgstr "Artists"
 msgid "Log Out"
 msgstr "Log Out"
 
-#: data/ui/music-controls.ui:55
+#: data/ui/music-controls.ui:98
 msgid "Shuffle"
 msgstr "Shuffle"
 
-#: data/ui/music-controls.ui:65
+#: data/ui/music-controls.ui:108
 msgid "Repeat"
 msgstr "Repeat"
 

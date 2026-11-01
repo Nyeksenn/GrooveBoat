@@ -54,3 +54,10 @@
   border-style: none;
   box-shadow: none;
 }
+
+button.circular.play-pause-large {
+  min-width: 56px;
+  min-height: 56px;
+  padding: 0;
+  -gtk-icon-size: 28px;
+}

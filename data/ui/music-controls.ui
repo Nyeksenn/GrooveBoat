@@ -44,9 +44,52 @@
       </object>
     </child>
     <child>
+      <!-- Transport: previous, play/pause (larger), next -->
       <object class="GtkBox">
         <property name="orientation">horizontal</property>
         <property name="halign">center</property>
+        <property name="valign">center</property>
+        <property name="spacing">20</property>
+        <child>
+          <object class="GtkButton" id="skip-back-button">
+            <property name="valign">center</property>
+            <property name="icon-name">skip-backward-large-symbolic</property>
+            <property name="action-name">app.play-previous</property>
+            <style>
+              <class name="circular"/>
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="play-button">
+            <property name="valign">center</property>
+            <property name="icon-name">play-symbolic</property>
+            <property name="action-name">app.toggle-play</property>
+            <style>
+              <class name="circular"/>
+              <class name="play-pause-large"/>
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="skip-forward-button">
+            <property name="valign">center</property>
+            <property name="icon-name">skip-forward-large-symbolic</property>
+            <property name="action-name">app.play-next</property>
+            <property name="action-target">false</property>
+            <style>
+              <class name="circular"/>
+            </style>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <!-- Modes and volume, below the transport buttons -->
+      <object class="GtkBox">
+        <property name="orientation">horizontal</property>
+        <property name="halign">center</property>
+        <property name="margin-top">12</property>
         <property name="spacing">20</property>
         <child>
           <object class="GtkToggleButton" id="shuffle-button">
@@ -66,34 +109,6 @@
             <signal name="clicked" handler="loop-clicked"/>
             <style>
               <class name="flat"/>
-            </style>
-          </object>
-        </child>
-        <child>
-          <object class="GtkButton" id="skip-back-button">
-            <property name="icon-name">skip-backward-large-symbolic</property>
-            <property name="action-name">app.play-previous</property>
-            <style>
-              <class name="circular"/>
-            </style>
-          </object>
-        </child>
-        <child>
-          <object class="GtkButton" id="play-button">
-            <property name="icon-name">play-symbolic</property>
-            <property name="action-name">app.toggle-play</property>
-            <style>
-              <class name="circular"/>
-            </style>
-          </object>
-        </child>
-        <child>
-          <object class="GtkButton" id="skip-forward-button">
-            <property name="icon-name">skip-forward-large-symbolic</property>
-            <property name="action-name">app.play-next</property>
-            <property name="action-target">false</property>
-            <style>
-              <class name="circular"/>
             </style>
           </object>
         </child>
