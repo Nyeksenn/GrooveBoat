@@ -251,23 +251,27 @@ final class MprisObject implements MediaPlayer2, MediaPlayer2Player, MediaPlayer
         }
         switch (property) {
             case "Volume" -> {
-                double volume = Math.max(0.0, Math.min(1.0, ((Number) raw).doubleValue()));
+                if (!(raw instanceof Number number)) {
+                    throw invalidType(property);
+                }
+                double volume = Math.max(0.0, Math.min(1.0, number.doubleValue()));
                 onMain(() -> {
                     app.getStream().setMuted(volume == 0.0);
                     app.getStream().setVolume(volume);
                 });
             }
             case "Shuffle" -> {
-                boolean shuffle = (Boolean) raw;
+                if (!(raw instanceof Boolean shuffle)) {
+                    throw invalidType(property);
+                }
                 onMain(() -> app.queueStore.setShuffle(shuffle));
             }
             case "LoopStatus" -> {
-                var mode = switch ((String) raw) {
-                    case "None" -> io.github.Nyeksenn.grooveboat.audio.RepeatMode.NONE;
-                    case "Track" -> io.github.Nyeksenn.grooveboat.audio.RepeatMode.TRACK;
-                    case "Playlist" -> io.github.Nyeksenn.grooveboat.audio.RepeatMode.PLAYLIST;
-                    default -> throw new DBusExecutionException("Invalid LoopStatus");
-                };
+                if (!(raw instanceof String status)) {
+                    throw invalidType(property);
+                }
+                var mode = MprisState.repeatMode(status)
+                        .orElseThrow(() -> new DBusExecutionException("Invalid LoopStatus"));
                 onMain(() -> app.queueStore.setRepeat(mode));
             }
             case "Rate" -> {
@@ -275,6 +279,10 @@ final class MprisObject implements MediaPlayer2, MediaPlayer2Player, MediaPlayer
             }
             default -> throw new DBusExecutionException("Property is read-only: " + property);
         }
+    }
+
+    private static DBusExecutionException invalidType(String property) {
+        return new DBusExecutionException("Invalid value type for " + property);
     }
 
     @Override

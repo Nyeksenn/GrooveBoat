@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.backend.jellyfin;
 
+import org.jspecify.annotations.Nullable;
 import static org.javagi.util.Intl.i18n;
 import io.github.Nyeksenn.grooveboat.backend.*;
 import org.semver4j.Semver;
@@ -19,6 +20,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -49,8 +51,8 @@ public final class JellyfinBackend implements MusicBackend {
     private final String deviceName;
     private final String appVersion;
 
-    private volatile String token;
-    private volatile String userId;
+    private volatile @Nullable String token;
+    private volatile @Nullable String userId;
 
     public JellyfinBackend(String baseUrl, String deviceId, String deviceName, String appVersion) {
         this.baseUrl = BackendSupport.normalizeBaseUrl(baseUrl);
@@ -172,7 +174,7 @@ public final class JellyfinBackend implements MusicBackend {
         }
         var product = info.path("ProductName").asString("");
         var version = info.path("Version").asString("");
-        if (!product.toLowerCase().contains("jellyfin") || version.isEmpty()) {
+        if (!product.toLowerCase(Locale.ROOT).contains("jellyfin") || version.isEmpty()) {
             return ServerInfo.incompatible(i18n("Not a Jellyfin server"));
         }
         var semver = Semver.coerce(version);

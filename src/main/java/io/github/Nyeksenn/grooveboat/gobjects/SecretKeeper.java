@@ -5,6 +5,7 @@ import org.gnome.secret.SchemaType;
 import org.gnome.secret.Secret;
 import org.javagi.base.GErrorException;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -40,13 +41,14 @@ public class SecretKeeper implements AutoCloseable {
         }, exec);
     }
 
-    public CompletableFuture<String> lookupPassword(String username, String protocol, String server) {
+    /** The stored credential, or empty when there is none or the keyring can't be read. */
+    public CompletableFuture<Optional<String>> lookupPassword(String username, String protocol, String server) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 var attributes = Secret.attributesBuild(SCHEMA, "user", username, "protocol", protocol, "server", server, null);
-                return Secret.passwordLookupvSync(SCHEMA, attributes, null);
+                return Optional.ofNullable(Secret.passwordLookupvSync(SCHEMA, attributes, null));
             } catch (GErrorException e) {
-                return null;
+                return Optional.empty();
             }
         }, exec);
     }

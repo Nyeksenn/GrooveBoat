@@ -1,17 +1,26 @@
 package io.github.Nyeksenn.grooveboat.backend;
 
-/**
- * Result of probing a server URL.
- *
- * @param compatible whether a supported server of the probed backend type answered
- * @param reason     user-facing explanation when not compatible, otherwise {@code null}
- */
-public record ServerInfo(boolean compatible, String name, String version, String reason) {
-    public static ServerInfo compatible(String name, String version) {
-        return new ServerInfo(true, name, version, null);
+import org.jspecify.annotations.Nullable;
+
+/** Result of probing a server URL. */
+public sealed interface ServerInfo {
+    /** A supported server of the probed backend type answered. */
+    record Compatible(String name, String version) implements ServerInfo {
     }
 
-    public static ServerInfo incompatible(String reason) {
-        return new ServerInfo(false, null, null, reason);
+    /**
+     * No usable server answered.
+     *
+     * @param reason user-facing explanation, if there is one
+     */
+    record Incompatible(@Nullable String reason) implements ServerInfo {
+    }
+
+    static ServerInfo compatible(String name, String version) {
+        return new Compatible(name, version);
+    }
+
+    static ServerInfo incompatible(String reason) {
+        return new Incompatible(reason);
     }
 }

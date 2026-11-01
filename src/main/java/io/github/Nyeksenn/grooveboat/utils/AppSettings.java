@@ -41,7 +41,7 @@ public final class AppSettings {
      */
     public static void migrate() {
         var settings = get();
-        if (settings.getString(BACKEND).equals(BackendType.NONE)
+        if (backend().isEmpty()
                 && !settings.getString(URL).isBlank()
                 && !settings.getString(USERNAME).isBlank()) {
             logger.info("Migrating existing configuration to the OpenSubsonic backend");

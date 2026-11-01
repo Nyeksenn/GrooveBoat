@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.backend.subsonic;
 
+import org.jspecify.annotations.Nullable;
 import static org.javagi.util.Intl.i18n;
 import io.github.Nyeksenn.grooveboat.backend.*;
 import io.github.Nyeksenn.grooveboat.backend.subsonic.dto.Album;
@@ -152,7 +153,7 @@ public final class SubsonicBackend implements MusicBackend {
 
     private static void requireOk(JsonNode node) throws IOException {
         var status = node.path("status").asString("");
-        if (!status.equals("ok")) {
+        if (!"ok".equals(status)) {
             var code = node.path("error").path("code").asInt(0);
             var message = node.path("error").path("message").asString("request failed");
             // 40: wrong credentials, 41: token auth not supported, 44: invalid API key
@@ -234,7 +235,7 @@ public final class SubsonicBackend implements MusicBackend {
         return artists.stream().map(a -> new RemoteArtistRef(a.id(), a.name())).toList();
     }
 
-    private static Instant parseCreated(String value) {
+    private static @Nullable Instant parseCreated(@Nullable String value) {
         if (value == null) {
             return null;
         }

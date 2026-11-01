@@ -116,7 +116,7 @@ public class GrooveboatWindow extends ApplicationWindow {
         app.executor.submit(() -> {
             try {
                 var backend = BackendFactory.create(type.get(), url);
-                var credential = secrets.lookupPassword(username, backend.scheme(), backend.host()).join();
+                var credential = secrets.lookupPassword(username, backend.scheme(), backend.host()).join().orElse(null);
                 var session = new Session(username, credential, userId);
                 var offline = false;
                 try {

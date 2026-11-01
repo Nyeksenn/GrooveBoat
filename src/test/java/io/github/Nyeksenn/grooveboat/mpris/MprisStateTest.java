@@ -2,6 +2,7 @@ package io.github.Nyeksenn.grooveboat.mpris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.github.Nyeksenn.grooveboat.audio.RepeatMode;
 import java.util.List;
 import org.freedesktop.dbus.DBusPath;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,15 @@ class MprisStateTest {
         assertThat(state.shuffle()).isFalse();
         assertThat(state.currentTrackId()).isEqualTo(MprisState.NO_TRACK);
         assertThat(state.metadata().get("mpris:trackid").getValue()).isEqualTo(new DBusPath(MprisState.NO_TRACK));
+    }
+
+    @Test
+    void loopStatusRoundTripsForEveryRepeatMode() {
+        for (var mode : RepeatMode.values()) {
+            assertThat(MprisState.repeatMode(MprisState.loopStatus(mode))).contains(mode);
+        }
+        assertThat(MprisState.repeatMode("Sideways")).isEmpty();
+        assertThat(MprisState.repeatMode("none")).isEmpty();
     }
 
     @Test

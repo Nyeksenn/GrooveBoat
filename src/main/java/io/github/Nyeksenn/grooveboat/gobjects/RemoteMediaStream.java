@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.gobjects;
 
+import org.jspecify.annotations.Nullable;
 import io.github.Nyeksenn.grooveboat.audio.AppPipeline;
 import io.github.Nyeksenn.grooveboat.backend.MusicBackend;
 import io.github.Nyeksenn.grooveboat.backend.PlaybackSource;
@@ -30,6 +31,8 @@ import java.util.function.Supplier;
  */
 public final class RemoteMediaStream extends MediaStream {
     private static final Logger logger = LoggerFactory.getLogger(RemoteMediaStream.class);
+    /** How often the playback position is polled while a song plays. */
+    private static final long POSITION_TICK_MS = 30L;
 
     /** A song together with the playback URL built for it and the backend that has to release it. */
     private record Track(SongListItem item, PlaybackSource source, MusicBackend backend) {
@@ -139,7 +142,7 @@ public final class RemoteMediaStream extends MediaStream {
         return item.getDuration().toNanos() / 1000L;
     }
 
-    private Track build(SongListItem item) {
+    private @Nullable Track build(SongListItem item) {
         var b = backend.get();
         if (b == null) {
             return null;
@@ -208,7 +211,7 @@ public final class RemoteMediaStream extends MediaStream {
     }
 
     /** Called by the pipeline on a streaming thread in about-to-finish. */
-    private String takeNextUri() {
+    private @Nullable String takeNextUri() {
         var track = next.getAndSet(null);
         if (track == null) {
             return null;
@@ -221,7 +224,7 @@ public final class RemoteMediaStream extends MediaStream {
      * Handles the pipeline's stream-start. After a gapless switch it moves the stream over to the new track and
      * returns its song, so the queue can follow; otherwise returns {@code null}.
      */
-    public SongListItem onStreamStart() {
+    public @Nullable SongListItem onStreamStart() {
         if (awaitingLoadStart) {
             awaitingLoadStart = false;
             fadeInPending = true;
@@ -313,7 +316,7 @@ public final class RemoteMediaStream extends MediaStream {
     }
 
     public void startTimestampUpdate() {
-        future = scheduler.scheduleAtFixedRate(this::updatePosition, 0L, 30L, TimeUnit.MILLISECONDS);
+        future = scheduler.scheduleAtFixedRate(this::updatePosition, 0L, POSITION_TICK_MS, TimeUnit.MILLISECONDS);
     }
 
     public void cancelTimestampUpdate() {

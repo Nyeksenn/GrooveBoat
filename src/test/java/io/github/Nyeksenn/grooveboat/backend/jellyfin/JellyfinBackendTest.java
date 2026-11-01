@@ -9,6 +9,7 @@ import io.github.Nyeksenn.grooveboat.backend.FakeServer;
 import io.github.Nyeksenn.grooveboat.backend.FakeServer.Reply;
 import io.github.Nyeksenn.grooveboat.backend.PlaybackSource;
 import io.github.Nyeksenn.grooveboat.backend.RemoteArtistRef;
+import io.github.Nyeksenn.grooveboat.backend.ServerInfo;
 import io.github.Nyeksenn.grooveboat.backend.Session;
 import java.io.IOException;
 import java.time.Duration;
@@ -48,10 +49,7 @@ class JellyfinBackendTest {
     void probeAcceptsRecentJellyfin() throws Exception {
         var body = "{\"ProductName\":\"Jellyfin Server\",\"Version\":\"10.10.3\",\"ServerName\":\"Home\"}";
         try (var server = new FakeServer((m, p, q) -> Reply.json(body))) {
-            var info = backend(server.baseUrl()).probe();
-            assertThat(info.compatible()).isTrue();
-            assertThat(info.name()).isEqualTo("Home");
-            assertThat(info.version()).isEqualTo("10.10.3");
+            assertThat(backend(server.baseUrl()).probe()).isEqualTo(new ServerInfo.Compatible("Home", "10.10.3"));
             assertThat(server.requests()).containsExactly("GET /System/Info/Public");
         }
     }
@@ -60,7 +58,7 @@ class JellyfinBackendTest {
     void probeRejectsOldJellyfin() throws Exception {
         var body = "{\"ProductName\":\"Jellyfin Server\",\"Version\":\"10.8.13\"}";
         try (var server = new FakeServer((m, p, q) -> Reply.json(body))) {
-            assertThat(backend(server.baseUrl()).probe().compatible()).isFalse();
+            assertThat(backend(server.baseUrl()).probe()).isInstanceOf(ServerInfo.Incompatible.class);
         }
     }
 
@@ -69,9 +67,9 @@ class JellyfinBackendTest {
         try (var other = new FakeServer((m, p, q) -> Reply.json("{\"ProductName\":\"Emby\",\"Version\":\"4.8\"}"));
              var missing = new FakeServer((m, p, q) -> Reply.status(404));
              var garbage = new FakeServer((m, p, q) -> Reply.json("<html>"))) {
-            assertThat(backend(other.baseUrl()).probe().compatible()).isFalse();
-            assertThat(backend(missing.baseUrl()).probe().compatible()).isFalse();
-            assertThat(backend(garbage.baseUrl()).probe().compatible()).isFalse();
+            assertThat(backend(other.baseUrl()).probe()).isInstanceOf(ServerInfo.Incompatible.class);
+            assertThat(backend(missing.baseUrl()).probe()).isInstanceOf(ServerInfo.Incompatible.class);
+            assertThat(backend(garbage.baseUrl()).probe()).isInstanceOf(ServerInfo.Incompatible.class);
         }
     }
 

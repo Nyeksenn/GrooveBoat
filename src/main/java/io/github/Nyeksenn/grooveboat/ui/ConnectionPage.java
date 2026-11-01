@@ -94,9 +94,9 @@ public class ConnectionPage extends NavigationPage {
                 info = null;
             }
 
-            if (info != null && info.compatible()) {
+            if (info instanceof ServerInfo.Compatible(var name, var version)) {
                 final var found = backend;
-                logger.info("Found {} {} at {}", info.name(), info.version(), found.host());
+                logger.info("Found {} {} at {}", name, version, found.host());
                 GLib.idleAddOnce(() -> {
                     connectionNextButton.setSensitive(true);
                     dialog.setCandidate(found);
@@ -110,12 +110,13 @@ public class ConnectionPage extends NavigationPage {
 
             // Wrong server type picked? Point the user at the right one.
             var other = type.other();
-            if (probeQuietly(other, url).compatible()) {
+            if (probeQuietly(other, url) instanceof ServerInfo.Compatible) {
                 fail(String.format(i18n("This looks like a %1$s server. Go back and choose %1$s."), other.displayName()));
             } else if (info == null) {
                 fail(i18n("Unable to reach server"));
             } else {
-                fail(info.reason() != null ? info.reason() : i18n("Incompatible server"));
+                var reason = info instanceof ServerInfo.Incompatible(var r) ? r : null;
+                fail(reason != null ? reason : i18n("Incompatible server"));
             }
         });
     }

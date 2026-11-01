@@ -5,35 +5,21 @@ import org.gnome.gtk.Ordering;
 import org.gnome.gtk.Sorter;
 import org.gnome.gtk.SorterOrder;
 import org.javagi.gobject.annotations.RegisteredType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.lang.foreign.MemorySegment;
+import java.util.Comparator;
+import java.util.Locale;
 
 @RegisteredType(name = "AlbumTitleSorter")
 public class AlbumTitleSorter extends Sorter {
-    private static final Logger logger = LoggerFactory.getLogger(AlbumTitleSorter.class);
+    /** Case-insensitive: by album artist, then by album name. */
+    private static final Comparator<AlbumListItem> ORDER = Comparator
+            .comparing((AlbumListItem item) -> item.getAlbumArtist().toLowerCase(Locale.ROOT))
+            .thenComparing(item -> item.getAlbumName().toLowerCase(Locale.ROOT));
 
     @Override
     public Ordering compare(GObject item1, GObject item2) {
-        var first = (AlbumListItem) item1;
-        var second = (AlbumListItem) item2;
-        var artistOrdering = first.getAlbumArtist().toLowerCase().compareTo(second.getAlbumArtist().toLowerCase());
-        var albumOrdering = first.getAlbumName().toLowerCase().compareTo(second.getAlbumName().toLowerCase());
-
-        if (artistOrdering < 0) {
-            return Ordering.SMALLER;
-        } else if (artistOrdering == 0) {
-            if (albumOrdering < 0) {
-                return Ordering.SMALLER;
-            } else if (albumOrdering == 0) {
-                return Ordering.EQUAL;
-            } else {
-                return Ordering.LARGER;
-            }
-        } else {
-            return Ordering.LARGER;
-        }
+        var result = ORDER.compare((AlbumListItem) item1, (AlbumListItem) item2);
+        return result < 0 ? Ordering.SMALLER : result == 0 ? Ordering.EQUAL : Ordering.LARGER;
     }
 
     @Override

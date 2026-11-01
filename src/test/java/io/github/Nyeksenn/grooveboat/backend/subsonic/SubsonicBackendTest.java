@@ -8,6 +8,7 @@ import io.github.Nyeksenn.grooveboat.backend.BackendType;
 import io.github.Nyeksenn.grooveboat.backend.FakeServer;
 import io.github.Nyeksenn.grooveboat.backend.FakeServer.Reply;
 import io.github.Nyeksenn.grooveboat.backend.RemoteArtistRef;
+import io.github.Nyeksenn.grooveboat.backend.ServerInfo;
 import io.github.Nyeksenn.grooveboat.backend.Session;
 import java.io.IOException;
 import java.time.Duration;
@@ -42,10 +43,8 @@ class SubsonicBackendTest {
     @Test
     void probeAcceptsOpenSubsonicServers() throws Exception {
         try (var server = new FakeServer((m, p, q) -> Reply.json(envelope("")))) {
-            var info = new SubsonicBackend(server.baseUrl()).probe();
-            assertThat(info.compatible()).isTrue();
-            assertThat(info.name()).isEqualTo("navidrome");
-            assertThat(info.version()).isEqualTo("0.55");
+            assertThat(new SubsonicBackend(server.baseUrl()).probe())
+                    .isEqualTo(new ServerInfo.Compatible("navidrome", "0.55"));
         }
     }
 
@@ -53,7 +52,7 @@ class SubsonicBackendTest {
     void probeRejectsPlainSubsonic() throws Exception {
         var body = "{\"subsonic-response\":{\"status\":\"ok\",\"version\":\"1.16.1\"}}";
         try (var server = new FakeServer((m, p, q) -> Reply.json(body))) {
-            assertThat(new SubsonicBackend(server.baseUrl()).probe().compatible()).isFalse();
+            assertThat(new SubsonicBackend(server.baseUrl()).probe()).isInstanceOf(ServerInfo.Incompatible.class);
         }
     }
 
@@ -61,7 +60,7 @@ class SubsonicBackendTest {
     void probeRejectsOldApiVersions() throws Exception {
         var body = "{\"subsonic-response\":{\"status\":\"ok\",\"version\":\"1.10.0\",\"openSubsonic\":true}}";
         try (var server = new FakeServer((m, p, q) -> Reply.json(body))) {
-            assertThat(new SubsonicBackend(server.baseUrl()).probe().compatible()).isFalse();
+            assertThat(new SubsonicBackend(server.baseUrl()).probe()).isInstanceOf(ServerInfo.Incompatible.class);
         }
     }
 

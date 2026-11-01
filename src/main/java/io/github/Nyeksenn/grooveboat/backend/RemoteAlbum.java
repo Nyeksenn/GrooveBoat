@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.backend;
 
+import org.jspecify.annotations.Nullable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -9,6 +10,6 @@ import java.util.List;
  *
  * @param imageId backend image id for {@link MusicBackend#cacheImage}, or {@code null} if the album has no cover
  */
-public record RemoteAlbum(String id, String title, int songCount, int year, Duration duration, String imageId,
+public record RemoteAlbum(String id, String title, int songCount, int year, Duration duration, @Nullable String imageId,
                           List<RemoteArtistRef> artists, Instant created) {
 }

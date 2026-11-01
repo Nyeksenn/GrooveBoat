@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.audio;
 
+import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -29,7 +30,7 @@ final class PlayOrder<T> {
      * shuffled order is first brought in line with the queue: entries that left are dropped, new entries are inserted
      * at random places after {@code current}.
      */
-    List<T> resolve(List<T> queue, T current, boolean shuffle) {
+    List<T> resolve(List<T> queue, @Nullable T current, boolean shuffle) {
         if (!shuffle) {
             return queue;
         }
@@ -37,7 +38,7 @@ final class PlayOrder<T> {
         return shuffled;
     }
 
-    private void reconcile(List<T> queue, T current) {
+    private void reconcile(List<T> queue, @Nullable T current) {
         var present = Collections.newSetFromMap(new IdentityHashMap<T, Boolean>());
         present.addAll(queue);
         shuffled.removeIf(item -> !present.contains(item));
@@ -59,7 +60,7 @@ final class PlayOrder<T> {
     }
 
     /** The entry a skip-forward would play (wrapping in repeat-playlist mode), or {@code null}. */
-    static <T> T after(List<T> order, T current, RepeatMode repeat) {
+    static <T> @Nullable T after(List<T> order, @Nullable T current, RepeatMode repeat) {
         if (current == null) {
             return null;
         }
@@ -71,7 +72,7 @@ final class PlayOrder<T> {
     }
 
     /** The entry a skip-back would play (wrapping in repeat-playlist mode), or {@code null}. */
-    static <T> T before(List<T> order, T current, RepeatMode repeat) {
+    static <T> @Nullable T before(List<T> order, @Nullable T current, RepeatMode repeat) {
         if (current == null) {
             return null;
         }

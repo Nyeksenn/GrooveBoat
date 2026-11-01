@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.audio;
 
+import org.jspecify.annotations.Nullable;
 import io.github.Nyeksenn.grooveboat.entities.query.QAlbumModel;
 import io.github.Nyeksenn.grooveboat.entities.query.QSongModel;
 import io.github.Nyeksenn.grooveboat.gobjects.SongListItem;
@@ -118,7 +119,7 @@ public class QueueStore extends GObject {
     }
 
     /** The selected song, or {@code null}. */
-    public SongListItem currentItem() {
+    public @Nullable SongListItem currentItem() {
         var idx = selection.getSelected();
         return idx == GTK_INVALID_LIST_POSITION ? null : model.getItem(idx);
     }
@@ -133,12 +134,12 @@ public class QueueStore extends GObject {
     }
 
     /** The song a skip-forward would play (wrapping in repeat-playlist mode), or {@code null}. */
-    private SongListItem itemAfterCurrent() {
+    private @Nullable SongListItem itemAfterCurrent() {
         var current = currentItem();
         return current == null ? null : PlayOrder.after(playOrder(), current, repeat);
     }
 
-    private SongListItem itemBeforeCurrent() {
+    private @Nullable SongListItem itemBeforeCurrent() {
         var current = currentItem();
         return current == null ? null : PlayOrder.before(playOrder(), current, repeat);
     }
