@@ -19,6 +19,11 @@ public class BaseModel extends Model {
     @WhenModified
     Instant whenModified;
 
+    /** Cuts {@code value} to the size of its column, so a long server value can't make the insert fail. */
+    static String truncate(String value, int max) {
+        return value == null || value.length() <= max ? value : value.substring(0, max);
+    }
+
     public Long getVersion() {
         return version;
     }

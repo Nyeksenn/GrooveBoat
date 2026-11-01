@@ -128,8 +128,7 @@ public final class LibrarySync implements AutoCloseable {
                             logger.warn("Unable to cache cover art for album {}: {}", album.title(), e.getMessage());
                         }
                     }
-                    return new AlbumModel(album.id(), truncate(album.title(), 100), album.songCount(), album.year(),
-                            album.duration(), coverPath, albumArtists);
+                    return AlbumModel.from(album, coverPath, albumArtists);
                 }, exec));
             }
 
@@ -180,7 +179,7 @@ public final class LibrarySync implements AutoCloseable {
                     }
                     DB.sqlUpdate(ARTIST_UPSERT)
                             .setParameter("id", remote.id())
-                            .setParameter("name", truncate(remote.name(), 200))
+                            .setParameter("name", ArtistModel.clampName(remote.name()))
                             // Ebean maps Path columns as file URIs and reads them back with Paths.get(URI); a
                             // plain path here made every later load of this artist fail.
                             .setParameter("artistImagePath", imagePath == null ? null : imagePath.toUri().toString())
@@ -193,17 +192,13 @@ public final class LibrarySync implements AutoCloseable {
         }
     }
 
-    private static String truncate(String value, int max) {
-        return value == null || value.length() <= max ? value : value.substring(0, max);
-    }
-
     private static ArrayList<ArtistModel> resolveArtists(List<RemoteArtistRef> artists) {
         var artistList = new ArrayList<ArtistModel>(3);
         for (var artist : artists) {
             var savedArtist = new QArtistModel().id.equalTo(artist.id()).findOne();
             if (savedArtist == null) {
                 try {
-                    var newArtist = new ArtistModel(artist.id(), truncate(artist.name(), 200));
+                    var newArtist = ArtistModel.from(artist);
                     newArtist.save();
                     artistList.add(newArtist);
                 } catch (DuplicateKeyException e) {
@@ -248,23 +243,12 @@ public final class LibrarySync implements AutoCloseable {
                     checkCancelled();
                     var savedSongModel = new QSongModel().id.equalTo(song.id()).findOne();
                     var artists = resolveArtists(song.artists());
-                    var newSongModel = new SongModel(
-                            song.id(),
-                            truncate(song.title(), 200),
-                            song.track(),
-                            song.year(),
-                            song.duration(),
-                            song.bitRate(),
-                            truncate(song.contentType(), 50),
-                            song.discNumber(),
-                            artists,
-                            album
-                    );
+                    var newSongModel = SongModel.from(song, artists, album);
 
                     if (savedSongModel == null) {
                         return newSongModel;
                     }
-                    if (!newSongModel.equals(savedSongModel)) {
+                    if (!savedSongModel.hasSameContent(newSongModel)) {
                         // Update the loaded row in place; saving a new bean with the same id would insert.
                         savedSongModel.setAllFields(newSongModel);
                     }

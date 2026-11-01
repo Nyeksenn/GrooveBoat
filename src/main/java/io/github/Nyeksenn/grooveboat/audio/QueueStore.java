@@ -274,17 +274,7 @@ public class QueueStore extends GObject {
         var texture = loader.load(album.getId());
         var items = new ArrayList<SongListItem>();
         for (var song : library.getSongs(albumId)) {
-            items.add(new SongListItem(
-                    song.getTitle(),
-                    song.getId(),
-                    song.getDisplayArtist(),
-                    album.getTitle(),
-                    song.getDuration(),
-                    song.getContentType(),
-                    texture,
-                    album.getId(),
-                    album.getCoverPath()
-            ));
+            items.add(SongListItem.of(song, album, texture));
         }
         return items;
     }
@@ -306,17 +296,7 @@ public class QueueStore extends GObject {
                             var song = new QSongModel().id.equalTo(songId).findOne();
                             if (song != null) {
                                 var texture = loader.load(song.getAlbum().getId());
-                                var item = new SongListItem(
-                                        song.getTitle(),
-                                        song.getId(),
-                                        song.getDisplayArtist(),
-                                        song.getAlbum().getTitle(),
-                                        song.getDuration(),
-                                        song.getContentType(),
-                                        texture,
-                                        song.getAlbum().getId(),
-                                        song.getAlbum().getCoverPath()
-                                );
+                                var item = SongListItem.of(song, song.getAlbum(), texture);
                                 GLib.idleAddOnce(() -> {
                                     model.removeAll();
                                     model.append(item);
@@ -341,17 +321,7 @@ public class QueueStore extends GObject {
                             var song = new QSongModel().id.equalTo(songId).findOne();
                             if (song != null) {
                                 var texture = loader.load(song.getAlbum().getId());
-                                var item = new SongListItem(
-                                        song.getTitle(),
-                                        song.getId(),
-                                        song.getDisplayArtist(),
-                                        song.getAlbum().getTitle(),
-                                        song.getDuration(),
-                                        song.getContentType(),
-                                        texture,
-                                        song.getAlbum().getId(),
-                                        song.getAlbum().getCoverPath()
-                                );
+                                var item = SongListItem.of(song, song.getAlbum(), texture);
                                 GLib.idleAddOnce(() -> model.append(item));
                             }
                         });

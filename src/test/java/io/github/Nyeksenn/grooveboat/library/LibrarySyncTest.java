@@ -161,6 +161,47 @@ class LibrarySyncTest {
     }
 
     @Test
+    void getSongsUpdatesChangedSongsInPlaceWhenTheServerListGrows() {
+        backend.albums.add(album("al1", "First", T1));
+        backend.songs.put("al1", List.of(song("s1", "al1", "One", 1), song("s2", "al1", "Two", 2)));
+        sync.refresh(false);
+        sync.getSongs("al1");
+
+        backend.songs.put("al1", List.of(song("s1", "al1", "One (Remastered)", 1), song("s2", "al1", "Two", 2),
+                song("s3", "al1", "Three", 3)));
+        var updated = sync.getSongs("al1");
+
+        assertThat(updated).extracting(SongModel::getTitle)
+                .containsExactlyInAnyOrder("One (Remastered)", "Two", "Three");
+        assertThat(db.find(SongModel.class).findCount()).isEqualTo(3);
+        assertThat(db.find(SongModel.class).where().idEq("s1").findOne().getTitle()).isEqualTo("One (Remastered)");
+    }
+
+    @Test
+    void getSongsTruncatesOverlongColumns() {
+        backend.albums.add(album("al1", "First", T1));
+        backend.songs.put("al1", List.of(new RemoteSong("s1", "al1", "t".repeat(300), 1, 2024, Duration.ofMinutes(4),
+                320, "c".repeat(80), 1, List.of(BAND))));
+        sync.refresh(false);
+
+        var saved = sync.getSongs("al1").getFirst();
+
+        assertThat(saved.getTitle()).hasSize(200);
+        assertThat(saved.getContentType()).hasSize(50);
+    }
+
+    @Test
+    void artistNamesAreTruncatedToTheColumnSize() {
+        backend.artists.put("long", new RemoteArtist("long", "n".repeat(300), null));
+        backend.albums.add(new RemoteAlbum("al1", "First", 1, 2024, Duration.ofMinutes(4), null,
+                List.of(new RemoteArtistRef("long", "n".repeat(300))), T1));
+
+        sync.refresh(false);
+
+        assertThat(db.find(ArtistModel.class).where().idEq("long").findOne().getName()).hasSize(200);
+    }
+
+    @Test
     void getSongsFallsBackToTheCacheWhenOffline() {
         backend.albums.add(album("al1", "First", T1));
         backend.songs.put("al1", List.of(song("s1", "al1", "One", 1)));

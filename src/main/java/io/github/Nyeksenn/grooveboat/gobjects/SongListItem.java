@@ -1,7 +1,10 @@
 package io.github.Nyeksenn.grooveboat.gobjects;
 
+import io.github.Nyeksenn.grooveboat.entities.AlbumModel;
+import io.github.Nyeksenn.grooveboat.entities.SongModel;
 import org.gnome.gdk.Texture;
 import org.gnome.gobject.GObject;
+import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.time.Duration;
@@ -69,11 +72,13 @@ public final class SongListItem extends GObject {
         return contentType;
     }
 
-    public SongListItem(String songName, String songId, String artistName, String albumTitle, Duration duration, String contentType, Texture coverArt) {
-        this(songName, songId, artistName, albumTitle, duration, contentType, coverArt, null, null);
+    /** A queue/list entry for {@code song} of {@code album}. {@code cover} is the album's decoded cover, if any. */
+    public static SongListItem of(SongModel song, AlbumModel album, @Nullable Texture cover) {
+        return new SongListItem(song.getTitle(), song.getId(), song.getDisplayArtist(), album.getTitle(),
+                song.getDuration(), song.getContentType(), cover, album.getId(), album.getCoverPath());
     }
 
-    public SongListItem(String songName, String songId, String artistName, String albumTitle, Duration duration, String contentType, Texture coverArt, String albumId, Path coverPath) {
+    private SongListItem(String songName, String songId, String artistName, String albumTitle, Duration duration, String contentType, Texture coverArt, String albumId, Path coverPath) {
         this.albumId = albumId;
         this.coverPath = coverPath;
         this.trackId = "/io/github/Nyeksenn/grooveboat/track/" + TRACK_COUNTER.incrementAndGet();

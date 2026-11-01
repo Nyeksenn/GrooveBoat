@@ -101,14 +101,7 @@ public class SongListPage extends NavigationPage {
                 try {
                     var texture = albumTextureLoader.load(albumId);
                     for (var song : songs) {
-                        var songListItem = new SongListItem(
-                                song.getTitle(),
-                                song.getId(),
-                                song.getDisplayArtist(),
-                                song.getAlbum().getTitle(),
-                                song.getDuration(),
-                                song.getContentType(),
-                                texture);
+                        var songListItem = SongListItem.of(song, song.getAlbum(), texture);
                         GLib.idleAddOnce(() -> this.store.append(songListItem));
                     }
                 } catch (NullPointerException e) {

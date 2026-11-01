@@ -5,6 +5,9 @@ import io.ebean.annotation.Length;
 import io.ebean.annotation.NotNull;
 import jakarta.persistence.*;
 
+import io.github.Nyeksenn.grooveboat.backend.RemoteSong;
+import org.jspecify.annotations.Nullable;
+
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -12,11 +15,16 @@ import java.util.Objects;
 @Entity
 @Table(name = "song")
 public class SongModel extends BaseModel {
+    /** Size of the {@code title} column. */
+    public static final int TITLE_LENGTH = 200;
+    /** Size of the {@code content_type} column. */
+    public static final int CONTENT_TYPE_LENGTH = 50;
+
     @Id
     String id;
 
     @NotNull
-    @Length(200)
+    @Length(TITLE_LENGTH)
     String title;
 
     @NotNull
@@ -29,7 +37,7 @@ public class SongModel extends BaseModel {
 
     int bitRate;
 
-    @Length(50)
+    @Length(CONTENT_TYPE_LENGTH)
     String contentType;
 
     int discNumber;
@@ -123,21 +131,14 @@ public class SongModel extends BaseModel {
     }
 
     public String getDisplayArtist() {
-        var sb = new StringBuilder();
-        var numSongArtists = songArtists.size();
-        for (int i = 0; i < numSongArtists; i++) {
-            sb.append(songArtists.get(i).getName());
-            if (!(i == (numSongArtists - 1))) {
-                sb.append(" & ");
-            }
-        }
-
-        return sb.toString();
+        return ArtistModel.joinNames(songArtists, " & ");
     }
 
-    public String getDisplayArtistPango() {
-        var artist = getDisplayArtist();
-        return artist.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    /** A new song from the server's data. Not saved. */
+    public static SongModel from(RemoteSong song, List<ArtistModel> artists, @Nullable AlbumModel album) {
+        return new SongModel(song.id(), truncate(song.title(), TITLE_LENGTH), song.track(), song.year(),
+                song.duration(), song.bitRate(), truncate(song.contentType(), CONTENT_TYPE_LENGTH),
+                song.discNumber(), artists, album);
     }
 
     public SongModel(String songId, String title, int track, int year, Duration duration, int bitRate, String contentType, int discNumber, List<ArtistModel> songArtists, AlbumModel album) {
@@ -165,15 +166,36 @@ public class SongModel extends BaseModel {
         this.setAlbum(src.getAlbum());
     }
 
+    /**
+     * Whether every synced field matches {@code other}'s. Artists (in order) and the album are compared by id, so
+     * this never walks into their own collections.
+     */
+    public boolean hasSameContent(SongModel other) {
+        return track == other.track && releaseYear == other.releaseYear && bitRate == other.bitRate
+                && discNumber == other.discNumber
+                && Objects.equals(title, other.title)
+                && Objects.equals(duration, other.duration)
+                && Objects.equals(contentType, other.contentType)
+                && Objects.equals(artistIds(), other.artistIds())
+                && Objects.equals(albumId(), other.albumId());
+    }
+
+    private List<String> artistIds() {
+        return songArtists == null ? List.of() : songArtists.stream().map(ArtistModel::getId).toList();
+    }
+
+    private @Nullable String albumId() {
+        return album == null ? null : album.getId();
+    }
+
+    /** Entities are the same when their ids are: the other fields change while the row stays the same song. */
     @Override
     public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        SongModel songModel = (SongModel) o;
-        return getTrack() == songModel.getTrack() && getReleaseYear() == songModel.getReleaseYear() && getBitRate() == songModel.getBitRate() && getDiscNumber() == songModel.getDiscNumber() && Objects.equals(getId(), songModel.getId()) && Objects.equals(getTitle(), songModel.getTitle()) && Objects.equals(getDuration(), songModel.getDuration()) && Objects.equals(getContentType(), songModel.getContentType()) && Objects.equals(getSongArtists(), songModel.getSongArtists()) && Objects.equals(getAlbum(), songModel.getAlbum());
+        return this == o || (o != null && getClass() == o.getClass() && Objects.equals(id, ((SongModel) o).id));
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getTitle(), getTrack(), getReleaseYear(), getDuration(), getBitRate(), getContentType(), getDiscNumber(), getSongArtists(), getAlbum());
+        return Objects.hashCode(id);
     }
 }

@@ -79,8 +79,7 @@ public class AlbumListView extends Box {
             // parallelStream) are broken and crash GTK as soon as they are added to a list store.
             var items = new ArrayList<AlbumListItem>(albums.size());
             for (var album : albums) {
-                items.add(new AlbumListItem(albumTextureLoader.load(album.getId()), album.getTitle(),
-                        album.getDisplayArtist(), album.getId()));
+                items.add(AlbumListItem.of(album, albumTextureLoader.load(album.getId())));
             }
             GLib.idleAddOnce(() -> {
                 if (generation == loadGeneration) {

@@ -61,8 +61,7 @@ public class ArtistSongsPage extends NavigationPage {
                 // Built on this executor thread, not the ForkJoin common pool (see AlbumListView).
                 var items = new ArrayList<SongListItem>(songs.size());
                 for (var song : songs) {
-                    items.add(new SongListItem(song.getTitle(), song.getId(), song.getDisplayArtist(),
-                            album.getTitle(), song.getDuration(), song.getContentType(), cover));
+                    items.add(SongListItem.of(song, album, cover));
                 }
                 var albumId = album.getId();
                 var title = album.getTitle();
