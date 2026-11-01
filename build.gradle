@@ -71,6 +71,11 @@ tasks.named('shadowJar') {
 
 tasks.named('test') {
     useJUnitPlatform()
+    jvmArgs '--enable-native-access=ALL-UNNAMED'
+    // LibrarySync reads GSettings: use the schema compiled for development runs, with a throwaway backend
+    dependsOn 'compileSchemas'
+    environment 'GSETTINGS_BACKEND', 'memory'
+    environment 'GSETTINGS_SCHEMA_DIR', layout.buildDirectory.dir('schemas').get().asFile.absolutePath
     failOnNoDiscoveredTests = false
 }
 
