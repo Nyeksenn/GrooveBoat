@@ -54,3 +54,11 @@
   border-style: none;
   box-shadow: none;
 }
+
+// The play/pause button of the player controls: larger than the skip buttons next to it.
+button.circular.play-pause-large {
+  min-width: 56px;
+  min-height: 56px;
+  padding: 0;
+  -gtk-icon-size: 28px;
+}

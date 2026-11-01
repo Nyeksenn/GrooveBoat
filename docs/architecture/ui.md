@@ -68,4 +68,15 @@ Menu items and buttons in templates refer to these actions by name, with the tar
 
 Logout replaces the main window with a new one, so widgets must not leave anything behind that outlives their window. The queue store, its selection model, the media stream and the application live for the whole process. Property bindings from the stream to a widget end on their own when the widget is destroyed. Widgets that connect handlers to them (the player and mini player to the *initialize-song* signal, the queue view to the selection) keep the connection and disconnect it when they are unrealised. Without that, the old window's widgets would keep reacting to the new session after they were destroyed.
 
+Widgets also get realised again whenever the window crosses the size breakpoint (the split view collapses or expands), so two helpers in `ui/AppWidgets` cover the two cases:
+
+- `whileRealized(widget, scope -> …)` runs its setup on every realise and releases what was registered in the scope (`scope.track(connection)` for signal handlers, `scope.onRelease(cleanup)` for listeners) on every unrealise. Use it for anything connected to the queue store, its selection or the stream.
+- `onFirstRealize(widget, setup)` runs one-time setup (loading the grid, adding actions) only the first time. Pages that must wait for a session before loading keep their own guard.
+
+`AppWidgets.app(widget)` and `window(widget)` reach the application and main window above a realised widget; they are only valid while it is realised, so code that can run while a widget is unrealised (a reload action) keeps what it needs from setup.
+
+## Loading data off the main thread
+
+`ui/UiAsync` is the one way widgets do work on the pool and show the result: `run(executor, work, onUi)` runs `work` on the pool and `onUi` on the main loop, `background(executor, task)` is for tasks that update the UI themselves, and both log failures instead of losing them. `UiAsync.Latest` is for loads that replace each other (the album and artist grids): only the newest result is applied, so overlapping reloads can't add items twice. The work runs on the given executor, which keeps custom GObjects off the ForkJoin common pool.
+
 Application actions registered by a widget (refresh and full refresh, from the music chooser) are registered again by the new window's widget, which replaces the old ones.

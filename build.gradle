@@ -33,10 +33,14 @@ dependencies {
     implementation 'com.h2database:h2:2.5.252'
     implementation 'com.github.hypfvieh:dbus-java-core:5.2.2'
     implementation 'com.github.hypfvieh:dbus-java-transport-native-unixsocket:5.2.2'
-    implementation 'commons-validator:commons-validator:1.11.0'
     implementation 'org.semver4j:semver4j:6.0.0'
+    implementation 'org.jspecify:jspecify:1.0.0'
 
     testImplementation "io.ebean:ebean-test:${ebeanVersion}"
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.13.4'
+    testImplementation 'org.assertj:assertj-core:3.27.3'
+    testImplementation 'ch.qos.logback:logback-classic:1.6.6'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.13.4'
 
     annotationProcessor "io.ebean:querybean-generator:${ebeanVersion}"
     runtimeOnly 'org.slf4j:slf4j-api:2.0.20'
@@ -46,6 +50,7 @@ dependencies {
 // No toolchain: the flatpak build uses whatever JDK the SDK extension provides (25 or newer).
 tasks.withType(JavaCompile).configureEach {
     options.release = 25
+    options.compilerArgs += ['-Xlint:all,-processing,-this-escape', '-Werror']
 }
 
 // Generate a file with all dependency urls for the offline flatpak build
@@ -65,8 +70,13 @@ tasks.named('shadowJar') {
     mergeServiceFiles()
 }
 
-// src/test only holds MigrationGenerator, no tests
 tasks.named('test') {
+    useJUnitPlatform()
+    jvmArgs '--enable-native-access=ALL-UNNAMED'
+    // LibrarySync reads GSettings: use the schema compiled for development runs, with a throwaway backend
+    dependsOn 'compileSchemas'
+    environment 'GSETTINGS_BACKEND', 'memory'
+    environment 'GSETTINGS_SCHEMA_DIR', layout.buildDirectory.dir('schemas').get().asFile.absolutePath
     failOnNoDiscoveredTests = false
 }
 

@@ -7,6 +7,7 @@ import org.gnome.gtk.FilterMatch;
 import org.javagi.gobject.annotations.RegisteredType;
 
 import java.lang.foreign.MemorySegment;
+import java.util.Locale;
 
 @RegisteredType(name = "AlbumFilter")
 public class AlbumFilter extends Filter {
@@ -17,7 +18,7 @@ public class AlbumFilter extends Filter {
     }
 
     public void setSearchString(String searchString) {
-        this.searchString = searchString.toLowerCase();
+        this.searchString = searchString.toLowerCase(Locale.ROOT);
         emitChanged(FilterChange.DIFFERENT);
     }
 
@@ -29,8 +30,8 @@ public class AlbumFilter extends Filter {
     @Override
     public boolean match(GObject item) {
         var i = (AlbumListItem) item;
-        var titleMatch = i.getAlbumName().toLowerCase().contains(searchString);
-        var artistMatch = i.getAlbumArtist().toLowerCase().contains(searchString);
+        var titleMatch = i.getAlbumName().toLowerCase(Locale.ROOT).contains(searchString);
+        var artistMatch = i.getAlbumArtist().toLowerCase(Locale.ROOT).contains(searchString);
         return titleMatch || artistMatch;
     }
 
@@ -38,7 +39,7 @@ public class AlbumFilter extends Filter {
     }
 
     public AlbumFilter(String searchString) {
-        this.searchString = searchString.toLowerCase();
+        this.searchString = searchString.toLowerCase(Locale.ROOT);
     }
 
     public AlbumFilter(MemorySegment address) {

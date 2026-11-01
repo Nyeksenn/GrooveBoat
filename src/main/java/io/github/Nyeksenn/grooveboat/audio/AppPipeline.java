@@ -94,7 +94,7 @@ public final class AppPipeline {
         try {
             next = nextUriSupplier.get();
         } catch (RuntimeException e) {
-            logger.warn("Couldn't get next track: {}", e.getMessage());
+            logger.warn("Couldn't get next track", e);
             next = null;
         }
         if (next != null) {

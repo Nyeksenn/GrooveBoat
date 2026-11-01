@@ -23,13 +23,22 @@ public final class BackendFactory {
     }
 
     /** Stable per-installation device id. Created on first use and kept across logouts. */
-    private static synchronized String deviceId() {
-        var settings = AppSettings.get();
-        var id = settings.getString(AppSettings.DEVICE_ID);
-        if (id.isBlank()) {
-            id = "grooveboat-" + UUID.randomUUID().toString().replace("-", "");
-            settings.setString(AppSettings.DEVICE_ID, id);
+    private static String deviceId() {
+        return DeviceId.VALUE;
+    }
+
+    /** Lazily initialized, so the id is only read from (or written to) the settings when a Jellyfin backend is made. */
+    private static final class DeviceId {
+        static final String VALUE = load();
+
+        private static String load() {
+            var settings = AppSettings.get();
+            var id = settings.getString(AppSettings.DEVICE_ID);
+            if (id.isBlank()) {
+                id = "grooveboat-" + UUID.randomUUID().toString().replace("-", "");
+                settings.setString(AppSettings.DEVICE_ID, id);
+            }
+            return id;
         }
-        return id;
     }
 }

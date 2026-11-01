@@ -57,10 +57,12 @@ public class Main {
         properties.put("datasource.db.databaseUrl", dbUrl);
 
         cfg.loadFromProperties(properties);
-        cfg.setDdlGenerate(false);
-        cfg.setDdlRun(false);
-        cfg.setDdlCreateOnly(false);
-        cfg.setDefaultServer(true);
+        cfg.ddlGenerate(false);
+        cfg.ddlRun(false);
+        cfg.ddlCreateOnly(false);
+        cfg.defaultDatabase(true);
+        // Anything still loaded lazily (a collection of one entity) is fetched for up to 100 entities at once.
+        cfg.lazyLoadBatchSize(100);
         cfg.setPackages(List.of("io.github.Nyeksenn.grooveboat.entities"));
         cfg.build();
 

@@ -76,15 +76,15 @@ public class SongListPage extends NavigationPage {
 
     public void loadItems() {
         if (this.library == null && this.executor == null) {
-            var window = (GrooveboatWindow) getRoot();
-            var app = (GrooveboatApp) window.getApplication();
+            var window = AppWidgets.window(this);
+            var app = AppWidgets.app(this);
             var albumTextureLoader = CoverLoader.getInstance();
 
             this.library = app.getLibrary();
             if (this.library == null) {
                 return;
             }
-            this.executor = app.executor;
+            this.executor = app.executors.io;
             this.win = window;
 
             var menuItem = new MenuItem();
@@ -92,27 +92,21 @@ public class SongListPage extends NavigationPage {
             menuItem.setActionAndTargetValue("app.queue-album", Variant.string(albumId));
             this.albumQueueMenu.appendItem(menuItem);
 
-            this.executor.submit(() -> {
+            UiAsync.background(this.executor, () -> {
                 var songs = library.getSongs(albumId);
                 if (songs.isEmpty()) {
                     logger.warn("No songs for album {}", albumId);
                     return;
                 }
-                try {
-                    var texture = albumTextureLoader.load(albumId);
-                    for (var song : songs) {
-                        var songListItem = new SongListItem(
-                                song.getTitle(),
-                                song.getId(),
-                                song.getDisplayArtist(),
-                                song.getAlbum().getTitle(),
-                                song.getDuration(),
-                                song.getContentType(),
-                                texture);
-                        GLib.idleAddOnce(() -> this.store.append(songListItem));
+                var texture = albumTextureLoader.load(albumId);
+                for (var song : songs) {
+                    var songAlbum = song.getAlbum();
+                    if (songAlbum == null) {
+                        logger.warn("Song {} has no album; leaving it out of the list", song.getId());
+                        continue;
                     }
-                } catch (NullPointerException e) {
-                    logger.warn("Didn't find texture for an album");
+                    var songListItem = SongListItem.of(song, songAlbum, texture);
+                    GLib.idleAddOnce(() -> this.store.append(songListItem));
                 }
             });
         }

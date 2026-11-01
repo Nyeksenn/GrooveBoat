@@ -1,6 +1,7 @@
 package io.github.Nyeksenn.grooveboat.mpris;
 
 import io.github.Nyeksenn.grooveboat.audio.QueueStore;
+import io.github.Nyeksenn.grooveboat.audio.RepeatMode;
 import io.github.Nyeksenn.grooveboat.gobjects.RemoteMediaStream;
 import io.github.Nyeksenn.grooveboat.gobjects.SongListItem;
 import org.freedesktop.dbus.DBusPath;
@@ -8,9 +9,11 @@ import org.freedesktop.dbus.types.Variant;
 
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Immutable snapshot of everything MPRIS exposes. Built on the GTK main thread and read by D-Bus handler threads,
@@ -57,6 +60,20 @@ public record MprisState(
         return Map.copyOf(map);
     }
 
+    /** The MPRIS {@code LoopStatus} string for a repeat mode. */
+    public static String loopStatus(RepeatMode mode) {
+        return switch (mode) {
+            case NONE -> "None";
+            case TRACK -> "Track";
+            case PLAYLIST -> "Playlist";
+        };
+    }
+
+    /** The repeat mode for an MPRIS {@code LoopStatus} string, or empty if the string is not a valid status. */
+    public static Optional<RepeatMode> repeatMode(String loopStatus) {
+        return Arrays.stream(RepeatMode.values()).filter(mode -> loopStatus(mode).equals(loopStatus)).findFirst();
+    }
+
     /** Must run on the main thread. */
     public static MprisState capture(RemoteMediaStream stream, QueueStore queue) {
         var current = stream.getCurrentItem();
@@ -70,11 +87,7 @@ public record MprisState(
             ids.add(item.getTrackId());
             tracks.put(item.getTrackId(), metadataOf(item));
         }
-        var loop = switch (queue.getRepeat()) {
-            case NONE -> "None";
-            case TRACK -> "Track";
-            case PLAYLIST -> "Playlist";
-        };
+        var loop = loopStatus(queue.getRepeat());
         double volume = stream.getMuted() ? 0.0 : stream.getVolume();
         return new MprisState(status, loop, queue.isShuffle(), volume,
                 current == null ? noTrackMetadata() : metadataOf(current),

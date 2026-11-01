@@ -12,12 +12,9 @@ import org.gnome.gtk.PopoverMenu;
 import org.javagi.gtk.annotations.GtkCallback;
 import org.javagi.gtk.annotations.GtkChild;
 import org.javagi.gtk.annotations.GtkTemplate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/song-card.ui", name = "SongCard")
 public class SongCard extends Box {
-    private static final Logger logger = LoggerFactory.getLogger(SongCard.class);
     private String songId;
 
     @GtkChild(name = "song-picture")

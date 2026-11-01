@@ -37,8 +37,7 @@ public class ArtistSongsPage extends NavigationPage {
         if (initialized) {
             return;
         }
-        var win = (GrooveboatWindow) getRoot();
-        var app = (GrooveboatApp) win.getApplication();
+        var app = AppWidgets.app(this);
         var library = app.getLibrary();
         if (library == null) {
             return;
@@ -46,7 +45,7 @@ public class ArtistSongsPage extends NavigationPage {
         initialized = true;
         var coverLoader = CoverLoader.getInstance();
 
-        app.executor.submit(() -> {
+        UiAsync.background(app.executors.io, () -> {
             var albums = new QAlbumModel().albumArtists.id.equalTo(artistId)
                     .orderBy().release_year.desc().title.asc().findList();
             logger.info("Loading {} albums for artist {}", albums.size(), artistId);
@@ -61,8 +60,7 @@ public class ArtistSongsPage extends NavigationPage {
                 // Built on this executor thread, not the ForkJoin common pool (see AlbumListView).
                 var items = new ArrayList<SongListItem>(songs.size());
                 for (var song : songs) {
-                    items.add(new SongListItem(song.getTitle(), song.getId(), song.getDisplayArtist(),
-                            album.getTitle(), song.getDuration(), song.getContentType(), cover));
+                    items.add(SongListItem.of(song, album, cover));
                 }
                 var albumId = album.getId();
                 var title = album.getTitle();

@@ -93,7 +93,8 @@ public class MusicControls extends Box {
                 GLib.idleAddOnce(() -> ms.seek((long) value));
             }, DEBOUNCE_DELAY, TimeUnit.MILLISECONDS);
         } catch (RejectedExecutionException e) {
-            logger.warn(e.getMessage());
+            // The scheduler only stops when the app shuts down.
+            logger.debug("Not seeking: the scheduler is shut down");
         }
 
         return false;
@@ -172,18 +173,13 @@ public class MusicControls extends Box {
 
     @InstanceInit
     public void init() {
-        onRealize(() -> {
-            var win = (GrooveboatWindow) getRoot();
-            this.app = (GrooveboatApp) win.getApplication();
-            this.scheduler = app.scheduler;
+        AppWidgets.whileRealized(this, scope -> {
+            this.app = AppWidgets.app(this);
+            this.scheduler = app.executors.scheduler;
             this.volumeButton.setIcons(volumeIcons);
             app.queueStore.addModeListener(modeListener);
+            scope.onRelease(() -> app.queueStore.removeModeListener(modeListener));
             syncModeButtons();
-        });
-        onUnrealize(() -> {
-            if (app != null) {
-                app.queueStore.removeModeListener(modeListener);
-            }
         });
     }
 

@@ -5,6 +5,9 @@ import io.ebean.annotation.Length;
 import io.ebean.annotation.NotNull;
 import jakarta.persistence.*;
 
+import io.github.Nyeksenn.grooveboat.backend.RemoteAlbum;
+import org.jspecify.annotations.Nullable;
+
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
@@ -13,11 +16,14 @@ import java.util.Objects;
 @Entity
 @Table(name = "album")
 public class AlbumModel extends BaseModel {
+    /** Size of the {@code title} column. */
+    public static final int TITLE_LENGTH = 100;
+
     @Id
     String id;
 
     @NotNull
-    @Length(100)
+    @Length(TITLE_LENGTH)
     String title;
 
     @NotNull
@@ -93,21 +99,17 @@ public class AlbumModel extends BaseModel {
     }
 
     public String getDisplayArtist() {
-        var sb = new StringBuilder();
-        var artists = getAlbumArtists();
-        var numArtists = artists.size();
-        for (int i = 0; i < numArtists; i++) {
-            sb.append(artists.get(i).getName());
-            if (!(i == (numArtists - 1))) {
-                sb.append("; ");
-            }
-        }
-
-        return sb.toString();
+        return ArtistModel.joinNames(getAlbumArtists(), "; ");
     }
 
     public void setAlbumArtists(List<ArtistModel> albumArtists) {
         this.albumArtists = albumArtists;
+    }
+
+    /** A new album from the server's data. Not saved. */
+    public static AlbumModel from(RemoteAlbum album, @Nullable Path coverPath, List<ArtistModel> artists) {
+        return new AlbumModel(album.id(), truncate(album.title(), TITLE_LENGTH), album.songCount(), album.year(),
+                album.duration(), coverPath, artists);
     }
 
     public AlbumModel(String id, String title, int songCount, int release_year, Duration duration, Path coverPath, List<ArtistModel> albumArtists) {
@@ -120,15 +122,14 @@ public class AlbumModel extends BaseModel {
         this.albumArtists = albumArtists;
     }
 
+    /** Entities are the same when their ids are: the other fields change while the row stays the same album. */
     @Override
     public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        AlbumModel that = (AlbumModel) o;
-        return songCount == that.songCount && release_year == that.release_year && Objects.equals(id, that.id) && Objects.equals(title, that.title) && Objects.equals(duration, that.duration) && Objects.equals(coverPath, that.coverPath);
+        return this == o || (o != null && getClass() == o.getClass() && Objects.equals(id, ((AlbumModel) o).id));
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, title, songCount, release_year, duration, coverPath);
+        return Objects.hashCode(id);
     }
 }

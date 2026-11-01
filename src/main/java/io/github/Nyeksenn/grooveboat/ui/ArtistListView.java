@@ -31,10 +31,8 @@ public class ArtistListView extends Box {
     private static final Logger logger = LoggerFactory.getLogger(ArtistListView.class);
     private final ListStore<ArtistListItem> store = new ListStore<>();
     private ExecutorService executor;
-    /** Incremented per load on the main thread; a finished load only applies if it is still the newest. */
-    private int loadGeneration = 0;
-    /** Realized again whenever the window crosses the size breakpoint; set up only once. */
-    private boolean initialized = false;
+    /** Only the newest load is applied, so overlapping reloads can't add artists twice. */
+    private final UiAsync.Latest latest = new UiAsync.Latest();
 
     @GtkChild(name = "artist-nav-view")
     public NavigationView artistNavView;
@@ -64,8 +62,7 @@ public class ArtistListView extends Box {
     /** Replaces the grid's contents with the album artists in the cache. */
     public void loadItems() {
         var coverLoader = CoverLoader.getInstance();
-        var generation = ++loadGeneration;
-        executor.submit(() -> {
+        latest.run(executor, () -> {
             var artists = new QArtistModel().albums.isNotEmpty().findList();
             artists.sort(Comparator.comparing(a -> a.getName() == null ? "" : a.getName(),
                     String.CASE_INSENSITIVE_ORDER));
@@ -76,26 +73,20 @@ public class ArtistListView extends Box {
                 items.add(new ArtistListItem(coverLoader.loadArtist(artist.getId()), artist.getName(),
                         artist.getId()));
             }
-            GLib.idleAddOnce(() -> {
-                if (generation == loadGeneration) {
-                    store.removeAll();
-                    items.forEach(store::append);
-                }
-            });
+            return items;
+        }, items -> {
+            store.removeAll();
+            items.forEach(store::append);
         });
     }
 
     @InstanceInit
     public void init() {
         artistGridView.setModel(new NoSelection<>(store));
-        onRealize(() -> {
-            if (initialized) {
-                return;
-            }
-            initialized = true;
-            var win = (GrooveboatWindow) getRoot();
-            var app = (GrooveboatApp) win.getApplication();
-            this.executor = app.executor;
+        // Realized again whenever the window crosses the size breakpoint; the setup must only run once.
+        AppWidgets.onFirstRealize(this, () -> {
+            var win = AppWidgets.window(this);
+            this.executor = AppWidgets.app(this).executors.io;
 
             var reloadAction = new SimpleAction("reload-artists", null);
             reloadAction.onActivate((_) -> {

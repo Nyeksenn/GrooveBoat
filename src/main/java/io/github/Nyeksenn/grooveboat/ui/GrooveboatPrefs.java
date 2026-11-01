@@ -1,6 +1,7 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
 import io.github.Nyeksenn.grooveboat.backend.MusicBackend;
+import io.github.Nyeksenn.grooveboat.backend.ServerInfo;
 import io.github.Nyeksenn.grooveboat.utils.AppSettings;
 import org.gnome.adw.ActionRow;
 import org.gnome.adw.PreferencesDialog;
@@ -46,11 +47,13 @@ public class GrooveboatPrefs extends PreferencesDialog {
         rowUrl.setSubtitle(GLib.markupEscapeText(backend.baseUrl(), -1));
         rowUsername.setSubtitle(GLib.markupEscapeText(AppSettings.get().getString(AppSettings.USERNAME), -1));
 
-        exec.submit(() -> {
+        UiAsync.background(exec, () -> {
             String version;
             try {
-                var info = backend.probe();
-                version = info.compatible() ? info.name() + " " + info.version() : "Unknown";
+                version = switch (backend.probe()) {
+                    case ServerInfo.Compatible(var name, var v) -> name + " " + v;
+                    case ServerInfo.Incompatible _ -> "Unknown";
+                };
             } catch (IOException e) {
                 logger.warn("Couldn't query server version: {}", e.getMessage());
                 version = "Unreachable";

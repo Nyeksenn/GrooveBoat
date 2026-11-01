@@ -35,14 +35,20 @@ At **activate**:
 When the main window is realised it registers a retry action and then works out what to show:
 
 1. **Plugin check.** If GStreamer elements needed for playback are missing (playbin3, the HTTP source, an HLS demuxer, the MP4 demuxer, the automatic audio sink), an error page names them and the packages that provide them. Nothing else happens.
-2. **Existing session.** If the application already holds a session (for example after a retry), the library is synced and shown.
+2. **Existing session.** If the application already holds a session (for example after a retry or just after setup), the library is shown as described under *Showing the library* below.
 3. **Logged out.** If the stored backend is *none*, the setup dialog opens.
-4. **Restore.** Otherwise the window shows "Connecting" and a background task:
+4. **Restore.** Otherwise a background task:
    - creates a backend of the stored type for the stored URL;
    - looks up the session credential in the keyring;
-   - asks the backend to restore and verify the session.
+   - **with a cached library and a stored credential**, adopts the stored session without contacting the server and starts it at once (the "Connecting" page is not shown);
+   - **otherwise** the window shows "Connecting" and the task asks the backend to restore and verify the session first. If the server rejects the stored login, a "Session Expired" page offers Log Out. If the server can't be reached, a "Connection Error" page offers Retry and Log Out; with a cached library it starts from the cache instead and shows a toast.
 
-   On success the session is started, the window shows "Loading Library" while an incremental sync runs, and then shows the content page and restores the queue. If the server rejects the stored login, a "Session Expired" page offers Log Out. If the server can't be reached, a "Connection Error" page offers Retry and Log Out.
+### Showing the library
+
+Once a session is started the window shows the library:
+
+- **Cached library present:** the content page is shown at once and the queue is restored. In the background (`library.StartupSync`) the stored login is verified with the server, if it hasn't been just now, and an incremental sync runs. When the sync found new albums, the album and artist grids reload. If the server can't be reached, a toast says so and the cached library stays. If it rejects the login, a dialog over the library offers Log Out. A result that arrives after the session ended (logout) is ignored.
+- **Empty cache** (first sync after setup or login): the window shows "Loading Library" until the first sync has finished, then the content page.
 
 ## First-run setup
 
@@ -81,6 +87,5 @@ On shutdown the application, in this order:
 2. Closes the library sync and the backend, if a session is active.
 3. Stops the thread pools.
 4. Sets the pipeline to its null state, quits its main loop and stops its thread.
-5. Closes the keyring executor.
 
 The quit action destroys and removes the active window before the application quits.

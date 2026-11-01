@@ -9,6 +9,8 @@ import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.module.blackbird.BlackbirdModule;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
@@ -54,6 +56,21 @@ public final class BackendSupport {
             url = url.substring(0, url.length() - 1);
         }
         return url;
+    }
+
+    /** Whether {@code url} is an http(s) URL with a host and a valid port, usable as a server address. */
+    public static boolean isValidBaseUrl(String url) {
+        try {
+            var uri = new URI(url);
+            var scheme = uri.getScheme();
+            var host = uri.getHost();
+            return scheme != null
+                    && (scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))
+                    && host != null && !host.isBlank()
+                    && uri.getPort() <= 65535;
+        } catch (URISyntaxException e) {
+            return false;
+        }
     }
 
     /** Writes a downloaded image into the cover cache, naming it after the image id and its content type. */

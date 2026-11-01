@@ -10,7 +10,6 @@ import org.gnome.gtk.Box;
 import org.gnome.gtk.Button;
 import org.gnome.gtk.GestureClick;
 import org.gnome.gtk.Label;
-import org.javagi.gobject.SignalConnection;
 import org.javagi.gobject.annotations.InstanceInit;
 import org.javagi.gobject.annotations.RegisteredType;
 import org.javagi.gtk.annotations.GtkCallback;
@@ -23,7 +22,6 @@ import java.lang.foreign.MemorySegment;
 @RegisteredType(name = "MiniPlayer")
 public class MiniPlayer extends Box {
     private RemoteMediaStream stream;
-    private SignalConnection<?> songConnection;
     private GrooveboatApp app;
 
     @GtkChild(name = "mini-album-cover")
@@ -73,17 +71,10 @@ public class MiniPlayer extends Box {
 
     @InstanceInit
     public void init() {
-        onUnrealize(() -> {
-            if (songConnection != null) {
-                songConnection.disconnect();
-                songConnection = null;
-            }
-        });
-        onRealize(() -> {
-            var win = (GrooveboatWindow) getRoot();
-            var app = (GrooveboatApp) win.getApplication();
+        AppWidgets.whileRealized(this, scope -> {
+            var app = AppWidgets.app(this);
             this.app = app;
-            songConnection = app.queueStore.connect("initialize-song", (QueueStore.InitializeSong) this::initStream);
+            scope.track(app.queueStore.connect("initialize-song", (QueueStore.InitializeSong) this::initStream));
 
             // One stream for the app's lifetime: bind it once, although the widget is realized again whenever
             // the window crosses the size breakpoint.

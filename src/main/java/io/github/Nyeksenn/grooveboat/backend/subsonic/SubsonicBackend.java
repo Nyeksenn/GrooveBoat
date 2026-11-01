@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.backend.subsonic;
 
+import org.jspecify.annotations.Nullable;
 import static org.javagi.util.Intl.i18n;
 import io.github.Nyeksenn.grooveboat.backend.*;
 import io.github.Nyeksenn.grooveboat.backend.subsonic.dto.Album;
@@ -8,8 +9,6 @@ import io.github.Nyeksenn.grooveboat.backend.subsonic.dto.ShortArtist;
 import io.github.Nyeksenn.grooveboat.backend.subsonic.dto.Song;
 import io.github.Nyeksenn.grooveboat.backend.subsonic.dto.SubsonicResponse;
 import org.semver4j.Semver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
@@ -17,6 +16,7 @@ import tools.jackson.databind.ObjectReader;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
@@ -34,8 +34,7 @@ import static io.github.Nyeksenn.grooveboat.backend.BackendSupport.JSON;
 import static org.gnome.glib.GLib.getHostName;
 
 /** OpenSubsonic implementation of {@link MusicBackend}, using salted-token authentication. */
-public final class SubsonicBackend implements MusicBackend {
-    private static final Logger logger = LoggerFactory.getLogger(SubsonicBackend.class);
+public final class SubsonicBackend extends AbstractHttpBackend {
     private static final Semver MIN_API_VERSION = new Semver("1.16.1");
     private static final String API_VERSION = "1.16.1";
     private static final int ALBUM_PAGE_SIZE = 200;
@@ -46,42 +45,22 @@ public final class SubsonicBackend implements MusicBackend {
     private static final ObjectReader songReader = JSON.readerFor(new TypeReference<List<Song>>() {
     });
 
-    private final String baseUrl;
-    private final String scheme;
-    private final String host;
     private final String clientName = "GrooveBoat-" + getHostName();
 
     private volatile String username = "";
     private volatile String password = "";
 
     public SubsonicBackend(String baseUrl) {
-        this.baseUrl = BackendSupport.normalizeBaseUrl(baseUrl);
-        var split = this.baseUrl.split("://", 2);
-        if (split.length != 2) {
-            throw new IllegalArgumentException("URL has no scheme");
-        }
-        this.scheme = split[0];
-        this.host = split[1];
+        this(baseUrl, HTTP);
+    }
+
+    public SubsonicBackend(String baseUrl, HttpClient http) {
+        super(baseUrl, http);
     }
 
     @Override
     public BackendType type() {
         return BackendType.OPENSUBSONIC;
-    }
-
-    @Override
-    public String baseUrl() {
-        return baseUrl;
-    }
-
-    @Override
-    public String scheme() {
-        return scheme;
-    }
-
-    @Override
-    public String host() {
-        return host;
     }
 
     // ---- Requests
@@ -115,26 +94,20 @@ public final class SubsonicBackend implements MusicBackend {
         } catch (NoSuchAlgorithmException e) {
             all.put("p", pwd);
         }
-        return URI.create(baseUrl + endpoint + "?" + BackendSupport.queryString(all));
+        return URI.create(baseUrl() + endpoint + "?" + BackendSupport.queryString(all));
     }
 
     private URI uri(String endpoint, Map<String, String> params) {
         return uri(endpoint, params, username, password);
     }
 
-    private <T> HttpResponse<T> send(URI uri, HttpResponse.BodyHandler<T> handler) throws IOException {
-        try {
-            var request = HttpRequest.newBuilder().GET().timeout(Duration.ofSeconds(30)).uri(uri).build();
-            return HTTP.send(request, handler);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IOException(e);
-        }
+    private <T> HttpResponse<T> get(URI uri, HttpResponse.BodyHandler<T> handler) throws IOException {
+        return send(HttpRequest.newBuilder().GET().timeout(Duration.ofSeconds(30)).uri(uri).build(), handler);
     }
 
     /** Executes a request and returns the {@code subsonic-response} node. */
     private JsonNode call(URI uri) throws IOException {
-        var response = send(uri, HttpResponse.BodyHandlers.ofString());
+        var response = get(uri, HttpResponse.BodyHandlers.ofString());
         try {
             var node = JSON.readTree(response.body()).path("subsonic-response");
             if (node.isMissingNode()) {
@@ -152,7 +125,7 @@ public final class SubsonicBackend implements MusicBackend {
 
     private static void requireOk(JsonNode node) throws IOException {
         var status = node.path("status").asString("");
-        if (!status.equals("ok")) {
+        if (!"ok".equals(status)) {
             var code = node.path("error").path("code").asInt(0);
             var message = node.path("error").path("message").asString("request failed");
             // 40: wrong credentials, 41: token auth not supported, 44: invalid API key
@@ -202,22 +175,21 @@ public final class SubsonicBackend implements MusicBackend {
     }
 
     @Override
-    public void restore(Session session) throws IOException {
+    protected void requireStoredSession(Session session) throws AuthenticationException {
         if (session.credential() == null) {
             throw new AuthenticationException("No stored password");
         }
-        checkCredentials(session.username(), session.credential());
-        this.username = session.username();
-        this.password = session.credential();
     }
 
     @Override
-    public void restoreUnverified(Session session) throws AuthenticationException {
-        if (session.credential() == null) {
-            throw new AuthenticationException("No stored password");
-        }
+    protected void verifySession(Session session) throws IOException {
+        checkCredentials(session.username(), Objects.requireNonNull(session.credential()));
+    }
+
+    @Override
+    protected void adoptSession(Session session) {
         this.username = session.username();
-        this.password = session.credential();
+        this.password = Objects.requireNonNull(session.credential());
     }
 
     @Override
@@ -234,7 +206,7 @@ public final class SubsonicBackend implements MusicBackend {
         return artists.stream().map(a -> new RemoteArtistRef(a.id(), a.name())).toList();
     }
 
-    private static Instant parseCreated(String value) {
+    private static @Nullable Instant parseCreated(@Nullable String value) {
         if (value == null) {
             return null;
         }
@@ -312,9 +284,8 @@ public final class SubsonicBackend implements MusicBackend {
 
     @Override
     public Path cacheImage(String imageId, int size) throws IOException {
-        var response = send(uri("/rest/getCoverArt", Map.of("id", imageId, "size", String.valueOf(size))),
-                HttpResponse.BodyHandlers.ofByteArray());
-        return BackendSupport.writeImage(imageId, response);
+        var uri = uri("/rest/getCoverArt", Map.of("id", imageId, "size", String.valueOf(size)));
+        return downloadImage(imageId, HttpRequest.newBuilder().GET().timeout(Duration.ofSeconds(30)).uri(uri).build());
     }
 
     // ---- Playback
@@ -329,10 +300,5 @@ public final class SubsonicBackend implements MusicBackend {
     @Override
     public void releasePlayback(PlaybackSource source) {
         // Nothing to release for progressive streams.
-    }
-
-    @Override
-    public void close() {
-        logger.debug("Closing OpenSubsonic backend");
     }
 }

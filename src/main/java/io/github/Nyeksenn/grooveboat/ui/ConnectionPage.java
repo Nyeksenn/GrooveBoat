@@ -1,12 +1,12 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
+import io.github.Nyeksenn.grooveboat.utils.Failures;
 import static org.javagi.util.Intl.i18n;
 import io.github.Nyeksenn.grooveboat.backend.BackendFactory;
 import io.github.Nyeksenn.grooveboat.backend.BackendSupport;
 import io.github.Nyeksenn.grooveboat.backend.BackendType;
 import io.github.Nyeksenn.grooveboat.backend.MusicBackend;
 import io.github.Nyeksenn.grooveboat.backend.ServerInfo;
-import org.apache.commons.validator.routines.UrlValidator;
 import org.gnome.adw.EntryRow;
 import org.gnome.adw.NavigationPage;
 import org.gnome.adw.PreferencesGroup;
@@ -30,8 +30,6 @@ import java.util.concurrent.ExecutorService;
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/connection-page.ui", name = "ConnectionPage")
 public class ConnectionPage extends NavigationPage {
     private static final Logger logger = LoggerFactory.getLogger(ConnectionPage.class);
-    private final UrlValidator validator = new UrlValidator(new String[]{"http", "https"},
-            UrlValidator.ALLOW_LOCAL_URLS);
     private ExecutorService exec;
 
     @GtkChild(name = "connection-next-button")
@@ -76,7 +74,7 @@ public class ConnectionPage extends NavigationPage {
         var type = dialog.getBackendType();
         var url = BackendSupport.normalizeBaseUrl(entryUrl.getText());
 
-        if (!validator.isValid(url)) {
+        if (!BackendSupport.isValidBaseUrl(url)) {
             fail("URL invalid");
             return;
         }
@@ -90,13 +88,13 @@ public class ConnectionPage extends NavigationPage {
                 info = backend.probe();
             } catch (IOException | RuntimeException e) {
                 // RuntimeExceptions (bad URL, unexpected response) must not leave the button disabled.
-                logger.warn("Couldn't reach server: {}", e.getMessage());
+                Failures.log(logger, "Couldn't reach server", e);
                 info = null;
             }
 
-            if (info != null && info.compatible()) {
+            if (info instanceof ServerInfo.Compatible(var name, var version)) {
                 final var found = backend;
-                logger.info("Found {} {} at {}", info.name(), info.version(), found.host());
+                logger.info("Found {} {} at {}", name, version, found.host());
                 GLib.idleAddOnce(() -> {
                     connectionNextButton.setSensitive(true);
                     dialog.setCandidate(found);
@@ -110,12 +108,13 @@ public class ConnectionPage extends NavigationPage {
 
             // Wrong server type picked? Point the user at the right one.
             var other = type.other();
-            if (probeQuietly(other, url).compatible()) {
+            if (probeQuietly(other, url) instanceof ServerInfo.Compatible) {
                 fail(String.format(i18n("This looks like a %1$s server. Go back and choose %1$s."), other.displayName()));
             } else if (info == null) {
                 fail(i18n("Unable to reach server"));
             } else {
-                fail(info.reason() != null ? info.reason() : i18n("Incompatible server"));
+                var reason = info instanceof ServerInfo.Incompatible(var r) ? r : null;
+                fail(reason != null ? reason : i18n("Incompatible server"));
             }
         });
     }
@@ -132,11 +131,7 @@ public class ConnectionPage extends NavigationPage {
             }
             entryUrl.grabFocus();
         });
-        onRealize(() -> {
-            var win = (GrooveboatWindow) getRoot();
-            var app = (GrooveboatApp) win.getApplication();
-            this.exec = app.executor;
-        });
+        onRealize(() -> this.exec = AppWidgets.app(this).executors.io);
     }
 
     public ConnectionPage(MemorySegment address) {

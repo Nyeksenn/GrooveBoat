@@ -5,13 +5,18 @@ import org.gnome.secret.SchemaType;
 import org.gnome.secret.Secret;
 import org.javagi.base.GErrorException;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Optional;
+import java.util.concurrent.locks.ReentrantLock;
 
-public class SecretKeeper implements AutoCloseable {
+/**
+ * The session credential in the desktop keyring (libsecret). The calls block until the keyring answers, so they must
+ * never run on the GTK main thread; call them from the I/O pool.
+ */
+public final class SecretKeeper {
     private static final Schema SCHEMA = Secret.getSchema(SchemaType.COMPAT_NETWORK);
-    private final ExecutorService exec = Executors.newSingleThreadExecutor();
+
+    /** The synchronous libsecret calls used to share one thread and so ran one at a time; the lock keeps that. */
+    private final ReentrantLock lock = new ReentrantLock();
 
     private SecretKeeper() {
     }
@@ -28,43 +33,43 @@ public class SecretKeeper implements AutoCloseable {
      * Stores the session credential (a password or an access token, depending on the backend).
      *
      * @param label shown to the user in their keyring manager
+     * @return whether the credential was stored
      */
-    public CompletableFuture<Boolean> storePassword(String username, String protocol, String server, String password, String label) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                var attributes = Secret.attributesBuild(SCHEMA, "user", username, "protocol", protocol, "server", server, null);
-                return Secret.passwordStorevSync(SCHEMA, attributes, Secret.COLLECTION_DEFAULT, label, password, null);
-            } catch (GErrorException e) {
-                return false;
-            }
-        }, exec);
+    public boolean storePassword(String username, String protocol, String server, String password, String label) {
+        lock.lock();
+        try {
+            var attributes = Secret.attributesBuild(SCHEMA, "user", username, "protocol", protocol, "server", server, null);
+            return Secret.passwordStorevSync(SCHEMA, attributes, Secret.COLLECTION_DEFAULT, label, password, null);
+        } catch (GErrorException e) {
+            return false;
+        } finally {
+            lock.unlock();
+        }
     }
 
-    public CompletableFuture<String> lookupPassword(String username, String protocol, String server) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                var attributes = Secret.attributesBuild(SCHEMA, "user", username, "protocol", protocol, "server", server, null);
-                return Secret.passwordLookupvSync(SCHEMA, attributes, null);
-            } catch (GErrorException e) {
-                return null;
-            }
-        }, exec);
+    /** The stored credential, or empty when there is none or the keyring can't be read. */
+    public Optional<String> lookupPassword(String username, String protocol, String server) {
+        lock.lock();
+        try {
+            var attributes = Secret.attributesBuild(SCHEMA, "user", username, "protocol", protocol, "server", server, null);
+            return Optional.ofNullable(Secret.passwordLookupvSync(SCHEMA, attributes, null));
+        } catch (GErrorException e) {
+            return Optional.empty();
+        } finally {
+            lock.unlock();
+        }
     }
 
-    /** Removes the stored credential. Completes with whether an entry was removed. */
-    public CompletableFuture<Boolean> clearPassword(String username, String protocol, String server) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                var attributes = Secret.attributesBuild(SCHEMA, "user", username, "protocol", protocol, "server", server, null);
-                return Secret.passwordClearvSync(SCHEMA, attributes, null);
-            } catch (GErrorException e) {
-                return false;
-            }
-        }, exec);
-    }
-
-    @Override
-    public void close() {
-        exec.close();
+    /** Removes the stored credential. Returns whether an entry was removed. */
+    public boolean clearPassword(String username, String protocol, String server) {
+        lock.lock();
+        try {
+            var attributes = Secret.attributesBuild(SCHEMA, "user", username, "protocol", protocol, "server", server, null);
+            return Secret.passwordClearvSync(SCHEMA, attributes, null);
+        } catch (GErrorException e) {
+            return false;
+        } finally {
+            lock.unlock();
+        }
     }
 }

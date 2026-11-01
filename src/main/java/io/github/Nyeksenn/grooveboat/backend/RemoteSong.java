@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.backend;
 
+import org.jspecify.annotations.Nullable;
 import java.time.Duration;
 import java.util.List;
 
@@ -10,5 +11,5 @@ import java.util.List;
  * @param contentType MIME type of the original file
  */
 public record RemoteSong(String id, String albumId, String title, int track, int year, Duration duration, int bitRate,
-                         String contentType, int discNumber, List<RemoteArtistRef> artists) {
+                         @Nullable String contentType, int discNumber, List<RemoteArtistRef> artists) {
 }

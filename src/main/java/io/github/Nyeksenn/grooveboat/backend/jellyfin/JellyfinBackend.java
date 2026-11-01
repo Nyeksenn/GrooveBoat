@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.backend.jellyfin;
 
+import org.jspecify.annotations.Nullable;
 import static org.javagi.util.Intl.i18n;
 import io.github.Nyeksenn.grooveboat.backend.*;
 import org.semver4j.Semver;
@@ -10,6 +11,7 @@ import tools.jackson.databind.JsonNode;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
@@ -19,6 +21,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -32,7 +35,7 @@ import static io.github.Nyeksenn.grooveboat.backend.BackendSupport.JSON;
  * as {@code ApiKey} query parameter instead, because GStreamer's HLS demuxer fetches playlists and segments itself and
  * Jellyfin propagates that parameter into every variant and segment URL.
  */
-public final class JellyfinBackend implements MusicBackend {
+public final class JellyfinBackend extends AbstractHttpBackend {
     private static final Logger logger = LoggerFactory.getLogger(JellyfinBackend.class);
     private static final Semver MIN_VERSION = new Semver("10.9.0");
     private static final String CLIENT_NAME = "GrooveBoat";
@@ -42,24 +45,19 @@ public final class JellyfinBackend implements MusicBackend {
     /** Jellyfin durations are in ticks of 100 ns. */
     private static final long NANOS_PER_TICK = 100L;
 
-    private final String baseUrl;
-    private final String scheme;
-    private final String host;
     private final String deviceId;
     private final String deviceName;
     private final String appVersion;
 
-    private volatile String token;
-    private volatile String userId;
+    private volatile @Nullable String token;
+    private volatile @Nullable String userId;
 
     public JellyfinBackend(String baseUrl, String deviceId, String deviceName, String appVersion) {
-        this.baseUrl = BackendSupport.normalizeBaseUrl(baseUrl);
-        var split = this.baseUrl.split("://", 2);
-        if (split.length != 2) {
-            throw new IllegalArgumentException("URL has no scheme");
-        }
-        this.scheme = split[0];
-        this.host = split[1];
+        this(baseUrl, deviceId, deviceName, appVersion, HTTP);
+    }
+
+    public JellyfinBackend(String baseUrl, String deviceId, String deviceName, String appVersion, HttpClient http) {
+        super(baseUrl, http);
         this.deviceId = deviceId;
         this.deviceName = deviceName;
         this.appVersion = appVersion;
@@ -68,21 +66,6 @@ public final class JellyfinBackend implements MusicBackend {
     @Override
     public BackendType type() {
         return BackendType.JELLYFIN;
-    }
-
-    @Override
-    public String baseUrl() {
-        return baseUrl;
-    }
-
-    @Override
-    public String scheme() {
-        return scheme;
-    }
-
-    @Override
-    public String host() {
-        return host;
     }
 
     // ---- Requests
@@ -105,9 +88,9 @@ public final class JellyfinBackend implements MusicBackend {
 
     private URI uri(String path, Map<String, String> params) {
         if (params == null || params.isEmpty()) {
-            return URI.create(baseUrl + path);
+            return URI.create(baseUrl() + path);
         }
-        return URI.create(baseUrl + path + "?" + BackendSupport.queryString(params));
+        return URI.create(baseUrl() + path + "?" + BackendSupport.queryString(params));
     }
 
     private HttpRequest.Builder request(URI uri, String withToken, Duration timeout) {
@@ -115,15 +98,6 @@ public final class JellyfinBackend implements MusicBackend {
                 .timeout(timeout)
                 .header("Authorization", authorizationHeader(withToken))
                 .header("Accept", "application/json");
-    }
-
-    private <T> HttpResponse<T> send(HttpRequest request, HttpResponse.BodyHandler<T> handler) throws IOException {
-        try {
-            return HTTP.send(request, handler);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IOException(e);
-        }
     }
 
     /** Authenticated GET returning parsed JSON. */
@@ -172,7 +146,7 @@ public final class JellyfinBackend implements MusicBackend {
         }
         var product = info.path("ProductName").asString("");
         var version = info.path("Version").asString("");
-        if (!product.toLowerCase().contains("jellyfin") || version.isEmpty()) {
+        if (!product.toLowerCase(Locale.ROOT).contains("jellyfin") || version.isEmpty()) {
             return ServerInfo.incompatible(i18n("Not a Jellyfin server"));
         }
         var semver = Semver.coerce(version);
@@ -201,22 +175,21 @@ public final class JellyfinBackend implements MusicBackend {
     }
 
     @Override
-    public void restore(Session session) throws IOException {
+    protected void requireStoredSession(Session session) throws AuthenticationException {
         if (session.credential() == null || session.userId() == null || session.userId().isEmpty()) {
             throw new AuthenticationException("No stored Jellyfin session");
         }
-        var response = send(request(uri("/Users/" + session.userId(), null), session.credential(), REQUEST_TIMEOUT)
-                .GET().build(), HttpResponse.BodyHandlers.ofString());
-        parse(response);
-        this.token = session.credential();
-        this.userId = session.userId();
     }
 
     @Override
-    public void restoreUnverified(Session session) throws AuthenticationException {
-        if (session.credential() == null || session.userId() == null || session.userId().isEmpty()) {
-            throw new AuthenticationException("No stored Jellyfin session");
-        }
+    protected void verifySession(Session session) throws IOException {
+        var response = send(request(uri("/Users/" + session.userId(), null), session.credential(), REQUEST_TIMEOUT)
+                .GET().build(), HttpResponse.BodyHandlers.ofString());
+        parse(response);
+    }
+
+    @Override
+    protected void adoptSession(Session session) {
         this.token = session.credential();
         this.userId = session.userId();
     }
@@ -360,9 +333,8 @@ public final class JellyfinBackend implements MusicBackend {
     @Override
     public Path cacheImage(String imageId, int size) throws IOException {
         var params = Map.of("maxWidth", String.valueOf(size), "maxHeight", String.valueOf(size));
-        var response = send(request(uri("/Items/" + imageId + "/Images/Primary", params), token, REQUEST_TIMEOUT)
-                .header("Accept", "image/*").GET().build(), HttpResponse.BodyHandlers.ofByteArray());
-        return BackendSupport.writeImage(imageId, response);
+        return downloadImage(imageId, request(uri("/Items/" + imageId + "/Images/Primary", params), token,
+                REQUEST_TIMEOUT).header("Accept", "image/*").GET().build());
     }
 
     // ---- Playback
@@ -406,10 +378,5 @@ public final class JellyfinBackend implements MusicBackend {
         } catch (IOException e) {
             logger.warn("Couldn't release Jellyfin play session: {}", e.getMessage());
         }
-    }
-
-    @Override
-    public void close() {
-        logger.debug("Closing Jellyfin backend");
     }
 }

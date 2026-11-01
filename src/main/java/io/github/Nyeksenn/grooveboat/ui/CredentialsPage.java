@@ -5,6 +5,7 @@ import io.github.Nyeksenn.grooveboat.backend.AuthenticationException;
 import io.github.Nyeksenn.grooveboat.backend.BackendType;
 import io.github.Nyeksenn.grooveboat.gobjects.SecretKeeper;
 import io.github.Nyeksenn.grooveboat.utils.AppSettings;
+import io.github.Nyeksenn.grooveboat.utils.Failures;
 import org.gnome.adw.EntryRow;
 import org.gnome.adw.NavigationPage;
 import org.gnome.adw.Toast;
@@ -90,7 +91,7 @@ public class CredentialsPage extends NavigationPage {
             try {
                 var session = backend.authenticate(username, password);
                 var stored = secrets.storePassword(username, backend.scheme(), backend.host(),
-                        session.credential(), keyringLabel(backend.type())).join();
+                        session.credential(), keyringLabel(backend.type()));
                 if (!stored) {
                     logger.error("Couldn't store credential in the keyring");
                     fail(i18n("Couldn't save the login to the keyring"), false);
@@ -104,10 +105,10 @@ public class CredentialsPage extends NavigationPage {
             } catch (AuthenticationException e) {
                 fail(i18n("Username or password wrong"), true);
             } catch (IOException e) {
-                logger.warn("Login failed: {}", e.getMessage());
+                Failures.log(logger, "Login failed", e);
                 fail(i18n("Unable to reach server"), false);
             } catch (RuntimeException e) {
-                logger.error("Login failed: {}", e.getMessage());
+                Failures.log(logger, "Login failed", e);
                 fail(i18n("Login failed"), false);
             }
         });
@@ -117,9 +118,8 @@ public class CredentialsPage extends NavigationPage {
     public void init() {
         onMap(() -> entryUsername.grabFocus());
         onRealize(() -> {
-            var win = (GrooveboatWindow) getRoot();
-            this.app = (GrooveboatApp) win.getApplication();
-            this.exec = app.executor;
+            this.app = AppWidgets.app(this);
+            this.exec = app.executors.io;
         });
     }
 

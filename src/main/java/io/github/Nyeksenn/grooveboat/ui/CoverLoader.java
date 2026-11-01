@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
+import org.jspecify.annotations.Nullable;
 import io.github.Nyeksenn.grooveboat.entities.query.QAlbumModel;
 import io.github.Nyeksenn.grooveboat.entities.query.QArtistModel;
 import org.gnome.gdk.Texture;
@@ -34,7 +35,7 @@ public class CoverLoader {
     }
 
     /** The album's cover, or {@code null} if it has none. */
-    public Texture load(String albumId) {
+    public @Nullable Texture load(String albumId) {
         return albums.computeIfAbsent(albumId, id -> {
             var alb = QAlbumModel.alias();
             var album = new QAlbumModel().select(alb.id, alb.coverPath).id.equalTo(id).findOne();
@@ -43,7 +44,7 @@ public class CoverLoader {
     }
 
     /** The artist's image, or {@code null} if it has none. */
-    public Texture loadArtist(String artistId) {
+    public @Nullable Texture loadArtist(String artistId) {
         return artists.computeIfAbsent(artistId, id -> {
             var art = QArtistModel.alias();
             var artist = new QArtistModel().select(art.id, art.artistImagePath).id.equalTo(id).findOne();
@@ -51,7 +52,7 @@ public class CoverLoader {
         });
     }
 
-    private static Texture decode(Path path, String what) {
+    private static @Nullable Texture decode(@Nullable Path path, String what) {
         if (path == null) {
             return null;
         }

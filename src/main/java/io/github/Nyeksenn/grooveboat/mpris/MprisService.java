@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.mpris;
 
+import org.jspecify.annotations.Nullable;
 import io.github.Nyeksenn.grooveboat.audio.QueueStore;
 import io.github.Nyeksenn.grooveboat.gobjects.SongListItem;
 import io.github.Nyeksenn.grooveboat.ui.GrooveboatApp;
@@ -41,7 +42,7 @@ public final class MprisService implements AutoCloseable {
     }
 
     /** Connects and claims the name; returns {@code null} (after logging) when that isn't possible. Main thread. */
-    public static MprisService start(GrooveboatApp app) {
+    public static @Nullable MprisService start(GrooveboatApp app) {
         DBusConnection connection = null;
         try {
             connection = DBusConnectionBuilder.forSessionBus().build();
@@ -53,12 +54,14 @@ public final class MprisService implements AutoCloseable {
             logger.info("MPRIS available as {}", BUS_NAME);
             return service;
         } catch (Exception | LinkageError e) {
+            // Optional feature: no session bus or a missing D-Bus library is no reason to stop the app.
             logger.warn("MPRIS disabled: {}", e.getMessage());
+            logger.debug("MPRIS startup failure", e);
             if (connection != null) {
                 try {
                     connection.close();
-                } catch (Exception ignored) {
-                    // Already failing.
+                } catch (Exception closeFailure) {
+                    logger.debug("Closing the failed MPRIS connection also failed", closeFailure);
                 }
             }
             return null;
