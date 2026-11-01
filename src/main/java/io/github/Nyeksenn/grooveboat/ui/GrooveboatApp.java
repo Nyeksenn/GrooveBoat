@@ -138,7 +138,7 @@ public final class GrooveboatApp extends Application {
             return;
         }
         try {
-            var removed = SecretKeeper.getInstance().clearPassword(username, split[0], split[1]).join();
+            var removed = SecretKeeper.getInstance().clearPassword(username, split[0], split[1]);
             logger.info("Keyring entry removed: {}", removed);
         } catch (RuntimeException e) {
             logger.warn("Couldn't remove keyring entry: {}", e.getMessage());
@@ -260,7 +260,6 @@ public final class GrooveboatApp extends Application {
             pipeline.quit();
         }
         executors.shutdownGst();
-        SecretKeeper.getInstance().close();
     }
 
     public GrooveboatApp() {

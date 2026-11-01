@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -27,6 +28,9 @@ final class StubBackend implements MusicBackend {
     final AtomicInteger songCalls = new AtomicInteger();
     volatile boolean offline;
     final AtomicBoolean closed = new AtomicBoolean();
+    /** When set, {@link #cacheImage} announces itself on {@link #imageEntered} and waits here before failing. */
+    volatile CountDownLatch imageGate;
+    final CountDownLatch imageEntered = new CountDownLatch(1);
 
     @Override
     public BackendType type() {
@@ -98,6 +102,15 @@ final class StubBackend implements MusicBackend {
 
     @Override
     public Path cacheImage(String imageId, int size) throws IOException {
+        var gate = imageGate;
+        if (gate != null) {
+            imageEntered.countDown();
+            try {
+                gate.await();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
         throw new IOException("no images in tests");
     }
 

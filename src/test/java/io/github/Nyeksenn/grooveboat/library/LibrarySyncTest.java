@@ -15,6 +15,8 @@ import io.github.Nyeksenn.grooveboat.utils.Helpers;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -143,6 +145,39 @@ class LibrarySyncTest {
 
         assertThat(db.find(AlbumModel.class).findCount()).isZero();
         assertThat(backend.albumCalls.get()).isZero();
+    }
+
+    @Test
+    void manyAlbumsSharingAnArtistAreSyncedConcurrentlyWithoutDuplicates() {
+        for (int i = 0; i < 60; i++) {
+            backend.albums.add(album("al" + i, "Album " + i, T1.plusSeconds(i)));
+        }
+
+        sync.refresh(false);
+
+        assertThat(db.find(AlbumModel.class).findCount()).isEqualTo(60);
+        assertThat(db.find(ArtistModel.class).findCount()).isEqualTo(1);
+        assertThat(lastSync()).isEqualTo(T1.plusSeconds(59).getEpochSecond());
+    }
+
+    @Test
+    void cancellingWhileAlbumTasksAreRunningSavesNothing() throws Exception {
+        backend.imageGate = new CountDownLatch(1);
+        backend.albums.add(new RemoteAlbum("al1", "First", 2, 2024, Duration.ofMinutes(8), "img", List.of(BAND), T1));
+        var refresh = new Thread(() -> sync.refresh(false));
+        refresh.start();
+        assertThat(backend.imageEntered.await(10, TimeUnit.SECONDS)).isTrue();
+
+        var stopper = new Thread(() -> sync.cancelAndAwait(Duration.ofSeconds(10)));
+        stopper.start();
+        Thread.sleep(100);
+        backend.imageGate.countDown();
+        refresh.join(10_000);
+        stopper.join(10_000);
+
+        assertThat(refresh.isAlive()).isFalse();
+        assertThat(db.find(AlbumModel.class).findCount()).isZero();
+        assertThat(lastSync()).isZero();
     }
 
     @Test

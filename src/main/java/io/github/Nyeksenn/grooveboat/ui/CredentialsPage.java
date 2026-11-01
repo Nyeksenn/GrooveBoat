@@ -90,7 +90,7 @@ public class CredentialsPage extends NavigationPage {
             try {
                 var session = backend.authenticate(username, password);
                 var stored = secrets.storePassword(username, backend.scheme(), backend.host(),
-                        session.credential(), keyringLabel(backend.type())).join();
+                        session.credential(), keyringLabel(backend.type()));
                 if (!stored) {
                     logger.error("Couldn't store credential in the keyring");
                     fail(i18n("Couldn't save the login to the keyring"), false);

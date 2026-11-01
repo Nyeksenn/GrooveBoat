@@ -81,6 +81,5 @@ On shutdown the application, in this order:
 2. Closes the library sync and the backend, if a session is active.
 3. Stops the thread pools.
 4. Sets the pipeline to its null state, quits its main loop and stops its thread.
-5. Closes the keyring executor.
 
 The quit action destroys and removes the active window before the application quits.

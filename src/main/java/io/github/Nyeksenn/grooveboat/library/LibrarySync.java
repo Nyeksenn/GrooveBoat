@@ -26,9 +26,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -66,6 +67,41 @@ public final class LibrarySync implements AutoCloseable {
         if (cancelled) {
             throw new CancellationRequested();
         }
+    }
+
+    /**
+     * Runs the tasks concurrently, each on its own virtual thread, and returns their results in order once all have
+     * finished. A failing task fails the call with the task's own exception (a {@link CancellationRequested} when the
+     * sync was cancelled), so callers handle it like an error in their own code.
+     */
+    private <T> List<T> runAll(List<Callable<T>> tasks) {
+        List<Future<T>> futures;
+        try {
+            futures = exec.invokeAll(tasks);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new CancellationRequested();
+        }
+        var results = new ArrayList<T>(tasks.size());
+        for (var future : futures) {
+            try {
+                results.add(future.get());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new CancellationRequested();
+            } catch (ExecutionException e) {
+                var cause = e.getCause();
+                if (cause instanceof RuntimeException runtime) {
+                    throw runtime;
+                }
+                if (cause instanceof Error error) {
+                    throw error;
+                }
+                throw new IllegalStateException("Sync task failed", cause);
+            }
+        }
+        checkCancelled();
+        return results;
     }
 
     /** Thrown inside sync tasks to unwind after {@link #cancelAndAwait}. */
@@ -115,9 +151,9 @@ public final class LibrarySync implements AutoCloseable {
                 return;
             }
 
-            var futures = new ArrayList<CompletableFuture<AlbumModel>>(newAlbums.size());
+            var albumTasks = new ArrayList<Callable<AlbumModel>>(newAlbums.size());
             for (var album : newAlbums) {
-                futures.add(CompletableFuture.supplyAsync(() -> {
+                albumTasks.add(() -> {
                     checkCancelled();
                     var albumArtists = resolveArtists(album.artists());
                     Path coverPath = null;
@@ -129,11 +165,10 @@ public final class LibrarySync implements AutoCloseable {
                         }
                     }
                     return AlbumModel.from(album, coverPath, albumArtists);
-                }, exec));
+                });
             }
 
-            var albumModels = futures.stream().map(CompletableFuture::join).toList();
-            checkCancelled();
+            var albumModels = runAll(albumTasks);
             db.saveAll(albumModels);
             // The newest album's server timestamp, not the local clock: the two can differ.
             var newest = newAlbums.stream().map(RemoteAlbum::created).max(Instant::compareTo).orElse(Instant.EPOCH);
@@ -144,12 +179,6 @@ public final class LibrarySync implements AutoCloseable {
             updateArtists(false);
         } catch (CancellationRequested e) {
             logger.info("Library sync cancelled");
-        } catch (CompletionException e) {
-            if (e.getCause() instanceof CancellationRequested) {
-                logger.info("Library sync cancelled");
-            } else {
-                logger.error("Album sync task failed: {}", e.getMessage());
-            }
         } catch (IOException e) {
             logger.warn("Couldn't fetch albums: {}", e.getMessage());
         } catch (Exception e) {
@@ -237,9 +266,9 @@ public final class LibrarySync implements AutoCloseable {
             }
 
             var album = new QAlbumModel().id.equalTo(albumId).findOne();
-            var futures = new ArrayList<CompletableFuture<SongModel>>(songList.size());
+            var songTasks = new ArrayList<Callable<SongModel>>(songList.size());
             for (var song : songList) {
-                futures.add(CompletableFuture.supplyAsync(() -> {
+                songTasks.add(() -> {
                     checkCancelled();
                     var savedSongModel = new QSongModel().id.equalTo(song.id()).findOne();
                     var artists = resolveArtists(song.artists());
@@ -253,11 +282,10 @@ public final class LibrarySync implements AutoCloseable {
                         savedSongModel.setAllFields(newSongModel);
                     }
                     return savedSongModel;
-                }, exec));
+                });
             }
 
-            var songModelList = futures.stream().map(CompletableFuture::join).toList();
-            checkCancelled();
+            var songModelList = runAll(songTasks);
             db.saveAll(songModelList);
             return songModelList;
         } catch (Exception e) {
