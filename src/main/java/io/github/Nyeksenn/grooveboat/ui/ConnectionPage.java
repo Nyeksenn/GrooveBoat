@@ -6,7 +6,6 @@ import io.github.Nyeksenn.grooveboat.backend.BackendSupport;
 import io.github.Nyeksenn.grooveboat.backend.BackendType;
 import io.github.Nyeksenn.grooveboat.backend.MusicBackend;
 import io.github.Nyeksenn.grooveboat.backend.ServerInfo;
-import org.apache.commons.validator.routines.UrlValidator;
 import org.gnome.adw.EntryRow;
 import org.gnome.adw.NavigationPage;
 import org.gnome.adw.PreferencesGroup;
@@ -30,8 +29,6 @@ import java.util.concurrent.ExecutorService;
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/connection-page.ui", name = "ConnectionPage")
 public class ConnectionPage extends NavigationPage {
     private static final Logger logger = LoggerFactory.getLogger(ConnectionPage.class);
-    private final UrlValidator validator = new UrlValidator(new String[]{"http", "https"},
-            UrlValidator.ALLOW_LOCAL_URLS);
     private ExecutorService exec;
 
     @GtkChild(name = "connection-next-button")
@@ -76,7 +73,7 @@ public class ConnectionPage extends NavigationPage {
         var type = dialog.getBackendType();
         var url = BackendSupport.normalizeBaseUrl(entryUrl.getText());
 
-        if (!validator.isValid(url)) {
+        if (!BackendSupport.isValidBaseUrl(url)) {
             fail("URL invalid");
             return;
         }

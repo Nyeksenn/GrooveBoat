@@ -131,6 +131,29 @@ class JellyfinBackendTest {
     }
 
     @Test
+    void failedRestoreDoesNotAdoptTheSession() throws Exception {
+        try (var server = new FakeServer((m, p, q) -> Reply.status(401))) {
+            var backend = backend(server.baseUrl());
+            assertThatThrownBy(() -> backend.restore(SESSION)).isInstanceOf(AuthenticationException.class);
+            assertThatThrownBy(() -> backend.albumsNewerThan(Instant.EPOCH)).isInstanceOf(IllegalStateException.class);
+        }
+    }
+
+    @Test
+    void interruptedRequestKeepsTheInterruptFlag() throws Exception {
+        try (var server = new FakeServer((m, p, q) -> Reply.json("{}"))) {
+            var backend = backend(server.baseUrl());
+            Thread.currentThread().interrupt();
+            try {
+                assertThatThrownBy(backend::probe).isInstanceOf(IOException.class);
+                assertThat(Thread.currentThread().isInterrupted()).isTrue();
+            } finally {
+                Thread.interrupted();
+            }
+        }
+    }
+
+    @Test
     void restoreNeedsTokenAndUserId() {
         var backend = backend("http://127.0.0.1:1");
         assertThatThrownBy(() -> backend.restoreUnverified(new Session("alice", null, "user-1")))

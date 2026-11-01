@@ -806,20 +806,6 @@
   },
   {
     "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/commons-beanutils/commons-beanutils/1.11.0/commons-beanutils-1.11.0.jar",
-    "sha512": "4348670579601bc1151de2f27414635c4ea0b4b53061d116c09ba319e2c4f8e91d0cb0713a964668bd5189105ac1e2b6590881850880bf5ff23cc6409f270420",
-    "dest": "build/repository/commons-beanutils/commons-beanutils/1.11.0",
-    "dest-filename": "commons-beanutils-1.11.0.jar"
-  },
-  {
-    "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/commons-beanutils/commons-beanutils/1.11.0/commons-beanutils-1.11.0.pom",
-    "sha512": "1b281ef48a3d9faf9a1cbb3782a29e8dfd8c7bdd2001435ef167764cbc41debfe57410d73608a9bf3b56bd73fbc836c2fe82c95f9acee7b186c11915076830f6",
-    "dest": "build/repository/commons-beanutils/commons-beanutils/1.11.0",
-    "dest-filename": "commons-beanutils-1.11.0.pom"
-  },
-  {
-    "type": "file",
     "url": "https://plugins.gradle.org/m2/commons-codec/commons-codec/1.22.0/commons-codec-1.22.0.jar",
     "sha512": "5b67a5abf63948323101920fec10140d4370b841cc3c522a2b5e9864782640222c3094442861015494ddbc30bb7ef275722a54455c7c8333084842a26d8755da",
     "dest": "build/repository/commons-codec/commons-codec/1.22.0",
@@ -834,34 +820,6 @@
   },
   {
     "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/commons-collections/commons-collections/3.2.2/commons-collections-3.2.2.jar",
-    "sha512": "51c72f9aca7726f3c387095e66be85a6df97c74b00a25434b89188c1b8eab6e2b55accf7b9bd412430d22bd09324dec076e300b3d1fa39fccad471f0f2a3da16",
-    "dest": "build/repository/commons-collections/commons-collections/3.2.2",
-    "dest-filename": "commons-collections-3.2.2.jar"
-  },
-  {
-    "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/commons-collections/commons-collections/3.2.2/commons-collections-3.2.2.pom",
-    "sha512": "e7a3f8a4b295bc040d15fc5ad5d14a2eb0a4139a2bc734853f6fc5db55170fa9e822532f9ef8e63ae00d7c7ae768e1ea55ce44a66392b25feca4859ac4a35a49",
-    "dest": "build/repository/commons-collections/commons-collections/3.2.2",
-    "dest-filename": "commons-collections-3.2.2.pom"
-  },
-  {
-    "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/commons-digester/commons-digester/2.1/commons-digester-2.1.jar",
-    "sha512": "a2c822690786b41e0a02506c7aaf7e8a4b8251ea71d6978ee03e82b11ca242e49386d6da84dbc7182d5a6fb167822aed200da2d97e2f264d63ccf8f1b9681ac8",
-    "dest": "build/repository/commons-digester/commons-digester/2.1",
-    "dest-filename": "commons-digester-2.1.jar"
-  },
-  {
-    "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/commons-digester/commons-digester/2.1/commons-digester-2.1.pom",
-    "sha512": "789fc2c96bedb9f4cc831983603cf4049a26f126ae8c67baf1d6bde89bf5185a8264e57cbbca34196f76632bfcfa6453f9ce8781b2b1579e08b737e133ad5cac",
-    "dest": "build/repository/commons-digester/commons-digester/2.1",
-    "dest-filename": "commons-digester-2.1.pom"
-  },
-  {
-    "type": "file",
     "url": "https://plugins.gradle.org/m2/commons-io/commons-io/2.22.0/commons-io-2.22.0.jar",
     "sha512": "fca0b4ae70e531bee74413e0b865981aa8b60a9390f789b63997203dae67be65362e95a0c35b9d4b072fbb0810114783415dd22b92fb42e5594b10992f632bc5",
     "dest": "build/repository/commons-io/commons-io/2.22.0",
@@ -873,34 +831,6 @@
     "sha512": "3dd4b7ade08401723a4e47316d43c04294cc97a234a9bfef734a1e14386b25d22f5d75f3bbe133d593e7cb3f82821f51f5ff104c0d1cd7a1d7fa1865c12dc10b",
     "dest": "build/repository/commons-io/commons-io/2.22.0",
     "dest-filename": "commons-io-2.22.0.pom"
-  },
-  {
-    "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/commons-logging/commons-logging/1.4.0/commons-logging-1.4.0.jar",
-    "sha512": "5c333d925f81fdd09a80176ff15cd38381eb12e9ec2dac75f113d66006002175b33cdd9a0668100c5c6a49ae81f9f576909b89219a345a0075ed4683a997570a",
-    "dest": "build/repository/commons-logging/commons-logging/1.4.0",
-    "dest-filename": "commons-logging-1.4.0.jar"
-  },
-  {
-    "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/commons-logging/commons-logging/1.4.0/commons-logging-1.4.0.pom",
-    "sha512": "6f96134739f0b2bf8553300ff4d80097d93e04816bbb1d695847537e28d05707b339fb095c82495b8fa17bf86a2ce23025d6a65bce27caef73555c4fd59da77f",
-    "dest": "build/repository/commons-logging/commons-logging/1.4.0",
-    "dest-filename": "commons-logging-1.4.0.pom"
-  },
-  {
-    "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/commons-validator/commons-validator/1.11.0/commons-validator-1.11.0.jar",
-    "sha512": "d44a84cdaef23cc61a05edaab66bce3e11c349045571069932e0687ed35c5e690ddc980b5fe0f93b16d01e1d4224bd721f2085e734c734eb4398e8f87f83813c",
-    "dest": "build/repository/commons-validator/commons-validator/1.11.0",
-    "dest-filename": "commons-validator-1.11.0.jar"
-  },
-  {
-    "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/commons-validator/commons-validator/1.11.0/commons-validator-1.11.0.pom",
-    "sha512": "3eb64c6ef056b8dbbdfab46e24e26668e5aad092b4482bdd2a38db287577cb90338b36966f226c2ac37344045c7920c3b196842e5ecf2840a5c2e05bcfd6165e",
-    "dest": "build/repository/commons-validator/commons-validator/1.11.0",
-    "dest-filename": "commons-validator-1.11.0.pom"
   },
   {
     "type": "file",
@@ -1779,20 +1709,6 @@
   },
   {
     "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/org/apache/apache/16/apache-16.pom",
-    "sha512": "82393cf3a0282c45df8cb945cedff90e314cc30e96c0f1d112c9b1a222084250d465377973fd8aacca8bfed5d4b9032544a5369929164811a289e0899ff6f08d",
-    "dest": "build/repository/org/apache/apache/16",
-    "dest-filename": "apache-16.pom"
-  },
-  {
-    "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/org/apache/apache/34/apache-34.pom",
-    "sha512": "29b34e91977d3490bca8ab046d67f71e336599b2ef3af87d757784e05d6fd2091704d3b8879e11a53fdaccd3d949dfa4d66af2db5fec0d7158e958102a79461a",
-    "dest": "build/repository/org/apache/apache/34",
-    "dest-filename": "apache-34.pom"
-  },
-  {
-    "type": "file",
     "url": "https://plugins.gradle.org/m2/org/apache/apache/35/apache-35.pom",
     "sha512": "d599ebf085e96ab2c0fa925fec99fc046f1763743a0445e5a4bf255d8259d44aec7bd175881accf1c6562e13efc26b13a54de01c49b46032464366d41869d7e8",
     "dest": "build/repository/org/apache/apache/35",
@@ -1804,62 +1720,6 @@
     "sha512": "f8b4087d30b07befaf0118f4c93900e21a1c094b0238ae922e9c989b2fec9b82c2cbd0ac8fb20176682b07daf332e75e25b33315a3b195f99bb4f9cb11d6ea67",
     "dest": "build/repository/org/apache/apache/37",
     "dest-filename": "apache-37.pom"
-  },
-  {
-    "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/org/apache/apache/38/apache-38.pom",
-    "sha512": "32747243a85bf79763c88b248a47890577d5ff1b3c7c44e4fe26d27004b9967fe7f6b78ced0800877018a0c04b21cf2c05a5cbf8f8c960448d324852ce00e17b",
-    "dest": "build/repository/org/apache/apache/38",
-    "dest-filename": "apache-38.pom"
-  },
-  {
-    "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/org/apache/apache/39/apache-39.pom",
-    "sha512": "eaf61c6302666177b7e717f2bb2bd58b8213d26fe36a777bfe44a9444c9b56713d58bb5dd42573f5441f47dce200a98dc0a04b11dd2b0b3f8057c2fb5822bf20",
-    "dest": "build/repository/org/apache/apache/39",
-    "dest-filename": "apache-39.pom"
-  },
-  {
-    "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/org/apache/apache/7/apache-7.pom",
-    "sha512": "99a60915e419d1c05d2bcc98dcf61b53d0216e99c7306fb40279993a48664352c59600d6947fe06dce4f524a72c4502b45a146be0742f7fddd7a3d76b177bebd",
-    "dest": "build/repository/org/apache/apache/7",
-    "dest-filename": "apache-7.pom"
-  },
-  {
-    "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/org/apache/commons/commons-parent/102/commons-parent-102.pom",
-    "sha512": "2a1976185937d0d55ce1dcd17bf9e02d799d23a11af964bd97e560b7b5472c7153014ba3a74cee345f06415693832195d55071a717b5ea013e7ddbf68638f228",
-    "dest": "build/repository/org/apache/commons/commons-parent/102",
-    "dest-filename": "commons-parent-102.pom"
-  },
-  {
-    "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/org/apache/commons/commons-parent/103/commons-parent-103.pom",
-    "sha512": "696eca70448eadc9f28e4495292be521560ae8a03d12c36fdcd1a06028ea0857d4900e9361f3a2b74ae8b8c3ea02c2acbfe81a7bf936f864c3986cc1d48587f8",
-    "dest": "build/repository/org/apache/commons/commons-parent/103",
-    "dest-filename": "commons-parent-103.pom"
-  },
-  {
-    "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/org/apache/commons/commons-parent/17/commons-parent-17.pom",
-    "sha512": "def9edc7f4bcecc148575deabfd3f2c65af35b44b483fb15c03812f831c564c61c93eef7d2fd204a956f2376d1b09cc7450a48bd0331b1c0bbe5bd90ae6e19c3",
-    "dest": "build/repository/org/apache/commons/commons-parent/17",
-    "dest-filename": "commons-parent-17.pom"
-  },
-  {
-    "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/org/apache/commons/commons-parent/39/commons-parent-39.pom",
-    "sha512": "ef77fa2d64e33773dd36ce047c467ac698945a2e2db54027a939a583fb4093fc5e2c1de2587e8f94a9985f7c3d37c6385c11c9b9f21303a52bc585307f44376c",
-    "dest": "build/repository/org/apache/commons/commons-parent/39",
-    "dest-filename": "commons-parent-39.pom"
-  },
-  {
-    "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/org/apache/commons/commons-parent/84/commons-parent-84.pom",
-    "sha512": "fa5098d3703c5957324a079c5731c3f5e0209ad5ad0415d2fb8372403d21ec5fc4f76fba04f80b2dc09d1e75c2280a40e9c6b772249493926b1f46fc5374433a",
-    "dest": "build/repository/org/apache/commons/commons-parent/84",
-    "dest-filename": "commons-parent-84.pom"
   },
   {
     "type": "file",
@@ -2500,13 +2360,6 @@
   },
   {
     "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/org/junit/junit-bom/5.12.2/junit-bom-5.12.2.pom",
-    "sha512": "ab6408540062233f4986b8b10c875d8eb7e6b8beb633be7a8e743140882789cf9fe9a25f4886e05e5bd24bc44df97b97396b89a05f39452135bfd4f2c35c3be0",
-    "dest": "build/repository/org/junit/junit-bom/5.12.2",
-    "dest-filename": "junit-bom-5.12.2.pom"
-  },
-  {
-    "type": "file",
     "url": "https://plugins.gradle.org/m2/org/junit/junit-bom/5.13.1/junit-bom-5.13.1.pom",
     "sha512": "e1c4acc68f7114cd501754d07e51a9345bc1106623ea9e38cd6d40b1886cea7f8f6fa227da9d71da608b6691ef1f9d75d11253567350fbb4a949770a1cb7023e",
     "dest": "build/repository/org/junit/junit-bom/5.13.1",
@@ -2780,7 +2633,7 @@
   },
   {
     "type": "file",
-    "url": "https://repo.maven.apache.org/maven2/org/mockito/mockito-bom/4.11.0/mockito-bom-4.11.0.pom",
+    "url": "https://plugins.gradle.org/m2/org/mockito/mockito-bom/4.11.0/mockito-bom-4.11.0.pom",
     "sha512": "6bdf2809a5a479f73975ddb87cb102db88dac702904b89e8dcd9b9057dbbce67abb85d9cfbefda79c152d928346122eced122d2af17617772abeae0c383cc16a",
     "dest": "build/repository/org/mockito/mockito-bom/4.11.0",
     "dest-filename": "mockito-bom-4.11.0.pom"

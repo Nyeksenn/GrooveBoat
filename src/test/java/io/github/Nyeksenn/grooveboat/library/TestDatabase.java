@@ -9,7 +9,6 @@ final class TestDatabase {
     private TestDatabase() {
     }
 
-    @SuppressWarnings("deprecation")
     static Database start() {
         var properties = new Properties();
         properties.put("ebean.migration.run", "true");
@@ -19,10 +18,10 @@ final class TestDatabase {
         properties.put("datasource.db.databaseUrl", "jdbc:h2:mem:grooveboat-test;DB_CLOSE_DELAY=-1");
         var cfg = Database.builder();
         cfg.loadFromProperties(properties);
-        cfg.setDdlGenerate(false);
-        cfg.setDdlRun(false);
-        cfg.setDdlCreateOnly(false);
-        cfg.setDefaultServer(true);
+        cfg.ddlGenerate(false);
+        cfg.ddlRun(false);
+        cfg.ddlCreateOnly(false);
+        cfg.defaultDatabase(true);
         cfg.setPackages(List.of("io.github.Nyeksenn.grooveboat.entities"));
         return cfg.build();
     }
