@@ -26,6 +26,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -36,6 +37,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -156,7 +158,7 @@ public final class LibrarySync implements AutoCloseable {
             if (newAlbums.isEmpty()) {
                 // The artist page shows album artists' images; fetch those still missing (e.g. after the repair
                 // migration cleared broken paths) without querying every artist again.
-                updateArtists(true);
+                updateArtists(uncheckedArtists());
                 return 0;
             }
 
@@ -185,7 +187,13 @@ public final class LibrarySync implements AutoCloseable {
                 settings.setUint64(AppSettings.LAST_SYNC, newest.getEpochSecond());
             }
 
-            updateArtists(false);
+            // Only the artists these albums brought in (and any never checked): the rest of the library is unchanged.
+            var newArtistIds = newAlbums.stream().flatMap(a -> a.artists().stream()).map(RemoteArtistRef::id)
+                    .collect(Collectors.toSet());
+            var toUpdate = new LinkedHashMap<String, ArtistModel>();
+            new QArtistModel().id.isIn(newArtistIds).findList().forEach(a -> toUpdate.put(a.getId(), a));
+            uncheckedArtists().forEach(a -> toUpdate.putIfAbsent(a.getId(), a));
+            updateArtists(new ArrayList<>(toUpdate.values()));
             return newAlbums.size();
         } catch (CancellationRequested e) {
             logger.info("Library sync cancelled");
@@ -200,13 +208,15 @@ public final class LibrarySync implements AutoCloseable {
     }
 
     /**
-     * @param missingImagesOnly only album artists without a cached image that were never checked (an artist the
-     *                          server has no image for is checked once, not on every start), instead of all artists
+     * Album artists without a cached image that were never checked: an artist the server has no image for is checked
+     * once, not on every start.
      */
-    private void updateArtists(boolean missingImagesOnly) {
-        var artists = missingImagesOnly
-                ? new QArtistModel().albums.isNotEmpty().artistImagePath.isNull().imageChecked.isFalse().findList()
-                : new QArtistModel().findList();
+    private static List<ArtistModel> uncheckedArtists() {
+        return new QArtistModel().albums.isNotEmpty().artistImagePath.isNull().imageChecked.isFalse().findList();
+    }
+
+    /** Asks the server for each artist's details and image and stores them. */
+    private void updateArtists(List<ArtistModel> artists) {
         try (var tx = DB.beginTransaction()) {
             for (var artist : artists) {
                 checkCancelled();

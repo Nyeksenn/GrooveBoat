@@ -175,6 +175,22 @@ class LibrarySyncTest {
     }
 
     @Test
+    void newAlbumsOnlyRefreshTheirOwnArtistsNotTheWholeLibrary() {
+        backend.artists.put("ar2", new RemoteArtist("ar2", "Other", null));
+        backend.albums.add(album("al1", "First", T1));
+        sync.refresh(false);
+        assertThat(backend.artistCalls.get()).isEqualTo(1);
+
+        backend.albums.add(new RemoteAlbum("al2", "Second", 2, 2024, Duration.ofMinutes(8), null,
+                List.of(new RemoteArtistRef("ar2", "Other")), T2));
+        assertThat(sync.refresh(false)).isEqualTo(1);
+
+        // only ar2 was asked for; ar1 was checked before and its album is not new
+        assertThat(backend.artistCalls.get()).isEqualTo(2);
+        assertThat(db.find(ArtistModel.class).findCount()).isEqualTo(2);
+    }
+
+    @Test
     void anArtistWhoseImageFailedToDownloadIsAskedForAgain() {
         backend.artists.put("ar1", new RemoteArtist("ar1", "Band", "img"));   // the stub can't download images
         backend.albums.add(album("al1", "First", T1));
