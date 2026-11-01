@@ -118,7 +118,7 @@ public class CredentialsPage extends NavigationPage {
         onMap(() -> entryUsername.grabFocus());
         onRealize(() -> {
             this.app = AppWidgets.app(this);
-            this.exec = app.executor;
+            this.exec = app.executors.io;
         });
     }
 

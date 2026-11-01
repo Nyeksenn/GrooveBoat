@@ -316,7 +316,7 @@ msgstr ""
 msgid "Logging Out"
 msgstr ""
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatApp.java:248
+#: src/main/java/io/github/Nyeksenn/grooveboat/audio/PlaybackEvents.java:120
 #, java-printf-format
 msgid "Couldn't play “%s”"
 msgstr ""

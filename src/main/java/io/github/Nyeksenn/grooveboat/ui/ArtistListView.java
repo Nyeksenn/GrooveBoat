@@ -86,7 +86,7 @@ public class ArtistListView extends Box {
         // Realized again whenever the window crosses the size breakpoint; the setup must only run once.
         AppWidgets.onFirstRealize(this, () -> {
             var win = AppWidgets.window(this);
-            this.executor = AppWidgets.app(this).executor;
+            this.executor = AppWidgets.app(this).executors.io;
 
             var reloadAction = new SimpleAction("reload-artists", null);
             reloadAction.onActivate((_) -> {

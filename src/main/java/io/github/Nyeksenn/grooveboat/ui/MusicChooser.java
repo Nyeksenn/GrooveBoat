@@ -68,7 +68,7 @@ public class MusicChooser extends NavigationPage {
             refreshProgressBar.pulse();
             return GLib.SOURCE_CONTINUE;
         });
-        UiAsync.background(app.executor, () -> {
+        UiAsync.background(app.executors.io, () -> {
             try {
                 library.refresh(full);
             } finally {

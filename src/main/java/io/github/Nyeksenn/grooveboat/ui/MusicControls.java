@@ -174,7 +174,7 @@ public class MusicControls extends Box {
     public void init() {
         AppWidgets.whileRealized(this, scope -> {
             this.app = AppWidgets.app(this);
-            this.scheduler = app.scheduler;
+            this.scheduler = app.executors.scheduler;
             this.volumeButton.setIcons(volumeIcons);
             app.queueStore.addModeListener(modeListener);
             scope.onRelease(() -> app.queueStore.removeModeListener(modeListener));

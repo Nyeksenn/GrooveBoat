@@ -15,6 +15,7 @@ data/ui/server-type-page.ui
 data/ui/song-list.ui
 data/ui/welcome-page.ui
 data/ui/window.ui
+src/main/java/io/github/Nyeksenn/grooveboat/audio/PlaybackEvents.java
 src/main/java/io/github/Nyeksenn/grooveboat/backend/jellyfin/JellyfinBackend.java
 src/main/java/io/github/Nyeksenn/grooveboat/backend/subsonic/SubsonicBackend.java
 src/main/java/io/github/Nyeksenn/grooveboat/ui/ArtistAlbumSection.java

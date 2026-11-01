@@ -84,7 +84,7 @@ public class SongListPage extends NavigationPage {
             if (this.library == null) {
                 return;
             }
-            this.executor = app.executor;
+            this.executor = app.executors.io;
             this.win = window;
 
             var menuItem = new MenuItem();

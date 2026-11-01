@@ -45,7 +45,7 @@ public class ArtistSongsPage extends NavigationPage {
         initialized = true;
         var coverLoader = CoverLoader.getInstance();
 
-        UiAsync.background(app.executor, () -> {
+        UiAsync.background(app.executors.io, () -> {
             var albums = new QAlbumModel().albumArtists.id.equalTo(artistId)
                     .orderBy().release_year.desc().title.asc().findList();
             logger.info("Loading {} albums for artist {}", albums.size(), artistId);

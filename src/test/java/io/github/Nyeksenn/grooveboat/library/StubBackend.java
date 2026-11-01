@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** In-memory {@link MusicBackend} for sync tests. Albums, songs and artists are plain mutable fields. */
@@ -25,6 +26,7 @@ final class StubBackend implements MusicBackend {
     final AtomicInteger albumCalls = new AtomicInteger();
     final AtomicInteger songCalls = new AtomicInteger();
     volatile boolean offline;
+    final AtomicBoolean closed = new AtomicBoolean();
 
     @Override
     public BackendType type() {
@@ -114,5 +116,6 @@ final class StubBackend implements MusicBackend {
 
     @Override
     public void close() {
+        closed.set(true);
     }
 }

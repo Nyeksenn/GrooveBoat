@@ -113,7 +113,7 @@ public class GrooveboatWindow extends ApplicationWindow {
         final String url = settings.getString(AppSettings.URL);
         final String userId = settings.getString(AppSettings.USER_ID);
 
-        app.executor.submit(() -> {
+        app.executors.io.submit(() -> {
             try {
                 var backend = BackendFactory.create(type.get(), url);
                 var credential = secrets.lookupPassword(username, backend.scheme(), backend.host()).join().orElse(null);
@@ -162,7 +162,7 @@ public class GrooveboatWindow extends ApplicationWindow {
     private void syncAndShowContent() {
         showLoading(i18n("Loading Library"));
         var library = app.getLibrary();
-        app.executor.submit(() -> {
+        app.executors.io.submit(() -> {
             library.refresh(false);
             GLib.idleAddOnce(this::showContent);
         });

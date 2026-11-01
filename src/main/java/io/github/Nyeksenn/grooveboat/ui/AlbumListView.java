@@ -88,7 +88,7 @@ public class AlbumListView extends Box {
         // Realized again whenever the window crosses the size breakpoint; the setup must only run once.
         AppWidgets.onFirstRealize(this, () -> {
             var win = AppWidgets.window(this);
-            this.executor = AppWidgets.app(this).executor;
+            this.executor = AppWidgets.app(this).executors.io;
 
             win.musicChooser.searchEntry.onSearchStarted(() -> {
                 gridView.setModel(new NoSelection<AlbumListItem>(new FilterListModel<AlbumListItem>(sortedModel, filter)));

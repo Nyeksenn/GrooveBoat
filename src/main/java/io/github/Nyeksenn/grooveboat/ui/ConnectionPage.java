@@ -130,7 +130,7 @@ public class ConnectionPage extends NavigationPage {
             }
             entryUrl.grabFocus();
         });
-        onRealize(() -> this.exec = AppWidgets.app(this).executor);
+        onRealize(() -> this.exec = AppWidgets.app(this).executors.io);
     }
 
     public ConnectionPage(MemorySegment address) {
