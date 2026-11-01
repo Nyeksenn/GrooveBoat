@@ -130,11 +130,7 @@ public class ConnectionPage extends NavigationPage {
             }
             entryUrl.grabFocus();
         });
-        onRealize(() -> {
-            var win = (GrooveboatWindow) getRoot();
-            var app = (GrooveboatApp) win.getApplication();
-            this.exec = app.executor;
-        });
+        onRealize(() -> this.exec = AppWidgets.app(this).executor);
     }
 
     public ConnectionPage(MemorySegment address) {

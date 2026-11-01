@@ -172,18 +172,13 @@ public class MusicControls extends Box {
 
     @InstanceInit
     public void init() {
-        onRealize(() -> {
-            var win = (GrooveboatWindow) getRoot();
-            this.app = (GrooveboatApp) win.getApplication();
+        AppWidgets.whileRealized(this, scope -> {
+            this.app = AppWidgets.app(this);
             this.scheduler = app.scheduler;
             this.volumeButton.setIcons(volumeIcons);
             app.queueStore.addModeListener(modeListener);
+            scope.onRelease(() -> app.queueStore.removeModeListener(modeListener));
             syncModeButtons();
-        });
-        onUnrealize(() -> {
-            if (app != null) {
-                app.queueStore.removeModeListener(modeListener);
-            }
         });
     }
 

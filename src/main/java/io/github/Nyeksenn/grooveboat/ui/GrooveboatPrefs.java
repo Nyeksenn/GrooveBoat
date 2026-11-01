@@ -47,7 +47,7 @@ public class GrooveboatPrefs extends PreferencesDialog {
         rowUrl.setSubtitle(GLib.markupEscapeText(backend.baseUrl(), -1));
         rowUsername.setSubtitle(GLib.markupEscapeText(AppSettings.get().getString(AppSettings.USERNAME), -1));
 
-        exec.submit(() -> {
+        UiAsync.background(exec, () -> {
             String version;
             try {
                 version = switch (backend.probe()) {

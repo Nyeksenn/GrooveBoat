@@ -76,8 +76,8 @@ public class SongListPage extends NavigationPage {
 
     public void loadItems() {
         if (this.library == null && this.executor == null) {
-            var window = (GrooveboatWindow) getRoot();
-            var app = (GrooveboatApp) window.getApplication();
+            var window = AppWidgets.window(this);
+            var app = AppWidgets.app(this);
             var albumTextureLoader = CoverLoader.getInstance();
 
             this.library = app.getLibrary();
@@ -92,7 +92,7 @@ public class SongListPage extends NavigationPage {
             menuItem.setActionAndTargetValue("app.queue-album", Variant.string(albumId));
             this.albumQueueMenu.appendItem(menuItem);
 
-            this.executor.submit(() -> {
+            UiAsync.background(this.executor, () -> {
                 var songs = library.getSongs(albumId);
                 if (songs.isEmpty()) {
                     logger.warn("No songs for album {}", albumId);

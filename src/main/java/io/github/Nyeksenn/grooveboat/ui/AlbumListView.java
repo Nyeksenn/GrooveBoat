@@ -31,13 +31,8 @@ public class AlbumListView extends Box {
     private ListStore<AlbumListItem> store;
     private SortListModel<AlbumListItem> sortedModel;
     private ExecutorService executor;
-    /** Incremented per load on the main thread; a finished load only applies if it is still the newest. */
-    private int loadGeneration = 0;
-    /**
-     * The widget is realized again whenever the window crosses the size breakpoint (the split view collapses or
-     * expands), so the one-time setup must not run again.
-     */
-    private boolean initialized = false;
+    /** Only the newest load is applied, so overlapping reloads can't add albums twice. */
+    private final UiAsync.Latest latest = new UiAsync.Latest();
 
     @GtkChild(name = "album-grid-view")
     public GridView gridView;
@@ -65,14 +60,10 @@ public class AlbumListView extends Box {
         albumCard.navView = albumNavView;
     }
 
-    /**
-     * Replaces the grid's contents with the albums in the cache. Only the newest load is applied, so overlapping
-     * reloads can't add albums twice.
-     */
+    /** Replaces the grid's contents with the albums in the cache. */
     public void loadItems() {
         var albumTextureLoader = CoverLoader.getInstance();
-        var generation = ++loadGeneration;
-        this.executor.submit(() -> {
+        latest.run(executor, () -> {
             var albums = new QAlbumModel().findList();
             logger.info("Loading {} albums", albums.size());
             // Built on this executor thread: GObjects of custom types created on the ForkJoin common pool (e.g. via
@@ -81,12 +72,10 @@ public class AlbumListView extends Box {
             for (var album : albums) {
                 items.add(AlbumListItem.of(album, albumTextureLoader.load(album.getId())));
             }
-            GLib.idleAddOnce(() -> {
-                if (generation == loadGeneration) {
-                    store.removeAll();
-                    items.forEach(store::append);
-                }
-            });
+            return items;
+        }, items -> {
+            store.removeAll();
+            items.forEach(store::append);
         });
     }
 
@@ -96,14 +85,10 @@ public class AlbumListView extends Box {
         this.sortedModel = new SortListModel<>(this.store, titleSorter);
         gridView.setModel(new NoSelection<AlbumListItem>(this.sortedModel));
 
-        this.onRealize(() -> {
-            if (initialized) {
-                return;
-            }
-            initialized = true;
-            var win = (GrooveboatWindow) getRoot();
-            var app = (GrooveboatApp) win.getApplication();
-            this.executor = app.executor;
+        // Realized again whenever the window crosses the size breakpoint; the setup must only run once.
+        AppWidgets.onFirstRealize(this, () -> {
+            var win = AppWidgets.window(this);
+            this.executor = AppWidgets.app(this).executor;
 
             win.musicChooser.searchEntry.onSearchStarted(() -> {
                 gridView.setModel(new NoSelection<AlbumListItem>(new FilterListModel<AlbumListItem>(sortedModel, filter)));

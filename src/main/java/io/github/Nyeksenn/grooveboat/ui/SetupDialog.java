@@ -64,7 +64,7 @@ public class SetupDialog extends Dialog {
     @InstanceInit
     public void init() {
         onRealize(() -> {
-            var win = (GrooveboatWindow) getRoot();
+            var win = AppWidgets.window(this);
             var action = new SimpleAction("close-setup", null);
             action.onActivate((_) -> {
                 // The candidate now belongs to the app's session.

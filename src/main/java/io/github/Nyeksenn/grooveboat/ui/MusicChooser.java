@@ -68,31 +68,29 @@ public class MusicChooser extends NavigationPage {
             refreshProgressBar.pulse();
             return GLib.SOURCE_CONTINUE;
         });
-        app.executor.submit(() -> {
-            library.refresh(full);
-            GLib.idleAddOnce(() -> {
-                done.set(true);
-                refreshProgressBar.setVisible(false);
-                win.activateActionVariant("win.reload-albums", null);
-                win.activateActionVariant("win.reload-artists", null);
-            });
+        UiAsync.background(app.executor, () -> {
+            try {
+                library.refresh(full);
+            } finally {
+                // Always hide the progress bar, even if the refresh blew up.
+                GLib.idleAddOnce(() -> {
+                    done.set(true);
+                    refreshProgressBar.setVisible(false);
+                    win.activateActionVariant("win.reload-albums", null);
+                    win.activateActionVariant("win.reload-artists", null);
+                });
+            }
         });
     }
 
-    private boolean initialized = false;
-
     @InstanceInit
     public void init() {
-        onRealize(() -> {
-            // Realized again whenever the window crosses the size breakpoint; set up only once.
-            if (initialized) {
-                return;
-            }
-            initialized = true;
-            var win = (GrooveboatWindow) getRoot();
-            var app = (GrooveboatApp) win.getApplication();
+        // Realized again whenever the window crosses the size breakpoint; set up only once.
+        AppWidgets.onFirstRealize(this, () -> {
+            var win = AppWidgets.window(this);
+            var app = AppWidgets.app(this);
 
-            albumSearchbar.setKeyCaptureWidget((Widget) getRoot());
+            albumSearchbar.setKeyCaptureWidget(win);
             albumSearchbar.bindProperty("search-mode-enabled", buttonSearch, "active").build();
 
             var refreshAction = new SimpleAction("refresh-data", null);

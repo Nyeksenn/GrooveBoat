@@ -5,7 +5,6 @@ import org.gnome.adw.Bin;
 import org.gnome.gobject.GObject;
 import org.gnome.gobject.ParamSpec;
 import org.gnome.gtk.*;
-import org.javagi.gobject.SignalConnection;
 import org.javagi.gobject.annotations.InstanceInit;
 import org.javagi.gtk.annotations.GtkCallback;
 import org.javagi.gtk.annotations.GtkChild;
@@ -20,7 +19,6 @@ import java.util.Set;
 public final class SongQueue extends Bin {
     private static final Logger logger = LoggerFactory.getLogger(SongQueue.class);
     private SingleSelection<SongListItem> currentSelection;
-    private SignalConnection<?> selectionConnection;
 
     @GtkChild(name = "queue-scroll-window")
     public ScrolledWindow queueScrollWindow;
@@ -57,19 +55,10 @@ public final class SongQueue extends Bin {
 
     @InstanceInit
     public void init() {
-        onUnrealize(() -> {
-            if (selectionConnection != null) {
-                selectionConnection.disconnect();
-                selectionConnection = null;
-            }
-        });
-        onRealize(() -> {
-            var win = (GrooveboatWindow) getRoot();
-            assert win != null;
-            var app = (GrooveboatApp) win.getApplication();
-            this.currentSelection = app.queueStore.getSelection();
+        AppWidgets.whileRealized(this, scope -> {
+            this.currentSelection = AppWidgets.app(this).queueStore.getSelection();
             queueListView.setModel(this.currentSelection);
-            selectionConnection = this.currentSelection.onNotify("selected", this::itemSelectionChanged);
+            scope.track(this.currentSelection.onNotify("selected", this::itemSelectionChanged));
         });
     }
 

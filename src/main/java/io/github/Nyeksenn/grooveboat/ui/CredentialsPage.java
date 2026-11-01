@@ -117,8 +117,7 @@ public class CredentialsPage extends NavigationPage {
     public void init() {
         onMap(() -> entryUsername.grabFocus());
         onRealize(() -> {
-            var win = (GrooveboatWindow) getRoot();
-            this.app = (GrooveboatApp) win.getApplication();
+            this.app = AppWidgets.app(this);
             this.exec = app.executor;
         });
     }

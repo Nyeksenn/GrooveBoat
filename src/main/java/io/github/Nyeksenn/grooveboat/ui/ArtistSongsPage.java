@@ -37,8 +37,7 @@ public class ArtistSongsPage extends NavigationPage {
         if (initialized) {
             return;
         }
-        var win = (GrooveboatWindow) getRoot();
-        var app = (GrooveboatApp) win.getApplication();
+        var app = AppWidgets.app(this);
         var library = app.getLibrary();
         if (library == null) {
             return;
@@ -46,7 +45,7 @@ public class ArtistSongsPage extends NavigationPage {
         initialized = true;
         var coverLoader = CoverLoader.getInstance();
 
-        app.executor.submit(() -> {
+        UiAsync.background(app.executor, () -> {
             var albums = new QAlbumModel().albumArtists.id.equalTo(artistId)
                     .orderBy().release_year.desc().title.asc().findList();
             logger.info("Loading {} albums for artist {}", albums.size(), artistId);
