@@ -139,6 +139,55 @@ class LibrarySyncTest {
     }
 
     @Test
+    void refreshReportsHowManyAlbumsWereNew() {
+        backend.albums.add(album("al1", "First", T1));
+        backend.albums.add(album("al2", "Second", T2));
+
+        assertThat(sync.refresh(false)).isEqualTo(2);
+        assertThat(sync.refresh(false)).isZero();
+
+        backend.albums.add(album("al3", "Third", T2.plusSeconds(60)));
+        assertThat(sync.refresh(false)).isEqualTo(1);
+    }
+
+    @Test
+    void refreshReportsZeroWhenTheSyncFailsOrIsCancelled() {
+        backend.albums.add(album("al1", "First", T1));
+        backend.offline = true;
+        assertThat(sync.refresh(false)).isZero();
+
+        backend.offline = false;
+        sync.cancelAndAwait(Duration.ofSeconds(1));
+        assertThat(sync.refresh(false)).isZero();
+    }
+
+    @Test
+    void anArtistWithoutImageIsNotAskedForAgainOnEveryRefresh() {
+        backend.albums.add(album("al1", "First", T1));
+        sync.refresh(false);
+        assertThat(backend.artistCalls.get()).isEqualTo(1);
+        assertThat(db.find(ArtistModel.class).findOne().isImageChecked()).isTrue();
+
+        sync.refresh(false);
+        sync.refresh(false);
+
+        assertThat(backend.artistCalls.get()).isEqualTo(1);
+    }
+
+    @Test
+    void anArtistWhoseImageFailedToDownloadIsAskedForAgain() {
+        backend.artists.put("ar1", new RemoteArtist("ar1", "Band", "img"));   // the stub can't download images
+        backend.albums.add(album("al1", "First", T1));
+        sync.refresh(false);
+        assertThat(backend.artistCalls.get()).isEqualTo(1);
+        assertThat(db.find(ArtistModel.class).findOne().isImageChecked()).isFalse();
+
+        sync.refresh(false);
+
+        assertThat(backend.artistCalls.get()).isEqualTo(2);
+    }
+
+    @Test
     void cancelledSyncDoesNothing() {
         backend.albums.add(album("al1", "First", T1));
         assertThat(sync.cancelAndAwait(Duration.ofSeconds(1))).isTrue();
@@ -198,7 +247,7 @@ class LibrarySyncTest {
     }
 
     @Test
-    void getSongsUpdatesChangedSongsInPlaceWhenTheServerListGrows() {
+    void getSongsUpdatesChangedSongsInPlaceWhenTheServerListGrows() throws Exception {
         backend.albums.add(album("al1", "First", T1));
         backend.songs.put("al1", List.of(song("s1", "al1", "One", 1), song("s2", "al1", "Two", 2)));
         sync.refresh(false);
@@ -206,12 +255,70 @@ class LibrarySyncTest {
 
         backend.songs.put("al1", List.of(song("s1", "al1", "One (Remastered)", 1), song("s2", "al1", "Two", 2),
                 song("s3", "al1", "Three", 3)));
-        var updated = sync.getSongs("al1");
-
+        // The next start: the cache is complete, so the old list comes back at once and the server is checked in the
+        // background.
+        List<SongModel> updated;
+        try (var nextSession = new LibrarySync(backend)) {
+            assertThat(nextSession.getSongs("al1")).hasSize(2);
+            awaitSongRows(3);
+            updated = nextSession.getSongs("al1");
+        }
         assertThat(updated).extracting(SongModel::getTitle)
                 .containsExactlyInAnyOrder("One (Remastered)", "Two", "Three");
         assertThat(db.find(SongModel.class).findCount()).isEqualTo(3);
         assertThat(db.find(SongModel.class).where().idEq("s1").findOne().getTitle()).isEqualTo("One (Remastered)");
+        assertThat(db.find(AlbumModel.class).where().idEq("al1").findOne().getSongCount()).isEqualTo(3);
+    }
+
+    private void awaitSongRows(int expected) throws InterruptedException {
+        for (int i = 0; i < 200 && db.find(SongModel.class).findCount() != expected; i++) {
+            Thread.sleep(25);
+        }
+        assertThat(db.find(SongModel.class).findCount()).isEqualTo(expected);
+    }
+
+    @Test
+    void aCompleteCacheIsAnsweredWithoutWaitingForTheServer() throws Exception {
+        backend.albums.add(album("al1", "First", T1));
+        backend.songs.put("al1", List.of(song("s1", "al1", "One", 1), song("s2", "al1", "Two", 2)));
+        sync.refresh(false);
+        sync.getSongs("al1");
+        assertThat(backend.songCalls.get()).isEqualTo(1);
+
+        backend.offline = true;
+        var again = sync.getSongs("al1");
+
+        assertThat(again).extracting(SongModel::getId).containsExactly("s1", "s2");
+        assertThat(backend.songCalls.get()).isEqualTo(1);
+    }
+
+    @Test
+    void anAlbumIsComparedWithTheServerOnlyOncePerSession() throws Exception {
+        backend.albums.add(album("al1", "First", T1));
+        backend.songs.put("al1", List.of(song("s1", "al1", "One", 1), song("s2", "al1", "Two", 2)));
+        sync.refresh(false);
+        sync.getSongs("al1");
+        // a second sync object: a new session with a complete cache but nothing compared yet
+        try (var next = new LibrarySync(backend)) {
+            next.getSongs("al1");
+            for (int i = 0; i < 200 && backend.songCalls.get() < 2; i++) {
+                Thread.sleep(25);
+            }
+            next.getSongs("al1");
+            next.getSongs("al1");
+            Thread.sleep(150);
+        }
+        assertThat(backend.songCalls.get()).isEqualTo(2);
+    }
+
+    @Test
+    void anIncompleteCacheIsCompletedFromTheServerBeforeReturning() {
+        backend.albums.add(album("al1", "First", T1));
+        backend.songs.put("al1", List.of(song("s1", "al1", "One", 1), song("s2", "al1", "Two", 2)));
+        sync.refresh(false);
+
+        assertThat(sync.getSongs("al1")).hasSize(2);
+        assertThat(backend.songCalls.get()).isEqualTo(1);
     }
 
     @Test

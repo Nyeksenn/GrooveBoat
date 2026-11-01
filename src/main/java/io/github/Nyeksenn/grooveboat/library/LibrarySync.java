@@ -15,6 +15,7 @@ import io.github.Nyeksenn.grooveboat.entities.query.QArtistModel;
 import io.github.Nyeksenn.grooveboat.entities.query.QSongModel;
 import io.github.Nyeksenn.grooveboat.utils.AppSettings;
 import io.github.Nyeksenn.grooveboat.utils.Helpers;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,11 +26,14 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -42,9 +46,9 @@ public final class LibrarySync implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(LibrarySync.class);
     private static final int IMAGE_SIZE = 800;
     private static final String ARTIST_UPSERT = """
-            MERGE INTO ARTIST (id, name, artist_image_path)
+            MERGE INTO ARTIST (id, name, artist_image_path, image_checked)
             KEY (id)
-            VALUES (:id, :name, :artistImagePath)
+            VALUES (:id, :name, :artistImagePath, :imageChecked)
             """;
 
     private final MusicBackend backend;
@@ -54,6 +58,8 @@ public final class LibrarySync implements AutoCloseable {
     /** Held while song rows are built and written, so a logout can wait for them before wiping the tables. */
     private final ReentrantLock saveLock = new ReentrantLock();
     private volatile boolean cancelled = false;
+    /** Albums whose song list was compared with the server in this session. */
+    private final Set<String> revalidated = ConcurrentHashMap.newKeySet();
 
     public LibrarySync(MusicBackend backend) {
         this.backend = backend;
@@ -116,8 +122,11 @@ public final class LibrarySync implements AutoCloseable {
     /**
      * Fetches albums added since the last sync (or everything, when {@code fullRefresh}), caches their covers and
      * refreshes artist details.
+     *
+     * @return the number of albums that were new to the cache; 0 when there was nothing new or the sync failed or was
+     * cancelled (the failure is logged)
      */
-    public void refresh(boolean fullRefresh) {
+    public int refresh(boolean fullRefresh) {
         syncLock.lock();
         try {
             checkCancelled();
@@ -148,7 +157,7 @@ public final class LibrarySync implements AutoCloseable {
                 // The artist page shows album artists' images; fetch those still missing (e.g. after the repair
                 // migration cleared broken paths) without querying every artist again.
                 updateArtists(true);
-                return;
+                return 0;
             }
 
             var albumTasks = new ArrayList<Callable<AlbumModel>>(newAlbums.size());
@@ -177,6 +186,7 @@ public final class LibrarySync implements AutoCloseable {
             }
 
             updateArtists(false);
+            return newAlbums.size();
         } catch (CancellationRequested e) {
             logger.info("Library sync cancelled");
         } catch (IOException e) {
@@ -186,12 +196,16 @@ public final class LibrarySync implements AutoCloseable {
         } finally {
             syncLock.unlock();
         }
+        return 0;
     }
 
-    /** @param missingImagesOnly only album artists without a cached image, instead of all artists */
+    /**
+     * @param missingImagesOnly only album artists without a cached image that were never checked (an artist the
+     *                          server has no image for is checked once, not on every start), instead of all artists
+     */
     private void updateArtists(boolean missingImagesOnly) {
         var artists = missingImagesOnly
-                ? new QArtistModel().albums.isNotEmpty().artistImagePath.isNull().findList()
+                ? new QArtistModel().albums.isNotEmpty().artistImagePath.isNull().imageChecked.isFalse().findList()
                 : new QArtistModel().findList();
         try (var tx = DB.beginTransaction()) {
             for (var artist : artists) {
@@ -206,8 +220,11 @@ public final class LibrarySync implements AutoCloseable {
                             logger.debug("No image for artist {}", remote.name());
                         }
                     }
+                    // Checked: the server has no image, or the image is cached. A failed download stays unchecked.
+                    var checked = remote.imageId() == null || imagePath != null;
                     DB.sqlUpdate(ARTIST_UPSERT)
                             .setParameter("id", remote.id())
+                            .setParameter("imageChecked", checked)
                             .setParameter("name", ArtistModel.clampName(remote.name()))
                             // Ebean maps Path columns as file URIs and reads them back with Paths.get(URI); a
                             // plain path here made every later load of this artist fail.
@@ -241,8 +258,53 @@ public final class LibrarySync implements AutoCloseable {
         return artistList;
     }
 
-    /** Returns the songs of an album, fetching and upserting them from the server when the cache is incomplete. */
+    /**
+     * Returns the songs of an album. When the cache has all of them (as many as the album's song count), they are
+     * returned at once and the server is asked in the background, once per album and session, whether anything
+     * changed; otherwise the songs are fetched from the server and upserted before returning.
+     */
     public List<SongModel> getSongs(String albumId) {
+        try {
+            checkCancelled();
+            var cached = cachedIfComplete(albumId);
+            if (cached != null) {
+                if (revalidated.add(albumId)) {
+                    try {
+                        exec.execute(() -> loadSongsFromServer(albumId));
+                    } catch (RejectedExecutionException e) {
+                        logger.debug("Not checking album {} for changes: the sync is closed", albumId);
+                    }
+                }
+                return cached;
+            }
+        } catch (CancellationRequested e) {
+            logger.info("Library sync cancelled");
+            return new ArrayList<>();
+        } catch (RuntimeException e) {
+            logger.error("Loading songs failed", e);
+            return new ArrayList<>();
+        }
+        return loadSongsFromServer(albumId);
+    }
+
+    /** The cached songs of an album if there are as many as the album's song count, otherwise {@code null}. */
+    private @Nullable List<SongModel> cachedIfComplete(String albumId) {
+        saveLock.lock();
+        try {
+            checkCancelled();
+            var album = new QAlbumModel().id.equalTo(albumId).findOne();
+            if (album == null || album.getSongCount() <= 0) {
+                return null;
+            }
+            var cached = cachedSongs(albumId);
+            return cached.size() == album.getSongCount() ? cached : null;
+        } finally {
+            saveLock.unlock();
+        }
+    }
+
+    /** Fetches the songs of an album from the server and upserts them. Falls back to the cache when offline. */
+    private List<SongModel> loadSongsFromServer(String albumId) {
         List<RemoteSong> songList;
         try {
             checkCancelled();
@@ -265,6 +327,7 @@ public final class LibrarySync implements AutoCloseable {
             var songsSaved = cachedSongs(albumId);
 
             if (songsSaved.size() == songList.size()) {
+                revalidated.add(albumId);
                 return songsSaved;
             }
 
@@ -290,6 +353,11 @@ public final class LibrarySync implements AutoCloseable {
 
             var songModelList = runAll(songTasks);
             db.saveAll(songModelList);
+            if (album != null && album.getSongCount() != songList.size()) {
+                album.setSongCount(songList.size());
+                album.update();
+            }
+            revalidated.add(albumId);
             return songModelList;
         } catch (CancellationRequested e) {
             logger.info("Library sync cancelled");

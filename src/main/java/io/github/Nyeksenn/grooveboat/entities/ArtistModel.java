@@ -28,6 +28,9 @@ public class ArtistModel extends BaseModel {
 
     Path artistImagePath;
 
+    /** The server was asked for this artist's image: it has none, or it is cached. Failed downloads stay unchecked. */
+    boolean imageChecked;
+
     @ManyToMany(mappedBy = "albumArtists")
     Set<AlbumModel> albums;
 
@@ -56,6 +59,14 @@ public class ArtistModel extends BaseModel {
 
     public void setArtistImagePath(Path artistImagePath) {
         this.artistImagePath = artistImagePath;
+    }
+
+    public boolean isImageChecked() {
+        return imageChecked;
+    }
+
+    public void setImageChecked(boolean imageChecked) {
+        this.imageChecked = imageChecked;
     }
 
     public Set<AlbumModel> getAlbums() {

@@ -26,6 +26,7 @@ final class StubBackend implements MusicBackend {
     final Map<String, RemoteArtist> artists = new HashMap<>();
     final AtomicInteger albumCalls = new AtomicInteger();
     final AtomicInteger songCalls = new AtomicInteger();
+    final AtomicInteger artistCalls = new AtomicInteger();
     volatile boolean offline;
     /** When set, thrown by the album and song calls, like an unexpected bug would. */
     volatile RuntimeException unexpectedFailure;
@@ -98,6 +99,7 @@ final class StubBackend implements MusicBackend {
 
     @Override
     public RemoteArtist artist(String artistId) throws IOException {
+        artistCalls.incrementAndGet();
         if (offline) {
             throw new IOException("offline");
         }
