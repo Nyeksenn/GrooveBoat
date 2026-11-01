@@ -127,7 +127,7 @@ final class QueueActions {
 
     /** The queue item for a cached song, or {@code null} if the song is unknown. Runs off the main thread. */
     private static SongListItem songItem(String songId) {
-        var song = new QSongModel().id.equalTo(songId).findOne();
+        var song = new QSongModel().id.equalTo(songId).songArtists.fetchQuery().album.fetch().findOne();
         if (song == null) {
             return null;
         }

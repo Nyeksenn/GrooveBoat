@@ -381,7 +381,9 @@ public final class LibrarySync implements AutoCloseable {
     }
 
     private static List<SongModel> cachedSongs(String albumId) {
-        return new QSongModel().album.id.equalTo(albumId).orderBy().discNumber.asc().track.asc().findList();
+        // Song rows show their artists and album: fetch them with the songs instead of lazily per song.
+        return new QSongModel().album.id.equalTo(albumId).songArtists.fetchQuery().album.fetch()
+                .orderBy().discNumber.asc().track.asc().findList();
     }
 
     /**

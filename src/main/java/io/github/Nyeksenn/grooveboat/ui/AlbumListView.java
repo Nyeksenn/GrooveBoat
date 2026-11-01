@@ -64,7 +64,8 @@ public class AlbumListView extends Box {
     public void loadItems() {
         var albumTextureLoader = CoverLoader.getInstance();
         latest.run(executor, () -> {
-            var albums = new QAlbumModel().findList();
+            // The grid shows each album's artists: load them in one extra query instead of one per album.
+            var albums = new QAlbumModel().albumArtists.fetchQuery().findList();
             logger.info("Loading {} albums", albums.size());
             // Built on this executor thread: GObjects of custom types created on the ForkJoin common pool (e.g. via
             // parallelStream) are broken and crash GTK as soon as they are added to a list store.
