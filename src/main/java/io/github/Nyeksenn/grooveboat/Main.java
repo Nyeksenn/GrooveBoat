@@ -30,6 +30,8 @@ public class Main {
     public static final String LOCALE_DIR = "/app/share/locale";
     public static final String RESOURCE_DIR = DEVEL_PROFILE ? "build/generated" : "/app/share/" + APPLICATION_ID;
 
+    // Ebean deprecated these setters; replacements are checked in the backend phase
+    @SuppressWarnings("deprecation")
     public static void main(String[] args) {
         // java-gi hands the Java arguments to GLib as argv, so without these, GLib takes the first argument (e.g.
         // "--gapplication-service" when D-Bus-activated) as the program name, which the audio sink then reports to

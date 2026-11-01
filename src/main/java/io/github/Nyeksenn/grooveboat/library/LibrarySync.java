@@ -70,6 +70,8 @@ public final class LibrarySync implements AutoCloseable {
 
     /** Thrown inside sync tasks to unwind after {@link #cancelAndAwait}. */
     private static final class CancellationRequested extends RuntimeException {
+        private static final long serialVersionUID = 1L;
+
         CancellationRequested() {
             super("Library sync cancelled", null, false, false);
         }

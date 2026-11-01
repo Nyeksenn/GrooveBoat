@@ -154,7 +154,7 @@ public class QueueStore extends GObject {
      */
     private void reconcileOrder() {
         var present = Collections.newSetFromMap(new IdentityHashMap<SongListItem, Boolean>());
-        int n = (int) model.getNItems();
+        int n = model.getNItems();
         for (int i = 0; i < n; i++) {
             present.add(model.getItem(i));
         }

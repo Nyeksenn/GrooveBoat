@@ -11,6 +11,7 @@ GrooveBoat is a GTK4/libadwaita desktop music player for Jellyfin and OpenSubson
 ```sh
 ./gradlew run                 # build + run (PROFILE=devel); uses the schema compiled into build/schemas (no install needed)
 ./gradlew build               # compile everything
+./gradlew test                # run unit tests
 ./gradlew generateMigrations  # generate a new Ebean DB migration from entity changes
 ./install_settings.sh         # install the GSettings schema system-wide (sudo; needed for running outside `gradlew run`)
 flatpak-builder --force-clean --user --install-deps-from=flathub --install --state-dir=/tmp/flatpak-builder /tmp/builddir io.github.Nyeksenn.grooveboat.yaml   # build + install the Flatpak
@@ -24,7 +25,7 @@ flatpak run io.github.Nyeksenn.grooveboat
 - Logs go to `$XDG_DATA_HOME/grooveboat/logs` (logback.xml), not the working directory.
 - Without the GSettings schema `io.github.Nyeksenn.grooveboat` (keys in `utils.AppSettings`), `new Settings(...)` aborts the app. `gradlew run` sets `GSETTINGS_SCHEMA_DIR=build/schemas`.
 - To run or test without touching the real user state, set `XDG_DATA_HOME=<scratch dir>` (DB, logs and cover cache) and `GSETTINGS_BACKEND=memory`. Build first without it, then run with `-x compileSass -x compileResources`: `sass` may be a distrobox wrapper, and rootless podman keeps its containers under `XDG_DATA_HOME`, so an overridden value makes distrobox create a second container. Never run `podman system reset` or similar with an overridden `XDG_DATA_HOME`; the runtime state under `XDG_RUNTIME_DIR` is shared with the real containers. For a headless GUI start, run `gtk4-broadwayd :7` and launch with `GDK_BACKEND=broadway BROADWAY_DISPLAY=:7`.
-- There is no test suite; `src/test` only holds `MigrationGenerator` (used by `generateMigrations`).
+- `./gradlew test` runs the JUnit 5 + AssertJ unit tests in `src/test` (pure logic only, no GTK or running server needed). `src/test` also holds `MigrationGenerator` (used by `generateMigrations`). Compilation uses `-Xlint:all -Werror` (minus `processing` and `this-escape`), so new warnings fail the build.
 
 ## Jellyfin test server
 
