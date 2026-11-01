@@ -27,6 +27,9 @@ final class StubBackend implements MusicBackend {
     final AtomicInteger albumCalls = new AtomicInteger();
     final AtomicInteger songCalls = new AtomicInteger();
     final AtomicInteger artistCalls = new AtomicInteger();
+    final AtomicInteger restoreCalls = new AtomicInteger();
+    /** When set, thrown by {@link #restore}. */
+    volatile IOException restoreFailure;
     volatile boolean offline;
     /** When set, thrown by the album and song calls, like an unexpected bug would. */
     volatile RuntimeException unexpectedFailure;
@@ -66,7 +69,11 @@ final class StubBackend implements MusicBackend {
     }
 
     @Override
-    public void restore(Session session) {
+    public void restore(Session session) throws IOException {
+        restoreCalls.incrementAndGet();
+        if (restoreFailure != null) {
+            throw restoreFailure;
+        }
     }
 
     @Override
