@@ -109,7 +109,7 @@ public final class GrooveboatApp extends Application {
         try {
             Helpers.truncateDB(DB.getDefault());
         } catch (SQLException | RuntimeException e) {
-            logger.warn("Couldn't clear cache tables: {}", e.getMessage());
+            logger.warn("Couldn't clear cache tables", e);
         }
         BackendSupport.clearCoverCache();
         CoverLoader.getInstance().clear();
@@ -141,7 +141,7 @@ public final class GrooveboatApp extends Application {
             var removed = SecretKeeper.getInstance().clearPassword(username, split[0], split[1]);
             logger.info("Keyring entry removed: {}", removed);
         } catch (RuntimeException e) {
-            logger.warn("Couldn't remove keyring entry: {}", e.getMessage());
+            logger.warn("Couldn't remove keyring entry", e);
         }
     }
 

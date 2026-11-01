@@ -7,12 +7,9 @@ import org.gnome.gtk.Label;
 import org.javagi.gtk.annotations.GtkCallback;
 import org.javagi.gtk.annotations.GtkChild;
 import org.javagi.gtk.annotations.GtkTemplate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/album-card.ui", name = "AlbumCard")
 public class AlbumCard extends Box {
-    private static final Logger logger = LoggerFactory.getLogger(AlbumCard.class);
     private String albumId;
 
     private GrooveboatWindow win;

@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
+import io.github.Nyeksenn.grooveboat.utils.Failures;
 import static org.javagi.util.Intl.i18n;
 import io.github.Nyeksenn.grooveboat.backend.BackendFactory;
 import io.github.Nyeksenn.grooveboat.backend.BackendSupport;
@@ -87,7 +88,7 @@ public class ConnectionPage extends NavigationPage {
                 info = backend.probe();
             } catch (IOException | RuntimeException e) {
                 // RuntimeExceptions (bad URL, unexpected response) must not leave the button disabled.
-                logger.warn("Couldn't reach server: {}", e.getMessage());
+                Failures.log(logger, "Couldn't reach server", e);
                 info = null;
             }
 

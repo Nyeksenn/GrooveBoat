@@ -7,12 +7,9 @@ import org.gnome.gtk.Label;
 import org.javagi.gtk.annotations.GtkCallback;
 import org.javagi.gtk.annotations.GtkChild;
 import org.javagi.gtk.annotations.GtkTemplate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/queue-item.ui", name = "QueueItem")
 public class QueueCard extends Box {
-    private static final Logger logger = LoggerFactory.getLogger(QueueCard.class);
     private int index;
 
     public int getIndex() {

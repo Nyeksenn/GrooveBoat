@@ -40,7 +40,7 @@ final class MprisObject implements MediaPlayer2, MediaPlayer2Player, MediaPlayer
             try {
                 r.run();
             } catch (RuntimeException e) {
-                logger.warn("MPRIS action failed: {}", e.getMessage());
+                logger.warn("MPRIS action failed", e);
             }
         });
     }

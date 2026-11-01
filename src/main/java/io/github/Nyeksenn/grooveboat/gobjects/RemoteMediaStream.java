@@ -158,6 +158,7 @@ public final class RemoteMediaStream extends MediaStream {
             executor.submit(() -> track.backend().releasePlayback(track.source()));
         } catch (RejectedExecutionException e) {
             // Shutting down; the server cleans up idle sessions itself.
+            logger.debug("Not releasing the play session: the executor is shut down");
         }
     }
 

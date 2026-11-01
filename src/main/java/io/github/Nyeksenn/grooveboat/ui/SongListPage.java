@@ -98,14 +98,15 @@ public class SongListPage extends NavigationPage {
                     logger.warn("No songs for album {}", albumId);
                     return;
                 }
-                try {
-                    var texture = albumTextureLoader.load(albumId);
-                    for (var song : songs) {
-                        var songListItem = SongListItem.of(song, song.getAlbum(), texture);
-                        GLib.idleAddOnce(() -> this.store.append(songListItem));
+                var texture = albumTextureLoader.load(albumId);
+                for (var song : songs) {
+                    var songAlbum = song.getAlbum();
+                    if (songAlbum == null) {
+                        logger.warn("Song {} has no album; leaving it out of the list", song.getId());
+                        continue;
                     }
-                } catch (NullPointerException e) {
-                    logger.warn("Didn't find texture for an album");
+                    var songListItem = SongListItem.of(song, songAlbum, texture);
+                    GLib.idleAddOnce(() -> this.store.append(songListItem));
                 }
             });
         }

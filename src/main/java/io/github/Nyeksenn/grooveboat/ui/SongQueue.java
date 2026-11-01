@@ -9,15 +9,12 @@ import org.javagi.gobject.annotations.InstanceInit;
 import org.javagi.gtk.annotations.GtkCallback;
 import org.javagi.gtk.annotations.GtkChild;
 import org.javagi.gtk.annotations.GtkTemplate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.foreign.MemorySegment;
 import java.util.Set;
 
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/song-queue.ui", name = "SongQueue")
 public final class SongQueue extends Bin {
-    private static final Logger logger = LoggerFactory.getLogger(SongQueue.class);
     private SingleSelection<SongListItem> currentSelection;
 
     @GtkChild(name = "queue-scroll-window")

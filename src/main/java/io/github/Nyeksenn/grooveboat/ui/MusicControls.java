@@ -93,7 +93,8 @@ public class MusicControls extends Box {
                 GLib.idleAddOnce(() -> ms.seek((long) value));
             }, DEBOUNCE_DELAY, TimeUnit.MILLISECONDS);
         } catch (RejectedExecutionException e) {
-            logger.warn(e.getMessage());
+            // The scheduler only stops when the app shuts down.
+            logger.debug("Not seeking: the scheduler is shut down");
         }
 
         return false;

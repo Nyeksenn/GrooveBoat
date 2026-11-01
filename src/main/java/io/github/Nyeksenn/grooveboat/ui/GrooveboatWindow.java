@@ -8,6 +8,7 @@ import io.github.Nyeksenn.grooveboat.backend.Session;
 import io.github.Nyeksenn.grooveboat.entities.query.QAlbumModel;
 import io.github.Nyeksenn.grooveboat.gobjects.SecretKeeper;
 import io.github.Nyeksenn.grooveboat.utils.AppSettings;
+import io.github.Nyeksenn.grooveboat.utils.Failures;
 import org.gnome.adw.AlertDialog;
 import org.gnome.adw.ApplicationWindow;
 import org.gnome.adw.ResponseAppearance;
@@ -151,7 +152,7 @@ public class GrooveboatWindow extends ApplicationWindow {
                         String.format(i18n("The server no longer accepts the stored login for %s. "
                                 + "Log out and sign in again."), GLib.markupEscapeText(username, -1)), false));
             } catch (IOException | RuntimeException e) {
-                logger.warn("Connection failed: {}", e.getMessage());
+                Failures.log(logger, "Connection failed", e);
                 GLib.idleAddOnce(() -> showError(i18n("Connection Error"),
                         String.format(i18n("Unable to reach the %s server. Please check your internet "
                                 + "connection and try again."), type.get().displayName()), true));
@@ -160,11 +161,19 @@ public class GrooveboatWindow extends ApplicationWindow {
     }
 
     private void syncAndShowContent() {
-        showLoading(i18n("Loading Library"));
         var library = app.getLibrary();
-        app.executors.io.submit(() -> {
-            library.refresh(false);
-            GLib.idleAddOnce(this::showContent);
+        if (library == null) {
+            logger.warn("No active session; not loading the library");
+            return;
+        }
+        showLoading(i18n("Loading Library"));
+        UiAsync.background(app.executors.io, () -> {
+            try {
+                library.refresh(false);
+            } finally {
+                // The cache is shown even if the sync failed, and the loading page never stays up for good.
+                GLib.idleAddOnce(this::showContent);
+            }
         });
     }
 

@@ -134,7 +134,7 @@ public final class LibrarySync implements AutoCloseable {
                 try {
                     Helpers.truncateDB(db);
                 } catch (SQLException e) {
-                    logger.warn("Couldn't truncate tables");
+                    logger.warn("Couldn't truncate tables", e);
                 }
             }
             // The cutoff has second precision, so albums from the last synced second can come back.
@@ -181,8 +181,8 @@ public final class LibrarySync implements AutoCloseable {
             logger.info("Library sync cancelled");
         } catch (IOException e) {
             logger.warn("Couldn't fetch albums: {}", e.getMessage());
-        } catch (Exception e) {
-            logger.warn("Library sync failed: {}", e.getMessage());
+        } catch (RuntimeException e) {
+            logger.error("Library sync failed", e);
         } finally {
             syncLock.unlock();
         }
@@ -251,8 +251,11 @@ public final class LibrarySync implements AutoCloseable {
             // Offline or server trouble: whatever the cache has is better than an empty page.
             logger.warn("Couldn't retrieve songs for album {}: {}", albumId, e.getMessage());
             return cachedSongs(albumId);
-        } catch (Exception e) {
-            logger.warn("Loading songs failed: {}", e.getMessage());
+        } catch (CancellationRequested e) {
+            logger.info("Library sync cancelled");
+            return new ArrayList<>();
+        } catch (RuntimeException e) {
+            logger.error("Loading songs failed", e);
             return new ArrayList<>();
         }
         // Everything below reads and writes the cache. A logout waits for this lock before wiping the tables.
@@ -288,8 +291,11 @@ public final class LibrarySync implements AutoCloseable {
             var songModelList = runAll(songTasks);
             db.saveAll(songModelList);
             return songModelList;
-        } catch (Exception e) {
-            logger.warn("Loading songs failed: {}", e.getMessage());
+        } catch (CancellationRequested e) {
+            logger.info("Library sync cancelled");
+            return new ArrayList<>();
+        } catch (RuntimeException e) {
+            logger.error("Loading songs failed", e);
             return new ArrayList<>();
         } finally {
             saveLock.unlock();

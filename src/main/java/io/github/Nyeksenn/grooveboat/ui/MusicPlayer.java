@@ -9,15 +9,12 @@ import org.javagi.gobject.annotations.InstanceInit;
 import org.javagi.gobject.annotations.RegisteredType;
 import org.javagi.gtk.annotations.GtkChild;
 import org.javagi.gtk.annotations.GtkTemplate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.foreign.MemorySegment;
 
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/music-player.ui", name = "MusicPlayer")
 @RegisteredType(name = "MusicPlayer")
 public class MusicPlayer extends Box {
-    private static final Logger logger = LoggerFactory.getLogger(MusicPlayer.class);
 
     @GtkChild(name = "player-album-picture")
     public RoundedImage playerAlbumPicture;

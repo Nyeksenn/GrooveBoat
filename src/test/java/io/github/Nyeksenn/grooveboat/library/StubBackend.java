@@ -27,6 +27,8 @@ final class StubBackend implements MusicBackend {
     final AtomicInteger albumCalls = new AtomicInteger();
     final AtomicInteger songCalls = new AtomicInteger();
     volatile boolean offline;
+    /** When set, thrown by the album and song calls, like an unexpected bug would. */
+    volatile RuntimeException unexpectedFailure;
     final AtomicBoolean closed = new AtomicBoolean();
     /** When set, {@link #cacheImage} announces itself on {@link #imageEntered} and waits here before failing. */
     volatile CountDownLatch imageGate;
@@ -73,6 +75,9 @@ final class StubBackend implements MusicBackend {
     @Override
     public List<RemoteAlbum> albumsNewerThan(Instant since) throws IOException {
         albumCalls.incrementAndGet();
+        if (unexpectedFailure != null) {
+            throw unexpectedFailure;
+        }
         if (offline) {
             throw new IOException("offline");
         }
@@ -82,6 +87,9 @@ final class StubBackend implements MusicBackend {
     @Override
     public List<RemoteSong> songsOfAlbum(String albumId) throws IOException {
         songCalls.incrementAndGet();
+        if (unexpectedFailure != null) {
+            throw unexpectedFailure;
+        }
         if (offline) {
             throw new IOException("offline");
         }

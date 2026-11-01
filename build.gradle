@@ -39,6 +39,7 @@ dependencies {
     testImplementation "io.ebean:ebean-test:${ebeanVersion}"
     testImplementation 'org.junit.jupiter:junit-jupiter:5.13.4'
     testImplementation 'org.assertj:assertj-core:3.27.3'
+    testImplementation 'ch.qos.logback:logback-classic:1.6.6'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.13.4'
 
     annotationProcessor "io.ebean:querybean-generator:${ebeanVersion}"

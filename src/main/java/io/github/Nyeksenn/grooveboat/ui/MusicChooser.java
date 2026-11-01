@@ -12,8 +12,6 @@ import org.javagi.gobject.annotations.RegisteredType;
 import org.javagi.gtk.annotations.GtkCallback;
 import org.javagi.gtk.annotations.GtkChild;
 import org.javagi.gtk.annotations.GtkTemplate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.foreign.MemorySegment;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -21,7 +19,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/music-chooser.ui", name = "MusicChooser")
 @RegisteredType(name = "MusicChooser")
 public class MusicChooser extends NavigationPage {
-    private static final Logger logger = LoggerFactory.getLogger(MusicChooser.class);
 
     @GtkChild(name = "music-chooser-header")
     public HeaderBar musicChooserHeader;

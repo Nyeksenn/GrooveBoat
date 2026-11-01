@@ -2,6 +2,7 @@ package io.github.Nyeksenn.grooveboat.library;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import ch.qos.logback.classic.Level;
 import io.ebean.Database;
 import io.github.Nyeksenn.grooveboat.backend.RemoteAlbum;
 import io.github.Nyeksenn.grooveboat.backend.RemoteArtist;
@@ -12,6 +13,7 @@ import io.github.Nyeksenn.grooveboat.entities.ArtistModel;
 import io.github.Nyeksenn.grooveboat.entities.SongModel;
 import io.github.Nyeksenn.grooveboat.utils.AppSettings;
 import io.github.Nyeksenn.grooveboat.utils.Helpers;
+import io.github.Nyeksenn.grooveboat.utils.LogCapture;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -234,6 +236,51 @@ class LibrarySyncTest {
         sync.refresh(false);
 
         assertThat(db.find(ArtistModel.class).where().idEq("long").findOne().getName()).hasSize(200);
+    }
+
+    @Test
+    void cancelledGetSongsIsNotLoggedAsAnError() {
+        sync.cancelAndAwait(Duration.ofSeconds(1));
+        try (var log = new LogCapture(LibrarySync.class)) {
+            assertThat(sync.getSongs("al1")).isEmpty();
+
+            assertThat(log.events(Level.ERROR)).isEmpty();
+            assertThat(log.events(Level.WARN)).isEmpty();
+        }
+    }
+
+    @Test
+    void anUnexpectedFailureWhileLoadingSongsIsLoggedAsAnErrorWithItsStackTrace() {
+        backend.unexpectedFailure = new IllegalStateException("bug");
+        try (var log = new LogCapture(LibrarySync.class)) {
+            assertThat(sync.getSongs("al1")).isEmpty();
+
+            assertThat(log.events(Level.ERROR)).hasSize(1);
+            assertThat(log.events(Level.ERROR).getFirst().getThrowableProxy().getMessage()).isEqualTo("bug");
+        }
+    }
+
+    @Test
+    void anUnexpectedFailureDuringRefreshIsLoggedAsAnErrorAndDoesNotEscape() {
+        backend.unexpectedFailure = new IllegalStateException("bug");
+        try (var log = new LogCapture(LibrarySync.class)) {
+            sync.refresh(false);
+
+            assertThat(log.events(Level.ERROR)).hasSize(1);
+            assertThat(log.events(Level.ERROR).getFirst().getThrowableProxy().getMessage()).isEqualTo("bug");
+        }
+    }
+
+    @Test
+    void anUnreachableServerIsOnlyAWarning() {
+        backend.offline = true;
+        try (var log = new LogCapture(LibrarySync.class)) {
+            sync.refresh(false);
+            sync.getSongs("al1");
+
+            assertThat(log.events(Level.ERROR)).isEmpty();
+            assertThat(log.events(Level.WARN)).hasSize(2);
+        }
     }
 
     @Test

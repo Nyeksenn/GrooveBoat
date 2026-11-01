@@ -54,12 +54,14 @@ public final class MprisService implements AutoCloseable {
             logger.info("MPRIS available as {}", BUS_NAME);
             return service;
         } catch (Exception | LinkageError e) {
+            // Optional feature: no session bus or a missing D-Bus library is no reason to stop the app.
             logger.warn("MPRIS disabled: {}", e.getMessage());
+            logger.debug("MPRIS startup failure", e);
             if (connection != null) {
                 try {
                     connection.close();
-                } catch (Exception _) {
-                    // Already failing.
+                } catch (Exception closeFailure) {
+                    logger.debug("Closing the failed MPRIS connection also failed", closeFailure);
                 }
             }
             return null;
