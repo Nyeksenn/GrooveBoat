@@ -19,8 +19,6 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.foreign.Arena;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -39,9 +37,8 @@ public class QueueStore extends GObject {
     private boolean forceReload = false;
     private RepeatMode repeat = RepeatMode.NONE;
     private boolean shuffle = false;
-    /** Shuffled play order (by identity); only maintained while shuffle is on. */
-    private final List<SongListItem> order = new ArrayList<>();
-    private final Random random = new Random();
+    /** Shuffled play order; only maintained while shuffle is on. */
+    private final PlayOrder<SongListItem> order = new PlayOrder<>(new Random());
     private final List<Runnable> modeListeners = new CopyOnWriteArrayList<>();
 
     @Signal
@@ -115,7 +112,7 @@ public class QueueStore extends GObject {
             return;
         }
         shuffle = enabled;
-        order.clear();
+        order.reset();
         refreshNext();
         modeListeners.forEach(Runnable::run);
     }
@@ -128,80 +125,22 @@ public class QueueStore extends GObject {
 
     /** Queue entries in play order: the list order, or the shuffled order while shuffle is on. */
     private List<SongListItem> playOrder() {
-        if (shuffle) {
-            reconcileOrder();
-            return order;
-        }
         var list = new ArrayList<SongListItem>();
         for (int i = 0; i < model.getNItems(); i++) {
             list.add(model.getItem(i));
         }
-        return list;
-    }
-
-    private static int identityIndex(List<SongListItem> list, SongListItem item) {
-        for (int i = 0; i < list.size(); i++) {
-            if (list.get(i) == item) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    /**
-     * Brings the shuffled order in line with the queue: entries that left are dropped, new entries are inserted at
-     * random places after the current song.
-     */
-    private void reconcileOrder() {
-        var present = Collections.newSetFromMap(new IdentityHashMap<SongListItem, Boolean>());
-        int n = model.getNItems();
-        for (int i = 0; i < n; i++) {
-            present.add(model.getItem(i));
-        }
-        order.removeIf(item -> !present.contains(item));
-        if (order.size() == n) {
-            return;
-        }
-        var current = currentItem();
-        if (current != null && identityIndex(order, current) < 0 && order.isEmpty()) {
-            order.add(current);
-        }
-        var inOrder = Collections.newSetFromMap(new IdentityHashMap<SongListItem, Boolean>());
-        inOrder.addAll(order);
-        int curPos = current == null ? -1 : identityIndex(order, current);
-        for (int i = 0; i < n; i++) {
-            var item = model.getItem(i);
-            if (inOrder.add(item)) {
-                order.add(curPos + 1 + random.nextInt(order.size() - curPos), item);
-            }
-        }
+        return order.resolve(list, currentItem(), shuffle);
     }
 
     /** The song a skip-forward would play (wrapping in repeat-playlist mode), or {@code null}. */
     private SongListItem itemAfterCurrent() {
         var current = currentItem();
-        if (current == null) {
-            return null;
-        }
-        var list = playOrder();
-        int i = identityIndex(list, current);
-        if (i >= 0 && i + 1 < list.size()) {
-            return list.get(i + 1);
-        }
-        return repeat == RepeatMode.PLAYLIST && !list.isEmpty() ? list.get(0) : null;
+        return current == null ? null : PlayOrder.after(playOrder(), current, repeat);
     }
 
     private SongListItem itemBeforeCurrent() {
         var current = currentItem();
-        if (current == null) {
-            return null;
-        }
-        var list = playOrder();
-        int i = identityIndex(list, current);
-        if (i > 0) {
-            return list.get(i - 1);
-        }
-        return repeat == RepeatMode.PLAYLIST && !list.isEmpty() ? list.get(list.size() - 1) : null;
+        return current == null ? null : PlayOrder.before(playOrder(), current, repeat);
     }
 
     public boolean canGoNext() {
