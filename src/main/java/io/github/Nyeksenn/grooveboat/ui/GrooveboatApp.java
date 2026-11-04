@@ -115,6 +115,7 @@ public final class GrooveboatApp extends Application {
             logger.warn("Couldn't clear cache tables", e);
         }
         BackendSupport.clearCoverCache();
+        QueueStore.deleteSaved();
         CoverLoader.getInstance().clear();
         AppSettings.resetSession();
     }
@@ -268,6 +269,8 @@ public final class GrooveboatApp extends Application {
     @Override
     protected void shutdown() {
         super.shutdown();
+        // Before anything is torn down: the queue is restored on the next start.
+        queueStore.save();
         if (mpris != null) {
             mpris.close();
         }

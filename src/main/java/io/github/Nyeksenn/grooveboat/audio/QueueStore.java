@@ -1,24 +1,34 @@
 package io.github.Nyeksenn.grooveboat.audio;
 
+import io.github.Nyeksenn.grooveboat.entities.SongModel;
 import io.github.Nyeksenn.grooveboat.entities.query.QSongModel;
 import io.github.Nyeksenn.grooveboat.gobjects.SongListItem;
 import io.github.Nyeksenn.grooveboat.ui.GrooveboatApp;
 import org.gnome.gio.ListStore;
+import org.gnome.glib.GLib;
 import org.gnome.glib.Variant;
 import org.gnome.gobject.GObject;
 import org.gnome.gobject.ParamSpec;
 import org.gnome.gtk.SingleSelection;
 import org.javagi.gobject.annotations.Signal;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class QueueStore extends GObject {
+    private static final Logger logger = LoggerFactory.getLogger(QueueStore.class);
+
     private final GrooveboatApp app;
     private boolean initialized;
+    /** Set while the saved queue is being looked up, so a second request doesn't restore it twice. */
+    private boolean restoring;
     private final ListStore<SongListItem> model = new ListStore<>();
     private final SingleSelection<SongListItem> selection = new SingleSelection<>(model);
     private static final int GTK_INVALID_LIST_POSITION = -1;
@@ -237,16 +247,126 @@ public class QueueStore extends GObject {
         return true;
     }
 
-    public void loadState() {
-        if (!model.isEmpty()) {
+    /** The queue as it is now, for saving; empty when nothing is queued. */
+    public QueueSnapshot snapshot() {
+        var ids = new ArrayList<String>();
+        for (int i = 0; i < model.getNItems(); i++) {
+            ids.add(model.getItem(i).getSongId());
+        }
+        return new QueueSnapshot(ids, Math.max(selection.getSelected(), 0));
+    }
+
+    /**
+     * Saves the queue for the next run (an empty queue removes the saved one). Does nothing without a session: the
+     * queue is empty then because the app never got to restore it, and that must not erase the saved one.
+     */
+    public void save() {
+        if (!app.hasSession()) {
             return;
         }
+        try {
+            QueueSnapshot.write(QueueSnapshot.defaultPath(), snapshot());
+        } catch (IOException | RuntimeException e) {
+            logger.warn("Couldn't save the queue: {}", e.getMessage());
+        }
+    }
+
+    /** Forgets the saved queue, e.g. on logout (its song ids belong to one server). */
+    public static void deleteSaved() {
+        try {
+            QueueSnapshot.delete(QueueSnapshot.defaultPath());
+        } catch (IOException e) {
+            logger.warn("Couldn't delete the saved queue: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Fills an empty queue after startup: the queue of the last run if there is one, otherwise the first song of the
+     * library. Nothing starts playing; the current song is only prepared.
+     */
+    public void loadState() {
+        if (!model.isEmpty() || restoring) {
+            return;
+        }
+        restoring = true;
+        var saved = QueueSnapshot.read(QueueSnapshot.defaultPath());
+        app.executors.io.submit(() -> {
+            List<SongListItem> items = List.of();
+            var index = 0;
+            try {
+                if (saved.isPresent()) {
+                    var restored = resolve(saved.get());
+                    items = restored.items();
+                    index = restored.index();
+                }
+            } catch (RuntimeException e) {
+                logger.error("Couldn't restore the saved queue", e);
+            }
+            final var restoredItems = items;
+            final var restoredIndex = index;
+            GLib.idleAddOnce(() -> {
+                restoring = false;
+                if (!model.isEmpty() || !app.hasSession()) {
+                    return;
+                }
+                if (restoredItems.isEmpty()) {
+                    queueFirstSong();
+                } else {
+                    restore(restoredItems, restoredIndex);
+                }
+            });
+        });
+    }
+
+    /** Fallback for a first run: queues one song so the player isn't empty. */
+    private void queueFirstSong() {
         var initSong = new QSongModel().setMaxRows(1).findOne();
         if (initSong == null) {
             return;
         }
         var action = app.lookupAction("queue-song");
         action.activate(Variant.string(initSong.getId()));
+    }
+
+    /** The saved songs that the library still has (in saved order), and where the current song ended up. */
+    record Restored(List<SongListItem> items, int index) {
+    }
+
+    /** Runs off the main thread. Songs that are gone from the library are dropped from the queue. */
+    private static Restored resolve(QueueSnapshot snapshot) {
+        var songs = new HashMap<String, SongModel>();
+        new QSongModel().id.in(snapshot.songIds()).songArtists.fetchQuery().album.fetch().findList().stream()
+                .filter(song -> song.getAlbum() != null)
+                .forEach(song -> songs.put(song.getId(), song));
+        var kept = snapshot.retain(songs.keySet());
+        var items = new ArrayList<SongListItem>();
+        for (var id : kept.songIds()) {
+            var song = songs.get(id);
+            items.add(SongListItem.of(song, song.getAlbum()));
+        }
+        return new Restored(items, kept.index());
+    }
+
+    /**
+     * Puts a restored queue in place and prepares {@code index} as the current song, without playing it. The
+     * selection changes are handled here, not by the usual handler: it would load the first entry as it is
+     * appended, and treat the later selection of the saved entry as a manual change that starts playing.
+     */
+    private void restore(List<SongListItem> items, int index) {
+        followingSwitch = true;
+        try {
+            items.forEach(model::append);
+            selection.setSelected(index);
+        } finally {
+            followingSwitch = false;
+        }
+        var current = currentItem();
+        if (current != null && app.getStream().load(current)) {
+            emit("initialize-song", current);
+        }
+        // As after startup: whatever is queued next is prepared, not played.
+        initialized = true;
+        refreshNext();
     }
 
     /** Empties the queue; the next queued song will be prepared without auto-playing, as after startup. */

@@ -47,7 +47,7 @@ When the main window is realised it registers a retry action and then works out 
 
 Once a session is started the window shows the library:
 
-- **Cached library present:** the content page is shown at once and the queue is restored. In the background (`library.StartupSync`) the stored login is verified with the server, if it hasn't been just now, and an incremental sync runs. When the sync found new albums, the album and artist grids reload. If the server can't be reached, a toast says so and the cached library stays. If it rejects the login, a dialog over the library offers Log Out. A result that arrives after the session ended (logout) is ignored.
+- **Cached library present:** the content page is shown at once and the queue is restored (see *Saved queue* below). In the background (`library.StartupSync`) the stored login is verified with the server, if it hasn't been just now, and an incremental sync runs. When the sync found new albums, the album and artist grids reload. If the server can't be reached, a toast says so and the cached library stays. If it rejects the login, a dialog over the library offers Log Out. A result that arrives after the session ended (logout) is ignored.
 - **Empty cache** (first sync after setup or login): the window shows "Loading Library" until the first sync has finished, then the content page.
 
 ## First-run setup
@@ -79,13 +79,22 @@ Logout is the only way to end a session, and so the only way to switch server or
 
 Replacing the whole window, rather than resetting widgets one by one, guarantees that nothing from the old session survives in the UI.
 
+## Saved queue
+
+The play queue survives a restart. On shutdown, with a session active, the queue's song ids (in queue order, duplicates kept) and the position of the current song are written to `queue.json` in the app's data directory (`QueueSnapshot`; written to a temporary file and moved into place). An empty queue removes the file, and without a session nothing is written, so a start that never got to restore the queue doesn't erase it.
+
+When the content page is shown with an empty queue, the file is read and the songs are looked up in the database on the I/O pool. Songs the library no longer has are dropped; if the current song is among them, the one that followed it becomes current. The queue is then filled in one step and the current song is only prepared, not played, as after startup. A missing, empty or unreadable file (or no remaining song) falls back to queueing the first song of the library. Logout deletes the file, because the ids belong to one server.
+
+Playback position, repeat and shuffle are not saved.
+
 ## Shutdown
 
 On shutdown the application, in this order:
 
-1. Stops the media stream, which releases its play sessions.
-2. Closes the library sync and the backend, if a session is active.
-3. Stops the thread pools.
-4. Sets the pipeline to its null state, quits its main loop and stops its thread.
+1. Saves the play queue.
+2. Stops the media stream, which releases its play sessions.
+3. Closes the library sync and the backend, if a session is active.
+4. Stops the thread pools.
+5. Sets the pipeline to its null state, quits its main loop and stops its thread.
 
 The quit action destroys and removes the active window before the application quits.
