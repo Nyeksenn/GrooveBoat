@@ -12,6 +12,7 @@ data/ui/headerbar-menu.ui
 data/ui/music-chooser.ui
 data/ui/music-controls.ui
 data/ui/prefs.ui
+data/ui/queue-item.ui
 data/ui/server-type-page.ui
 data/ui/song-list.ui
 data/ui/welcome-page.ui
@@ -26,5 +27,6 @@ src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatApp.java
 src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatPrefs.java
 src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java
 src/main/java/io/github/Nyeksenn/grooveboat/ui/MusicControls.java
+src/main/java/io/github/Nyeksenn/grooveboat/ui/QueueCard.java
 src/main/java/io/github/Nyeksenn/grooveboat/ui/SongCard.java
 src/main/java/io/github/Nyeksenn/grooveboat/ui/SongListPage.java

@@ -14,6 +14,19 @@
         <property name="hexpand">true</property>
         <property name="spacing">15</property>
         <child>
+          <object class="GtkImage" id="playing-icon">
+            <property name="icon-name">media-playback-start-symbolic</property>
+            <property name="visible">false</property>
+            <property name="valign">center</property>
+            <accessibility>
+              <property name="label" translatable="yes">Now playing</property>
+            </accessibility>
+            <style>
+              <class name="now-playing-icon"/>
+            </style>
+          </object>
+        </child>
+        <child>
           <object class="RoundedImage" id="album-cover">
             <property name="halign">start</property>
             <property name="pixel-size">40</property>

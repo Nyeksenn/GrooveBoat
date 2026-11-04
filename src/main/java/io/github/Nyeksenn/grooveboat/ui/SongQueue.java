@@ -39,6 +39,8 @@ public final class SongQueue extends Bin {
         queueCard.albumArtistLabel.setLabel(songItem.getArtistName());
         queueCard.songTitleLabel.setLabel(songItem.getSongName());
         listItem.bindProperty("position", queueCard, "index").syncCreate().build();
+        // The selected row is the current song: show it with the now-playing indicator.
+        listItem.bindProperty("selected", queueCard, "playing").syncCreate().build();
     }
 
     public void itemSelectionChanged(ParamSpec paramSpec) {

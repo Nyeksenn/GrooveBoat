@@ -40,8 +40,29 @@
   color: var(--accent-color);
 }
 
-.highlighted {
-  background-color: color-mix(in srgb, var(--accent-color) 13%, transparent);
+// Current song: a subtle tint and leading bar are decoration only; the icon, bold title and
+// the accessible description carry the meaning, so nothing depends on color.
+.now-playing {
+  background-color: color-mix(in srgb, var(--accent-color) 10%, transparent);
+  box-shadow: inset 3px 0 0 var(--accent-color);
+}
+
+.now-playing .now-playing-icon {
+  color: var(--accent-color);
+}
+
+// The queue's own selection look is replaced by .now-playing.
+listview.transparent-background > row:selected {
+  background-color: transparent;
+}
+
+@media (prefers-contrast: more) {
+  .now-playing {
+    background-color: transparent;
+    box-shadow: none;
+    outline: 2px solid var(--window-fg-color);
+    outline-offset: -2px;
+  }
 }
 
 .padded {
