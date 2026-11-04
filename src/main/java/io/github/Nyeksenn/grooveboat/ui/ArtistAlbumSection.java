@@ -64,6 +64,7 @@ public class ArtistAlbumSection extends Box {
             card.songDuration.setLabel(song.getDurationString());
             // The section header already shows the album cover.
             card.songPicture.setVisible(false);
+            card.setTrackNumber(song.getTrackNumber());
             card.setSongId(song.getSongId());
             songList.append(card);
         }

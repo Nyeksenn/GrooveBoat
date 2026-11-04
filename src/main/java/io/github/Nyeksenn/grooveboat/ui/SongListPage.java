@@ -71,6 +71,7 @@ public class SongListPage extends NavigationPage {
         songCard.songArtist.setLabel(song.getArtistName());
         songCard.songDuration.setLabel(song.getDurationString());
         songCard.songPicture.setTexture(song.getCoverArt());
+        songCard.setTrackNumber(song.getTrackNumber());
         songCard.setSongId(song.getSongId());
     }
 
