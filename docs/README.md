@@ -1,6 +1,6 @@
 # GrooveBoat Documentation
 
-GrooveBoat is a GTK4 / libadwaita desktop music player for Jellyfin and OpenSubsonic servers. It is written in Java 25 and talks to the native GNOME stack (GTK, libadwaita, GStreamer, libsecret, GSettings) through the java-gi bindings. Library metadata is cached locally in an embedded H2 database. GStreamer plays the original audio straight from server URLs: HLS for Jellyfin, progressive HTTP for OpenSubsonic.
+GrooveBoat is a GTK4 / libadwaita desktop music player for Jellyfin and OpenSubsonic servers. It is written in Java 27 and talks to the native GNOME stack (GTK, libadwaita, GStreamer, libsecret, GSettings) through the java-gi bindings. Library metadata is cached locally in an embedded H2 database. GStreamer plays the original audio straight from server URLs: HLS for Jellyfin, progressive HTTP for OpenSubsonic.
 
 ## Architecture
 

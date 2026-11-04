@@ -18,8 +18,8 @@ GrooveBoat is packaged as a Flatpak. There is no published release yet, so build
 Install the runtimes once:
 
 ```sh
-flatpak --user install org.gnome.Platform//50 org.gnome.Sdk//50
-flatpak --user install org.freedesktop.Sdk.Extension.openjdk//25.08
+flatpak --user install org.gnome.Platform//51 org.gnome.Sdk//51
+flatpak --user install org.freedesktop.Sdk.Extension.openjdk//26.08
 ```
 
 Build and install:
@@ -58,7 +58,7 @@ When installed as a Flatpak, everything lives under `~/.var/app/io.github.Nyekse
 
 ## Building for development
 
-You need JDK 25 or newer, GTK4, libadwaita, GStreamer (with the base, good and bad plugin sets), libsecret, `glib-compile-resources`, `glib-compile-schemas` and `sass` on your system.
+You need JDK 27 or newer, GTK4, libadwaita, GStreamer (with the base, good and bad plugin sets), libsecret, `glib-compile-resources`, `glib-compile-schemas` and `sass` on your system.
 
 ```sh
 ./gradlew run     # build and start the app from the repository root

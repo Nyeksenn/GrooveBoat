@@ -1,6 +1,6 @@
 id: io.github.Nyeksenn.grooveboat
 runtime: org.gnome.Platform
-runtime-version: '50'
+runtime-version: '51'
 
 sdk: org.gnome.Sdk
 sdk-extensions:
@@ -27,7 +27,7 @@ modules:
   - name: app
     buildsystem: meson
     build-options:
-      append-path: "/usr/lib/sdk/openjdk/gradle/bin:/usr/lib/sdk/openjdk/jvm/openjdk-26/bin"
+      append-path: "/usr/lib/sdk/openjdk/gradle/bin:/usr/lib/sdk/openjdk/jvm/openjdk-27/bin"
     sources:
       - type: dir
         path: .

@@ -925,17 +925,17 @@
   },
   {
     "type": "file",
-    "url": "https://plugins.gradle.org/m2/io/ebean/ebean-agent/19.6.0/ebean-agent-19.6.0.jar",
-    "sha512": "ea3d812c72d730f729a7470e96fd0020e514cb2bb7734b695ae682af7e4298be3b7205098bef38659f33a228d54cd062acde460f5b325de1e739f2d4570e9647",
-    "dest": "build/repository/io/ebean/ebean-agent/19.6.0",
-    "dest-filename": "ebean-agent-19.6.0.jar"
+    "url": "https://plugins.gradle.org/m2/io/ebean/ebean-agent/19.7.0/ebean-agent-19.7.0.jar",
+    "sha512": "d4e36692fcc73b7e90ebb0864531f545b43ce646ad7c3faf9a014810bde1bcceb39280cd5f7650cd6edb162c879b5ee1e53be00e07e1c521034563e401c9add2",
+    "dest": "build/repository/io/ebean/ebean-agent/19.7.0",
+    "dest-filename": "ebean-agent-19.7.0.jar"
   },
   {
     "type": "file",
-    "url": "https://plugins.gradle.org/m2/io/ebean/ebean-agent/19.6.0/ebean-agent-19.6.0.pom",
-    "sha512": "adebc4fd9856295644eed16b13b6b89f0d3a109c91a7bda7a14ee5cc5c2fc859ee58dac41d7cd8dfd6e550c1abf1b36cb2d6031be6f013a2343db7693203909a",
-    "dest": "build/repository/io/ebean/ebean-agent/19.6.0",
-    "dest-filename": "ebean-agent-19.6.0.pom"
+    "url": "https://plugins.gradle.org/m2/io/ebean/ebean-agent/19.7.0/ebean-agent-19.7.0.pom",
+    "sha512": "49dfb89885a1d5780a32ff3d45218e5ee3f81af8951b5d5fba44905c1ee5dabcb7dbbf414ced17a9deaf4df4f47b99fbba665543ddfdaa1bf095f48107b0a6f5",
+    "dest": "build/repository/io/ebean/ebean-agent/19.7.0",
+    "dest-filename": "ebean-agent-19.7.0.pom"
   },
   {
     "type": "file",
@@ -2696,6 +2696,20 @@
   },
   {
     "type": "file",
+    "url": "https://repo.maven.apache.org/maven2/org/slf4j/slf4j-api/2.0.19/slf4j-api-2.0.19.jar",
+    "sha512": "627253cf27192750fd5ff84622526ac04f6848829adccd807d485a971bb74e83e47539214a054b8c129f3608cbc6450f2076000ab075b44a1b2dc7b74f592857",
+    "dest": "build/repository/org/slf4j/slf4j-api/2.0.19",
+    "dest-filename": "slf4j-api-2.0.19.jar"
+  },
+  {
+    "type": "file",
+    "url": "https://repo.maven.apache.org/maven2/org/slf4j/slf4j-api/2.0.19/slf4j-api-2.0.19.pom",
+    "sha512": "78d40d8961e1c5c37141a29b4ea77d278d8333878b03dae9451f7fc9fe22e08354b4f3b484f65b818b8507c4fea61b62d1c8cbf23a017505f07ee63f44a23a08",
+    "dest": "build/repository/org/slf4j/slf4j-api/2.0.19",
+    "dest-filename": "slf4j-api-2.0.19.pom"
+  },
+  {
+    "type": "file",
     "url": "https://repo.maven.apache.org/maven2/org/slf4j/slf4j-api/2.0.20/slf4j-api-2.0.20.jar",
     "sha512": "6abf6218c2558a0059f35cecc24db3ef1552dbccdfb8f32d6c9d1d8b11fd545405e04e79673219d19e17b99ca6a2a3da7d92006bcaedaa15646bf07737115d17",
     "dest": "build/repository/org/slf4j/slf4j-api/2.0.20",
@@ -2717,6 +2731,13 @@
   },
   {
     "type": "file",
+    "url": "https://repo.maven.apache.org/maven2/org/slf4j/slf4j-bom/2.0.19/slf4j-bom-2.0.19.pom",
+    "sha512": "fa1db5970670db9a117648430568461bd66bd2d4ffea181dc69466c6607a7bddcd8f985eb84bf7d97a7d98423c69e1496aa9f818b8684a956fb2dd6179bd3d21",
+    "dest": "build/repository/org/slf4j/slf4j-bom/2.0.19",
+    "dest-filename": "slf4j-bom-2.0.19.pom"
+  },
+  {
+    "type": "file",
     "url": "https://repo.maven.apache.org/maven2/org/slf4j/slf4j-bom/2.0.20/slf4j-bom-2.0.20.pom",
     "sha512": "9e2c4e1c87bac7d6ac11e3f45820a0d2d98caab35f955bbb6ebd0c9729d493b7d37e8082e988ac20f5b1a91d7bc1be7d173ee56a5ced1a089324d1f9bd080ba2",
     "dest": "build/repository/org/slf4j/slf4j-bom/2.0.20",
@@ -2728,6 +2749,13 @@
     "sha512": "5b16a209843c18a478a0a16dff83ae1c75eedbdeadc15a958d536a36631d4d39a9998e085c165a79ced8ad187f021e2f3cd4068856ca174db35657ef5a473c5a",
     "dest": "build/repository/org/slf4j/slf4j-parent/2.0.17",
     "dest-filename": "slf4j-parent-2.0.17.pom"
+  },
+  {
+    "type": "file",
+    "url": "https://repo.maven.apache.org/maven2/org/slf4j/slf4j-parent/2.0.19/slf4j-parent-2.0.19.pom",
+    "sha512": "e9e975b05ec7809e9a8a66473dd7f4942bc12d0d1920fd2c811f6e50d48038c858af4014eed22d21b78c734bf0e1c49bd0b079578875c055d4fbf5206ddef4c6",
+    "dest": "build/repository/org/slf4j/slf4j-parent/2.0.19",
+    "dest-filename": "slf4j-parent-2.0.19.pom"
   },
   {
     "type": "file",
