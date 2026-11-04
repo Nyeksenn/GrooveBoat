@@ -8,6 +8,7 @@ import io.github.Nyeksenn.grooveboat.backend.RemoteArtist;
 import io.github.Nyeksenn.grooveboat.backend.RemoteSong;
 import io.github.Nyeksenn.grooveboat.backend.ServerInfo;
 import io.github.Nyeksenn.grooveboat.backend.Session;
+import io.github.Nyeksenn.grooveboat.backend.TranscodeSettings;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -132,7 +133,7 @@ final class StubBackend implements MusicBackend {
     }
 
     @Override
-    public PlaybackSource playbackSource(String songId, String contentType) {
+    public PlaybackSource playbackSource(String songId, String contentType, TranscodeSettings transcode) {
         return new PlaybackSource("http://stub/" + songId, false, null);
     }
 

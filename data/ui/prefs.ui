@@ -5,67 +5,6 @@
     <property name="content-height">600</property>
     <property name="title" translatable="yes">Preferences</property>
     <child>
-      <object class="AdwPreferencesPage" id="connection_page">
-        <property name="title" translatable="yes">Account</property>
-        <property name="icon-name">interlinked-rectangles-symbolic</property>
-        <child>
-          <object class="AdwPreferencesGroup">
-            <property name="title" translatable="yes">Server</property>
-            <property name="description" translatable="yes">To use another server or account, log out and set GrooveBoat up again.</property>
-            <child>
-              <object class="AdwActionRow" id="row-backend">
-                <property name="title" translatable="yes">Server Type</property>
-                <style>
-                  <class name="property"/>
-                </style>
-              </object>
-            </child>
-            <child>
-              <object class="AdwActionRow" id="row-url">
-                <property name="title" translatable="yes">Address</property>
-                <property name="subtitle-selectable">true</property>
-                <style>
-                  <class name="property"/>
-                </style>
-              </object>
-            </child>
-            <child>
-              <object class="AdwActionRow" id="row-version">
-                <property name="title" translatable="yes">Version</property>
-                <property name="subtitle">…</property>
-                <style>
-                  <class name="property"/>
-                </style>
-              </object>
-            </child>
-            <child>
-              <object class="AdwActionRow" id="row-username">
-                <property name="title" translatable="yes">Username</property>
-                <style>
-                  <class name="property"/>
-                </style>
-              </object>
-            </child>
-          </object>
-        </child>
-        <child>
-          <object class="AdwPreferencesGroup">
-            <child>
-              <object class="GtkButton" id="logout-button">
-                <property name="label" translatable="yes">Log Out</property>
-                <property name="halign">center</property>
-                <signal name="clicked" handler="logout-clicked"/>
-                <style>
-                  <class name="pill"/>
-                  <class name="destructive-action"/>
-                </style>
-              </object>
-            </child>
-          </object>
-        </child>
-      </object>
-    </child>
-    <child>
       <object class="AdwPreferencesPage">
         <property name="title" translatable="yes">Audio</property>
         <property name="icon-name">audio-speakers-symbolic</property>
@@ -102,6 +41,66 @@
                     </items>
                   </object>
                 </property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwPreferencesGroup">
+            <property name="title" translatable="yes">Streaming Quality</property>
+            <property name="description" translatable="yes">Asks the server to re-encode songs above the chosen bitrate. Songs already below it are not re-encoded. Changes apply from the next song that is loaded.</property>
+            <child>
+              <object class="AdwComboRow" id="row-transcode-unmetered">
+                <property name="title" translatable="yes">On Unmetered Connections</property>
+                <property name="subtitle" translatable="yes">Used on most connections.</property>
+                <property name="model">
+                  <object class="GtkStringList">
+                    <items>
+                      <item translatable="yes">Original</item>
+                      <item translatable="yes">High (320 kbps)</item>
+                      <item translatable="yes">Balanced (192 kbps)</item>
+                      <item translatable="yes">Data Saver (96 kbps)</item>
+                    </items>
+                  </object>
+                </property>
+              </object>
+            </child>
+            <child>
+              <object class="AdwComboRow" id="row-transcode-metered">
+                <property name="title" translatable="yes">On Metered Connections</property>
+                <property name="subtitle" translatable="yes">Used when the system marks the connection as metered.</property>
+                <property name="model">
+                  <object class="GtkStringList">
+                    <items>
+                      <item translatable="yes">Original</item>
+                      <item translatable="yes">High (320 kbps)</item>
+                      <item translatable="yes">Balanced (192 kbps)</item>
+                      <item translatable="yes">Data Saver (96 kbps)</item>
+                    </items>
+                  </object>
+                </property>
+              </object>
+            </child>
+            <child>
+              <object class="AdwComboRow" id="row-transcode-format">
+                <property name="title" translatable="yes">Transcoding Format</property>
+                <property name="subtitle" translatable="yes">Auto uses Opus on Jellyfin and MP3 on OpenSubsonic. Servers may not support every format.</property>
+                <property name="model">
+                  <object class="GtkStringList">
+                    <items>
+                      <item translatable="yes">Auto</item>
+                      <item translatable="yes">Opus</item>
+                      <item translatable="yes">AAC</item>
+                      <item translatable="yes">MP3</item>
+                    </items>
+                  </object>
+                </property>
+              </object>
+            </child>
+            <child>
+              <object class="AdwSwitchRow" id="row-transcode-unsupported">
+                <property name="title" translatable="yes">Transcode Unsupported Formats</property>
+                <property name="subtitle" translatable="yes">Otherwise songs this device can't decode are skipped.</property>
               </object>
             </child>
           </object>

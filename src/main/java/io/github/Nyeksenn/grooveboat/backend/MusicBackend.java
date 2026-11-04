@@ -63,11 +63,12 @@ public interface MusicBackend extends AutoCloseable {
     Path cacheImage(String imageId, int size) throws IOException;
 
     /**
-     * Builds a ready-to-play URL for the original audio of a song. Does no network I/O.
+     * Builds a ready-to-play URL for a song, as the original audio or transcoded by the server. Does no network I/O.
      *
      * @param contentType the song's MIME type as stored in the cache
+     * @param transcode   the quality to ask the server for
      */
-    PlaybackSource playbackSource(String songId, String contentType);
+    PlaybackSource playbackSource(String songId, String contentType, TranscodeSettings transcode);
 
     /** Tells the server that a playback session has ended. Best effort; may do network I/O. */
     void releasePlayback(PlaybackSource source);

@@ -6,6 +6,8 @@ import io.github.Nyeksenn.grooveboat.audio.AppPipeline;
 import io.github.Nyeksenn.grooveboat.audio.AudioSettings;
 import io.github.Nyeksenn.grooveboat.audio.PlaybackEvents;
 import io.github.Nyeksenn.grooveboat.audio.QueueStore;
+import io.github.Nyeksenn.grooveboat.audio.TranscodePolicy;
+import io.github.Nyeksenn.grooveboat.backend.AudioFormats;
 import io.github.Nyeksenn.grooveboat.backend.BackendSupport;
 import io.github.Nyeksenn.grooveboat.backend.MusicBackend;
 import io.github.Nyeksenn.grooveboat.gobjects.RemoteMediaStream;
@@ -199,13 +201,19 @@ public final class GrooveboatApp extends Application {
         Gtk.styleContextAddProviderForDisplay(display, cssProvider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
     }
 
-    public void preferencesActivated(Variant parameter) {
+    public void accountSettingsActivated(Variant parameter) {
         var backend = session.backend();
         if (!(getActiveWindow() instanceof GrooveboatWindow win) || backend == null) {
             return;
         }
-        var prefs = new GrooveboatPrefs(backend, executors.io, pipeline.isReplayGainAvailable());
-        prefs.present(win);
+        new AccountDialog(backend, executors.io).present(win);
+    }
+
+    public void preferencesActivated(Variant parameter) {
+        if (!(getActiveWindow() instanceof GrooveboatWindow win)) {
+            return;
+        }
+        new GrooveboatPrefs(pipeline.isReplayGainAvailable()).present(win);
     }
 
     public void quitActivated(Variant parameter) {
@@ -224,18 +232,28 @@ public final class GrooveboatApp extends Application {
         // Created synchronously so it exists before activate() watches its bus; its main loop runs on the GStreamer executor.
         pipeline = new AppPipeline();
         executors.gst.submit(pipeline::run);
-        AudioSettings.bind(AppSettings.get(), pipeline);
+        // A change of the streaming quality rebuilds the prepared follow-up song (the stream doesn't exist yet at bind
+        // time, in which case refreshNext does nothing).
+        var streaming = AudioSettings.bind(AppSettings.get(), pipeline, queueStore::refreshNext);
         // One media stream for the app's lifetime; tracks are loaded into it.
-        stream = new RemoteMediaStream(this::getBackend, pipeline, executors.io, executors.scheduler);
+        stream = new RemoteMediaStream(this::getBackend, pipeline, executors.io, executors.scheduler,
+                mime -> TranscodePolicy.decide(AudioFormats.codecForMime(mime), pipeline::canDecode,
+                        streaming.get()));
         playback = new PlaybackEvents(pipeline, stream, queueStore, message -> {
             if (getActiveWindow() instanceof GrooveboatWindow gw) {
                 gw.showToast(message);
             }
         });
 
+        stream.setSkipListener(playback::onSongSkipped);
+
         mpris = MprisService.start(this);
 
-        var preferences = new SimpleAction("account-settings", null);
+        var accountSettings = new SimpleAction("account-settings", null);
+        accountSettings.onActivate(this::accountSettingsActivated);
+        addAction(accountSettings);
+
+        var preferences = new SimpleAction("preferences", null);
         preferences.onActivate(this::preferencesActivated);
         addAction(preferences);
 

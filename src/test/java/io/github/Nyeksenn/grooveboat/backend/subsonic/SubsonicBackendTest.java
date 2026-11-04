@@ -1,5 +1,8 @@
 package io.github.Nyeksenn.grooveboat.backend.subsonic;
 
+import io.github.Nyeksenn.grooveboat.backend.TranscodeFormat;
+import io.github.Nyeksenn.grooveboat.backend.TranscodeProfile;
+import io.github.Nyeksenn.grooveboat.backend.TranscodeSettings;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -183,9 +186,21 @@ class SubsonicBackendTest {
     void playbackSourceIsProgressiveAndNeverLogsCredentials() throws Exception {
         var backend = new SubsonicBackend("http://music.example.org");
         backend.restoreUnverified(new Session("alice", "secret", ""));
-        var source = backend.playbackSource("s1", "audio/flac");
+        var source = backend.playbackSource("s1", "audio/flac", TranscodeSettings.ORIGINAL);
         assertThat(source.hls()).isFalse();
         assertThat(source.uri()).contains("/rest/stream").contains("id=s1").contains("format=raw");
         assertThat(source.toString()).doesNotContain("secret").doesNotContain("t=");
+    }
+
+    @Test
+    void transcodingSetsFormatAndBitrateCap() throws Exception {
+        var backend = new SubsonicBackend("http://music.example.org");
+        backend.restoreUnverified(new Session("alice", "secret", ""));
+        var settings = new TranscodeSettings(TranscodeProfile.DATA_SAVER, TranscodeFormat.AUTO, true);
+        var source = backend.playbackSource("s1", "audio/flac", settings);
+        assertThat(source.hls()).isFalse();
+        assertThat(source.uri()).contains("format=mp3").contains("maxBitRate=96").contains("estimateContentLength=true")
+                .doesNotContain("format=raw");
+        assertThat(source.toString()).doesNotContain("secret");
     }
 }

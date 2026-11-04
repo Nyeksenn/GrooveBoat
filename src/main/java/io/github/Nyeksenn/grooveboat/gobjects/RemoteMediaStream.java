@@ -2,6 +2,7 @@ package io.github.Nyeksenn.grooveboat.gobjects;
 
 import org.jspecify.annotations.Nullable;
 import io.github.Nyeksenn.grooveboat.audio.AppPipeline;
+import io.github.Nyeksenn.grooveboat.audio.TranscodePolicy;
 import io.github.Nyeksenn.grooveboat.backend.MusicBackend;
 import io.github.Nyeksenn.grooveboat.backend.PlaybackSource;
 import org.freedesktop.gstreamer.gst.State;
@@ -16,6 +17,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -42,6 +45,11 @@ public final class RemoteMediaStream extends MediaStream {
     private final AppPipeline pipeline;
     private final ExecutorService executor;
     private final ScheduledExecutorService scheduler;
+    /** Decides how a song is requested, or that it has to be skipped. */
+    private final Function<String, TranscodePolicy.Decision> policy;
+    /** Told (on the main thread) which song {@link #load} skipped and its unsupported codec. */
+    private BiConsumer<SongListItem, String> skipListener = (_, _) -> {
+    };
 
     private Track current;
     /** Prepared follow-up track, offered to the pipeline in about-to-finish. */
@@ -76,8 +84,16 @@ public final class RemoteMediaStream extends MediaStream {
         }
     }
 
+    public void setSkipListener(BiConsumer<SongListItem, String> listener) {
+        this.skipListener = listener;
+    }
+
+    /**
+     * @param policy maps a song's MIME type to the decision for it (transcode settings, or skip)
+     */
     public RemoteMediaStream(Supplier<MusicBackend> backend, AppPipeline pipeline, ExecutorService executor,
-                             ScheduledExecutorService scheduler) {
+                             ScheduledExecutorService scheduler, Function<String, TranscodePolicy.Decision> policy) {
+        this.policy = policy;
         this.backend = backend;
         this.pipeline = pipeline;
         this.executor = executor;
@@ -142,12 +158,16 @@ public final class RemoteMediaStream extends MediaStream {
         return item.getDuration().toNanos() / 1000L;
     }
 
+    /** The track for a playable song, or {@code null} without a session or when the song has to be skipped. */
     private @Nullable Track build(SongListItem item) {
         var b = backend.get();
         if (b == null) {
             return null;
         }
-        return new Track(item, b.playbackSource(item.getSongId(), item.getContentType()), b);
+        if (policy.apply(item.getContentType()) instanceof TranscodePolicy.Decision.Play play) {
+            return new Track(item, b.playbackSource(item.getSongId(), item.getContentType(), play.settings()), b);
+        }
+        return null;
     }
 
     private void release(Track track) {
@@ -183,8 +203,27 @@ public final class RemoteMediaStream extends MediaStream {
         return switching.get() != null;
     }
 
-    /** Loads a song from the start, replacing the current one, and prerolls it paused. */
-    public void load(SongListItem item) {
+    /**
+     * Loads a song from the start, replacing the current one, and prerolls it paused.
+     *
+     * @return false when the song was skipped because its format isn't supported on this device; playback is
+     * stopped and the skip listener has been told
+     */
+    public boolean load(SongListItem item) {
+        if (backend.get() == null) {
+            throw new IllegalStateException("No active session. Can't load a track.");
+        }
+        if (policy.apply(item.getContentType()) instanceof TranscodePolicy.Decision.Skip skip) {
+            logger.warn("Skipping a song: no decoder for {}", skip.codec());
+            cancelTimestampUpdate();
+            release(current);
+            current = null;
+            awaitingLoadStart = false;
+            fadeInPending = false;
+            pipeline.stop();
+            skipListener.accept(item, skip.codec());
+            return false;
+        }
         var track = build(item);
         if (track == null) {
             throw new IllegalStateException("No active session. Can't load a track.");
@@ -201,6 +240,7 @@ public final class RemoteMediaStream extends MediaStream {
         fadeInPending = false;
         // This takes microseconds
         streamPrepared(true, false, true, durationUs(item));
+        return true;
     }
 
     /**

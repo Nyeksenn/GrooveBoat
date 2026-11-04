@@ -13,7 +13,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -121,6 +123,55 @@ public final class AppPipeline {
     /** @return whether the ReplayGain elements are installed, i.e. whether {@link #setReplayGain} can do anything */
     public boolean isReplayGainAvailable() {
         return replayGainFilter != null;
+    }
+
+    /** GStreamer caps that identify a codec's compressed stream; codecs missing here are assumed playable. */
+    private static final Map<String, String> CODEC_CAPS = Map.ofEntries(
+            Map.entry("flac", "audio/x-flac"),
+            Map.entry("mp3", "audio/mpeg, mpegversion=(int)1, layer=(int)3"),
+            Map.entry("aac", "audio/mpeg, mpegversion=(int)4"),
+            Map.entry("alac", "audio/x-alac"),
+            Map.entry("opus", "audio/x-opus"),
+            Map.entry("vorbis", "audio/x-vorbis"),
+            Map.entry("ac3", "audio/x-ac3"),
+            Map.entry("eac3", "audio/x-eac3"),
+            Map.entry("wav", "audio/x-wav"),
+            Map.entry("wma", "audio/x-wma"),
+            Map.entry("wavpack", "audio/x-wavpack"));
+    private static final long FACTORY_TYPE_DECODER = 1L;
+    private static final long FACTORY_TYPE_DEMUXER = 1L << 5;
+    private static final long FACTORY_TYPE_PARSER = 1L << 6;
+
+    private final Map<String, Boolean> decodable = new ConcurrentHashMap<>();
+
+    /**
+     * Whether this device has a GStreamer element that can take the codec's stream (decoder, demuxer or parser).
+     * Unknown codecs count as playable, so playback is attempted. Call on the main thread.
+     */
+    public boolean canDecode(String codec) {
+        return decodable.computeIfAbsent(codec, AppPipeline::lookupDecoder);
+    }
+
+    private static boolean lookupDecoder(String codec) {
+        var capsString = CODEC_CAPS.get(codec);
+        if (capsString == null) {
+            return true;
+        }
+        try {
+            var caps = Caps.fromString(capsString);
+            for (var type : new long[]{FACTORY_TYPE_DECODER, FACTORY_TYPE_DEMUXER, FACTORY_TYPE_PARSER}) {
+                var factories = ElementFactory.listGetElements(new ElementFactoryListType(type), Rank.MARGINAL);
+                var matching = ElementFactory.listFilter(factories, caps, PadDirection.SINK, false);
+                if (matching != null && !matching.isEmpty()) {
+                    return true;
+                }
+            }
+            logger.info("No GStreamer element can read {} streams", codec);
+            return false;
+        } catch (RuntimeException e) {
+            logger.warn("Couldn't check decoder support for {}: {}", codec, e.toString());
+            return true;
+        }
     }
 
     /** Turns gapless playback on or off. When off, a track ends with EOS and the queue then loads the next one. */

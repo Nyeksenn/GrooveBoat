@@ -23,6 +23,10 @@ public final class AppSettings {
     public static final String REPLAY_GAIN_MODE = "replay-gain-mode";
     public static final String REPLAY_GAIN_MODE_TRACK = "track";
     public static final String REPLAY_GAIN_MODE_ALBUM = "album";
+    public static final String TRANSCODE_PROFILE_UNMETERED = "transcode-profile-unmetered";
+    public static final String TRANSCODE_PROFILE_METERED = "transcode-profile-metered";
+    public static final String TRANSCODE_FORMAT = "transcode-format";
+    public static final String TRANSCODE_UNSUPPORTED = "transcode-unsupported";
 
     private AppSettings() {
     }

@@ -291,10 +291,19 @@ public final class SubsonicBackend extends AbstractHttpBackend {
     // ---- Playback
 
     @Override
-    public PlaybackSource playbackSource(String songId, String contentType) {
-        // OpenSubsonic's hls.m3u8 transcodes by design, so play the original file progressively.
-        var uri = uri("/rest/stream", Map.of("id", songId, "format", "raw"));
-        return new PlaybackSource(uri.toString(), false, null);
+    public PlaybackSource playbackSource(String songId, String contentType, TranscodeSettings transcode) {
+        var params = new LinkedHashMap<String, String>();
+        params.put("id", songId);
+        if (transcode.profile().transcodes()) {
+            // The server decides what it can encode; MP3 is the one format every server offers.
+            params.put("format", transcode.format().codec(TranscodeFormat.MP3));
+            params.put("maxBitRate", String.valueOf(transcode.profile().maxBitrateKbps()));
+            params.put("estimateContentLength", "true");
+        } else {
+            // OpenSubsonic's hls.m3u8 transcodes by design, so play the original file progressively.
+            params.put("format", "raw");
+        }
+        return new PlaybackSource(uri("/rest/stream", params).toString(), false, null);
     }
 
     @Override

@@ -2,6 +2,7 @@
 # Please keep this file sorted alphabetically.
 data/io.github.Nyeksenn.grooveboat.desktop.in
 data/io.github.Nyeksenn.grooveboat.metainfo.xml.in
+data/ui/account-dialog.ui
 data/ui/album-list.ui
 data/ui/artist-list.ui
 data/ui/artist-songs.ui
