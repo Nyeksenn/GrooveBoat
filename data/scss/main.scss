@@ -26,6 +26,20 @@
   outline: none;
 }
 
+.quality-pill {
+  padding: 1px 10px;
+  border-radius: 999px;
+  font-size: 0.8em;
+  font-weight: 600;
+  background-color: color-mix(in srgb, var(--window-fg-color) 10%, transparent);
+  color: color-mix(in srgb, var(--window-fg-color) 70%, transparent);
+}
+
+.quality-pill.transcoded {
+  background-color: color-mix(in srgb, var(--accent-color) 18%, transparent);
+  color: var(--accent-color);
+}
+
 .highlighted {
   background-color: color-mix(in srgb, var(--accent-color) 13%, transparent);
 }

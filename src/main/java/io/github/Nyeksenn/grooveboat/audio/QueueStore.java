@@ -58,7 +58,11 @@ public class QueueStore extends GObject {
             return;
         }
         if (selectedItem != null && app.hasSession()) {
-            app.getStream().load(selectedItem);
+            if (!app.getStream().load(selectedItem)) {
+                // Skipped (unsupported format): the playback events move on; whatever comes next should autoplay.
+                initialized = true;
+                return;
+            }
             emit("initialize-song", selectedItem);
             if (!initialized) {
                 initialized = true;

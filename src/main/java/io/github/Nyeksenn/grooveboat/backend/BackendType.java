@@ -29,6 +29,11 @@ public enum BackendType {
         return displayName;
     }
 
+    /** Codec the server encodes to when the user leaves the transcoding format on Auto. */
+    public TranscodeFormat defaultTranscodeFormat() {
+        return this == JELLYFIN ? TranscodeFormat.OPUS : TranscodeFormat.MP3;
+    }
+
     public BackendType other() {
         return this == OPENSUBSONIC ? JELLYFIN : OPENSUBSONIC;
     }

@@ -2,6 +2,7 @@ package io.github.Nyeksenn.grooveboat.ui;
 
 import static org.javagi.util.Intl.i18n;
 
+import io.github.Nyeksenn.grooveboat.audio.QueueStore;
 import org.gnome.glib.GLib;
 import org.gnome.gtk.*;
 import org.javagi.gobject.annotations.InstanceInit;
@@ -52,6 +53,9 @@ public class MusicControls extends Box {
 
     @GtkChild(name = "volume-button")
     public ScaleButton volumeButton;
+
+    @GtkChild(name = "quality-pill")
+    public Label qualityPill;
 
     @GtkChild(name = "timestamp-label")
     public Label timestampLabel;
@@ -167,6 +171,26 @@ public class MusicControls extends Box {
                 .syncCreate().build();
     }
 
+    /** Shows the codec and bitrate of the current song; hidden while nothing is known. */
+    private void syncQualityPill() {
+        var stream = app == null ? null : app.getStream();
+        var quality = stream == null ? null : stream.getCurrentQuality();
+        if (quality == null) {
+            qualityPill.setVisible(false);
+            return;
+        }
+        qualityPill.setLabel(quality.label());
+        qualityPill.setTooltipText(quality.transcoded()
+                ? i18n("Transcoded by the server")
+                : i18n("Original file"));
+        if (quality.transcoded()) {
+            qualityPill.addCssClass("transcoded");
+        } else {
+            qualityPill.removeCssClass("transcoded");
+        }
+        qualityPill.setVisible(true);
+    }
+
     private static String timeFormat(long seconds) {
         return String.format("%02d:%02d", seconds / 60, seconds % 60);
     }
@@ -180,6 +204,9 @@ public class MusicControls extends Box {
             app.queueStore.addModeListener(modeListener);
             scope.onRelease(() -> app.queueStore.removeModeListener(modeListener));
             syncModeButtons();
+            scope.track(app.queueStore.connect("initialize-song",
+                    (QueueStore.InitializeSong) _ -> syncQualityPill()));
+            syncQualityPill();
         });
     }
 

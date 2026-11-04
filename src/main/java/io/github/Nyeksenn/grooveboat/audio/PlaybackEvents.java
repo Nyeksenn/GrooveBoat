@@ -6,7 +6,9 @@ import io.github.Nyeksenn.grooveboat.gobjects.RemoteMediaStream;
 import org.freedesktop.gstreamer.gst.Bus;
 import org.freedesktop.gstreamer.gst.Message;
 import org.freedesktop.gstreamer.gst.State;
+import io.github.Nyeksenn.grooveboat.gobjects.SongListItem;
 import org.gnome.glib.GError;
+import org.gnome.glib.GLib;
 import org.javagi.base.Out;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +27,8 @@ public final class PlaybackEvents {
     private final QueueStore queue;
     private final Consumer<String> showToast;
     private boolean buffering = false;
+    /** Songs skipped in a row; reset when a song starts. Stops a queue of only unsupported songs from looping. */
+    private int consecutiveSkips = 0;
 
     /**
      * @param showToast shows a short message in the active window
@@ -65,10 +69,32 @@ public final class PlaybackEvents {
     private void onStreamStart(Message msg) {
         // Deliberately keeps the buffering flag: stream-start can arrive while paused for buffering, and the
         // following 100% message must still resume playback.
+        consecutiveSkips = 0;
         var item = stream.onStreamStart();
         if (item != null) {
             queue.followGaplessSwitch(item);
         }
+    }
+
+    /**
+     * The stream skipped a song whose format this device can't decode (and transcoding it is off). Warns and moves on
+     * to the next song, unless every song in the queue was just skipped.
+     */
+    public void onSongSkipped(SongListItem item, String codec) {
+        showToast.accept(String.format(i18n("Skipped “%s”: its format (%s) isn't supported on this device"),
+                item.getSongName(), codec));
+        consecutiveSkips++;
+        if (consecutiveSkips >= Math.max(1, queue.getModel().getNItems())) {
+            logger.warn("Every song in the queue was skipped, stopping");
+            consecutiveSkips = 0;
+            return;
+        }
+        // Not inside the queue's selection handler that called us.
+        GLib.idleAddOnce(() -> {
+            if (!queue.advance(false)) {
+                stream.endOfQueue();
+            }
+        });
     }
 
     private void onError(Message msg) {

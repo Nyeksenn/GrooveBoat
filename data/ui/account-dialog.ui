@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="GrooveboatAccountDialog" parent="AdwPreferencesDialog">
+    <property name="content-width">600</property>
+    <property name="content-height">500</property>
+    <property name="title" translatable="yes">Account</property>
+    <child>
+      <object class="AdwPreferencesPage">
+        <property name="title" translatable="yes">Account</property>
+        <property name="icon-name">interlinked-rectangles-symbolic</property>
+        <child>
+          <object class="AdwPreferencesGroup">
+            <property name="title" translatable="yes">Server</property>
+            <property name="description" translatable="yes">To use another server or account, log out and set GrooveBoat up again.</property>
+            <child>
+              <object class="AdwActionRow" id="row-backend">
+                <property name="title" translatable="yes">Server Type</property>
+                <style>
+                  <class name="property"/>
+                </style>
+              </object>
+            </child>
+            <child>
+              <object class="AdwActionRow" id="row-url">
+                <property name="title" translatable="yes">Address</property>
+                <property name="subtitle-selectable">true</property>
+                <style>
+                  <class name="property"/>
+                </style>
+              </object>
+            </child>
+            <child>
+              <object class="AdwActionRow" id="row-version">
+                <property name="title" translatable="yes">Version</property>
+                <property name="subtitle">…</property>
+                <style>
+                  <class name="property"/>
+                </style>
+              </object>
+            </child>
+            <child>
+              <object class="AdwActionRow" id="row-username">
+                <property name="title" translatable="yes">Username</property>
+                <style>
+                  <class name="property"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwPreferencesGroup">
+            <child>
+              <object class="GtkButton" id="logout-button">
+                <property name="label" translatable="yes">Log Out</property>
+                <property name="halign">center</property>
+                <signal name="clicked" handler="logout-clicked"/>
+                <style>
+                  <class name="pill"/>
+                  <class name="destructive-action"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

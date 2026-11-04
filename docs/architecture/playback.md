@@ -10,7 +10,7 @@ The player is a single `playbin3`, GStreamer's own high-level player element, cr
 
 - **Starting a song** means setting the player to null, setting the new URL, and prerolling to paused. Going to null rather than just ready disposes the audio sink and its sound server stream, together with audio of the old song that was buffered there but not yet played; at ready it survived and came out when the new song started. Going to null also flushes the bus, so messages the old song left behind (stream-start, end-of-stream, buffering) are dropped. If a song is audibly playing, the player first fades it out over about 30 ms, so the cut doesn't click. The new song starts at volume 0 and fades in over about 120 ms once its own stream-start has arrived and its position moves (the media stream's position ticker triggers this). Before its stream-start, a position query can still report the old song's position. The fade only scales the user's volume, and stopping resets it.
 - **Stopping** returns it to ready.
-- **Gapless continuation:** shortly before the current song runs out of data, playbin3 emits *about-to-finish* on one of its streaming threads. The player then asks a supplier for the next URL. If it gets one, it sets it right away, and playbin3 moves on to that song without a gap. When the new song reaches the audio sink, playbin3 posts a *stream-start* message. If the supplier has nothing, the player ends with end-of-stream.
+- **Gapless continuation:** shortly before the current song runs out of data, playbin3 emits *about-to-finish* on one of its streaming threads. The player then asks a supplier for the next URL. If it gets one, it sets it right away, and playbin3 moves on to that song without a gap. When the new song reaches the audio sink, playbin3 posts a *stream-start* message. If the supplier has nothing, the player ends with end-of-stream. With the *gapless playback* setting off, the player never asks: every song ends with end-of-stream and the queue then loads the next one like after a manual skip, including the fade-in.
 - **Seeking, position and volume:** time-based seeks, position queries (relative to the current song), and volume and mute through playbin3's own properties. GTK's cubic volume scale is converted to playbin3's linear one.
 - **Plugin check:** it can list required GStreamer elements that are not installed, which the window uses at startup.
 
@@ -36,6 +36,15 @@ The backend turns a song ID and its stored content type into a *playback source*
 
 - **Jellyfin:** if the song's codec can be carried in fMP4 segments (FLAC, ALAC, AAC, MP3, Opus, AC-3, E-AC-3), the URL is the song's HLS master playlist. It asks for that same codec in fMP4 segments, so the server only repackages the audio without re-encoding, and includes a new play session ID. Other formats get the original-file stream as a progressive download.
 - **OpenSubsonic:** always the stream endpoint asking for the raw original format, as a progressive download. The protocol's HLS endpoint segments by transcoding, which the app doesn't use.
+
+### Transcoding
+
+Besides the original, a song can be requested at a bitrate cap (*High* 320, *Balanced* 192, *Data saver* 96 kbit/s) in a chosen format (Auto, Opus, AAC, MP3). The profile is a device setting with one value for unmetered and one for metered connections; `AudioSettings` keeps the one that currently applies (following GIO's `NetworkMonitor`) as a snapshot that any thread can read. A change rebuilds the prepared follow-up song; the current song keeps playing as it is.
+
+- **Jellyfin:** a transcoded song is always HLS. The request lists the original codec first and the target second (`audioCodec=flac,opus`), with `audioBitRate`/`maxStreamingBitrate` set to the cap, so the server copies a file that already fits and re-encodes only larger ones. Auto means Opus.
+- **OpenSubsonic:** the stream endpoint gets `format` and `maxBitRate` (and `estimateContentLength`). Auto means MP3, which every server can encode.
+
+**Unsupported formats.** `AppPipeline.canDecode` asks the GStreamer registry whether a decoder, demuxer or parser accepts the codec (codecs it doesn't know count as playable). `TranscodePolicy` then decides per song: playable songs use the active profile; an unplayable song is force-transcoded (never copied, at least the High cap) when *Transcode unsupported formats* is on, and otherwise skipped. A skipped song is not loaded: the stream stops, `PlaybackEvents.onSongSkipped` shows a toast and advances the queue, and gives up when every song of the queue was skipped in a row. A skipped follow-up simply isn't prepared, so that transition isn't gapless.
 
 Both kinds of URL carry their credentials in the query string, because GStreamer's HLS demuxer fetches playlists and segments itself and can't be relied on to send custom headers. Jellyfin repeats its API key parameter in every variant and segment URL; the Subsonic auth parameters are part of the URL anyway. A playback source never logs its URL: its text form cuts off the query string.
 
@@ -90,3 +99,7 @@ The full player, the compact mini player and the transport controls bind to the 
 - the slider is only enabled while the stream is *prepared* and not *seeking*.
 
 They listen for the queue's *initialize-song* signal only to update the cover, title and artist, and disconnect from it when they are unrealised. Volume and seek changes from the controls go straight to the stream. The loop toggle switches the application's loop mode, which also changes the prepared next song. The queue view shows the queue's selection model directly.
+
+## ReplayGain
+
+When the *ReplayGain* setting is on, a small bin (`rgvolume ! rglimiter`) is set as playbin3's `audio-filter`. `rgvolume` reads the ReplayGain tags that the decoder sends downstream and scales the audio; `rglimiter` prevents clipping when the gain is positive. Songs without tags play unchanged. The mode setting maps to `rgvolume`'s `album-mode` (album gain, falling back to the track gain) and applies at once. Switching ReplayGain on or off only takes effect when the next song is loaded, because playbin3's audio filter can only be swapped while the pipeline is in NULL, which `playUri` passes through anyway; songs of a running gapless chain keep the filter they started with. If the `rgvolume`/`rglimiter` elements aren't installed, ReplayGain is unavailable and its preference rows are disabled. The user's volume and the fades are independent of it.

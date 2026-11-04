@@ -340,7 +340,8 @@ public final class JellyfinBackend extends AbstractHttpBackend {
     // ---- Playback
 
     @Override
-    public PlaybackSource playbackSource(String songId, String contentType) {
+    public PlaybackSource playbackSource(String songId, String contentType, int bitRateKbps,
+                                         TranscodeSettings transcode) {
         if (token == null) {
             throw new IllegalStateException("Jellyfin backend has no session");
         }
@@ -348,6 +349,27 @@ public final class JellyfinBackend extends AbstractHttpBackend {
         var params = new LinkedHashMap<String, String>();
         params.put("mediaSourceId", songId);
         params.put("deviceId", deviceId);
+        if (transcode.profile().transcodes()) {
+            // Transcoding is always HLS. The server copies the original codec when it is allowed and already fits
+            // under the cap, and re-encodes to the target codec otherwise.
+            var target = transcode.format().codec(BackendType.JELLYFIN.defaultTranscodeFormat());
+            var bitrate = String.valueOf(transcode.profile().maxBitrateKbps() * 1000);
+            var copyable = transcode.allowCopy() && AudioFormats.isFmp4Copyable(codec) && !target.equals(codec);
+            var playSessionId = UUID.randomUUID().toString().replace("-", "");
+            params.put("audioCodec", copyable ? codec + "," + target : target);
+            params.put("audioBitRate", bitrate);
+            params.put("maxStreamingBitrate", bitrate);
+            params.put("segmentContainer", "mp4");
+            params.put("allowAudioStreamCopy", String.valueOf(transcode.allowCopy()));
+            params.put("playSessionId", playSessionId);
+            params.put("ApiKey", token);
+            var quality = StreamQuality.transcoded(codec, bitRateKbps,
+                    transcode.allowCopy() && AudioFormats.isFmp4Copyable(codec), target,
+                    transcode.profile().maxBitrateKbps());
+            return new PlaybackSource(uri("/Audio/" + songId + "/master.m3u8", params).toString(), true,
+                    playSessionId, quality);
+        }
+        var original = StreamQuality.original(codec, bitRateKbps);
         if (AudioFormats.isFmp4Copyable(codec)) {
             // Ask for the original codec so the server only copies the stream into fMP4 segments.
             var playSessionId = UUID.randomUUID().toString().replace("-", "");
@@ -357,12 +379,12 @@ public final class JellyfinBackend extends AbstractHttpBackend {
             params.put("playSessionId", playSessionId);
             params.put("ApiKey", token);
             return new PlaybackSource(uri("/Audio/" + songId + "/master.m3u8", params).toString(), true,
-                    playSessionId);
+                    playSessionId, original);
         }
         // Formats fMP4 can't carry: original file as progressive download.
         params.put("static", "true");
         params.put("ApiKey", token);
-        return new PlaybackSource(uri("/Audio/" + songId + "/stream", params).toString(), false, null);
+        return new PlaybackSource(uri("/Audio/" + songId + "/stream", params).toString(), false, null, original);
     }
 
     @Override

@@ -5,13 +5,17 @@ import org.freedesktop.gstreamer.audio.StreamVolumeFormat;
 import org.freedesktop.gstreamer.gst.*;
 import org.gnome.glib.MainContext;
 import org.gnome.glib.MainLoop;
+import org.javagi.base.GErrorException;
 import org.javagi.base.Out;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -51,6 +55,16 @@ public final class AppPipeline {
     private final Element playbin;
     private final Bus bus;
     private volatile Supplier<String> nextUriSupplier = () -> null;
+    /** Whether the next track is handed over before the current one ends. Off: each track ends with EOS. */
+    private volatile boolean gapless = true;
+    /**
+     * ReplayGain filter ({@code rgvolume ! rglimiter}) for playbin3's {@code audio-filter}, or {@code null} when the
+     * elements aren't installed. Only the bin and the rgvolume inside it, both created here, are referenced.
+     */
+    private final @Nullable Element replayGainFilter;
+    private final @Nullable Element rgvolume;
+    /** Whether {@link #replayGainFilter} is wanted; applied to playbin3 the next time a track is loaded. */
+    private volatile boolean replayGainEnabled = false;
     /** Whether a track has been loaded since the last {@link #stop}, i.e. there is one that may be audible. */
     private boolean loaded = false;
     /** The state last requested through this class, to tell whether audio is audible right now. */
@@ -75,6 +89,9 @@ public final class AppPipeline {
     public AppPipeline() {
         Gst.init(null);
         playbin = ElementFactory.make("playbin3", "player");
+        var filter = createReplayGainFilter();
+        replayGainFilter = filter;
+        rgvolume = filter instanceof Bin bin ? bin.getByName("rgvolume") : null;
         if (playbin == null) {
             // missingElements() reports this to the user; keep the app alive so it can.
             logger.error("Couldn't create playbin3");
@@ -88,8 +105,101 @@ public final class AppPipeline {
         playbin.setState(State.READY);
     }
 
+    /** Builds {@code rgvolume ! rglimiter} as one bin, or returns {@code null} when the plugin is missing. */
+    private static @Nullable Element createReplayGainFilter() {
+        if (ElementFactory.find("rgvolume") == null || ElementFactory.find("rglimiter") == null) {
+            logger.warn("ReplayGain elements (rgvolume, rglimiter; gst-plugins-good) not installed, ReplayGain is unavailable");
+            return null;
+        }
+        try {
+            // The limiter keeps positive gain from clipping.
+            return Gst.parseBinFromDescription("rgvolume name=rgvolume ! rglimiter", true);
+        } catch (GErrorException e) {
+            logger.warn("Couldn't build the ReplayGain filter: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /** @return whether the ReplayGain elements are installed, i.e. whether {@link #setReplayGain} can do anything */
+    public boolean isReplayGainAvailable() {
+        return replayGainFilter != null;
+    }
+
+    /** GStreamer caps that identify a codec's compressed stream; codecs missing here are assumed playable. */
+    private static final Map<String, String> CODEC_CAPS = Map.ofEntries(
+            Map.entry("flac", "audio/x-flac"),
+            Map.entry("mp3", "audio/mpeg, mpegversion=(int)1, layer=(int)3"),
+            Map.entry("aac", "audio/mpeg, mpegversion=(int)4"),
+            Map.entry("alac", "audio/x-alac"),
+            Map.entry("opus", "audio/x-opus"),
+            Map.entry("vorbis", "audio/x-vorbis"),
+            Map.entry("ac3", "audio/x-ac3"),
+            Map.entry("eac3", "audio/x-eac3"),
+            Map.entry("wav", "audio/x-wav"),
+            Map.entry("wma", "audio/x-wma"),
+            Map.entry("wavpack", "audio/x-wavpack"));
+    private static final long FACTORY_TYPE_DECODER = 1L;
+    private static final long FACTORY_TYPE_DEMUXER = 1L << 5;
+    private static final long FACTORY_TYPE_PARSER = 1L << 6;
+
+    private final Map<String, Boolean> decodable = new ConcurrentHashMap<>();
+
+    /**
+     * Whether this device has a GStreamer element that can take the codec's stream (decoder, demuxer or parser).
+     * Unknown codecs count as playable, so playback is attempted. Call on the main thread.
+     */
+    public boolean canDecode(String codec) {
+        return decodable.computeIfAbsent(codec, AppPipeline::lookupDecoder);
+    }
+
+    private static boolean lookupDecoder(String codec) {
+        var capsString = CODEC_CAPS.get(codec);
+        if (capsString == null) {
+            return true;
+        }
+        try {
+            var caps = Caps.fromString(capsString);
+            for (var type : new long[]{FACTORY_TYPE_DECODER, FACTORY_TYPE_DEMUXER, FACTORY_TYPE_PARSER}) {
+                var factories = ElementFactory.listGetElements(new ElementFactoryListType(type), Rank.MARGINAL);
+                var matching = ElementFactory.listFilter(factories, caps, PadDirection.SINK, false);
+                if (matching != null && !matching.isEmpty()) {
+                    return true;
+                }
+            }
+            logger.info("No GStreamer element can read {} streams", codec);
+            return false;
+        } catch (RuntimeException e) {
+            logger.warn("Couldn't check decoder support for {}: {}", codec, e.toString());
+            return true;
+        }
+    }
+
+    /** Turns gapless playback on or off. When off, a track ends with EOS and the queue then loads the next one. */
+    public void setGapless(boolean enabled) {
+        gapless = enabled;
+        logger.debug("Gapless playback {}", enabled ? "on" : "off");
+    }
+
+    /**
+     * Configures ReplayGain. The mode takes effect immediately. Switching it on or off only takes effect when the next
+     * track is loaded with {@link #playUri}: playbin3 can't swap its audio filter while playing.
+     *
+     * @param albumMode prefer the album gain (falling back to the track gain) instead of the track gain
+     */
+    public void setReplayGain(boolean enabled, boolean albumMode) {
+        replayGainEnabled = enabled;
+        if (rgvolume != null) {
+            rgvolume.setProperty("album-mode", albumMode);
+        }
+        logger.debug("ReplayGain {} ({} mode)", enabled ? "on" : "off", albumMode ? "album" : "track");
+    }
+
     /** Called on a GStreamer streaming thread. Setting the URI here makes playbin3 continue gaplessly. */
     private void onAboutToFinish() {
+        if (!gapless) {
+            logger.debug("Gapless playback is off, letting the track end");
+            return;
+        }
         String next;
         try {
             next = nextUriSupplier.get();
@@ -147,6 +257,8 @@ public final class AppPipeline {
         // track started. Going to NULL also flushes the bus, so messages the old track left behind (stream-start,
         // eos, buffering) are dropped.
         playbin.setState(State.NULL);
+        // The only moment the audio filter can be swapped safely: the pipeline is in NULL.
+        playbin.setProperty("audio-filter", replayGainEnabled ? replayGainFilter : null);
         whileStopped.run();
         playbin.setProperty("uri", uri);
         setState(State.PAUSED);

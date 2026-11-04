@@ -5,6 +5,7 @@
     <file compressed="true" alias="window.ui" preprocess="xml-stripblanks">ui/window.ui</file>
     <file compressed="true" alias="setup.ui" preprocess="xml-stripblanks">ui/setup.ui</file>
     <file compressed="true" alias="headerbar-menu.ui" preprocess="xml-stripblanks">ui/headerbar-menu.ui</file>
+    <file compressed="true" alias="account-dialog.ui" preprocess="xml-stripblanks">ui/account-dialog.ui</file>
     <file compressed="true" alias="prefs.ui" preprocess="xml-stripblanks">ui/prefs.ui</file>
     <file compressed="true" alias="album-list.ui" preprocess="xml-stripblanks">ui/album-list.ui</file>
     <file compressed="true" alias="album-card.ui" preprocess="xml-stripblanks">ui/album-card.ui</file>

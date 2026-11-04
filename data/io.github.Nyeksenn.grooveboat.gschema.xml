@@ -37,5 +37,62 @@
       <default>0</default>
       <description>Timestamp of the last time that metadata was queried from the server</description>
     </key>
+    <key name="gapless-playback" type="b">
+      <default>true</default>
+      <summary>Gapless playback</summary>
+      <description>Whether songs follow each other without a pause. When off, each song ends before the next one is loaded.</description>
+    </key>
+    <key name="replay-gain-enabled" type="b">
+      <default>false</default>
+      <summary>Apply ReplayGain</summary>
+      <description>Whether the volume of each song is adjusted using the ReplayGain tags in the audio file. Applies from the next song that is loaded.</description>
+    </key>
+    <key name="replay-gain-mode" type="s">
+      <choices>
+        <choice value="track"/>
+        <choice value="album"/>
+      </choices>
+      <default>"album"</default>
+      <summary>ReplayGain mode</summary>
+      <description>"track" levels every song to the same loudness; "album" keeps the loudness differences within an album and falls back to the track gain when a song has no album gain.</description>
+    </key>
+    <key name="transcode-profile-unmetered" type="s">
+      <choices>
+        <choice value="original"/>
+        <choice value="high"/>
+        <choice value="balanced"/>
+        <choice value="data-saver"/>
+      </choices>
+      <default>"original"</default>
+      <summary>Streaming quality on unmetered connections</summary>
+      <description>"original" plays the original files; the others ask the server to re-encode songs above 320, 192 or 96 kbit/s. Applies from the next song that is loaded.</description>
+    </key>
+    <key name="transcode-profile-metered" type="s">
+      <choices>
+        <choice value="original"/>
+        <choice value="high"/>
+        <choice value="balanced"/>
+        <choice value="data-saver"/>
+      </choices>
+      <default>"balanced"</default>
+      <summary>Streaming quality on metered connections</summary>
+      <description>Same choices as on unmetered connections, used while the system reports the connection as metered.</description>
+    </key>
+    <key name="transcode-format" type="s">
+      <choices>
+        <choice value="auto"/>
+        <choice value="opus"/>
+        <choice value="aac"/>
+        <choice value="mp3"/>
+      </choices>
+      <default>"auto"</default>
+      <summary>Transcoding format</summary>
+      <description>The codec the server encodes to when it transcodes. "auto" uses Opus on Jellyfin and MP3 on OpenSubsonic servers.</description>
+    </key>
+    <key name="transcode-unsupported" type="b">
+      <default>true</default>
+      <summary>Transcode unsupported formats</summary>
+      <description>Whether songs in a format this device can't decode are transcoded by the server. When off, such songs are skipped.</description>
+    </key>
   </schema>
 </schemalist>

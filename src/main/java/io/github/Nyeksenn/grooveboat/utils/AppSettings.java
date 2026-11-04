@@ -18,6 +18,15 @@ public final class AppSettings {
     public static final String USER_ID = "user-id";
     public static final String DEVICE_ID = "device-id";
     public static final String LAST_SYNC = "last-sync";
+    public static final String GAPLESS_PLAYBACK = "gapless-playback";
+    public static final String REPLAY_GAIN_ENABLED = "replay-gain-enabled";
+    public static final String REPLAY_GAIN_MODE = "replay-gain-mode";
+    public static final String REPLAY_GAIN_MODE_TRACK = "track";
+    public static final String REPLAY_GAIN_MODE_ALBUM = "album";
+    public static final String TRANSCODE_PROFILE_UNMETERED = "transcode-profile-unmetered";
+    public static final String TRANSCODE_PROFILE_METERED = "transcode-profile-metered";
+    public static final String TRANSCODE_FORMAT = "transcode-format";
+    public static final String TRANSCODE_UNSUPPORTED = "transcode-unsupported";
 
     private AppSettings() {
     }

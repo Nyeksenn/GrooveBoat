@@ -1,65 +1,98 @@
 package io.github.Nyeksenn.grooveboat.ui;
 
-import io.github.Nyeksenn.grooveboat.backend.MusicBackend;
-import io.github.Nyeksenn.grooveboat.backend.ServerInfo;
+import io.github.Nyeksenn.grooveboat.backend.TranscodeFormat;
+import io.github.Nyeksenn.grooveboat.backend.TranscodeProfile;
 import io.github.Nyeksenn.grooveboat.utils.AppSettings;
-import org.gnome.adw.ActionRow;
+import org.gnome.adw.ComboRow;
+import org.gnome.adw.SwitchRow;
 import org.gnome.adw.PreferencesDialog;
-import org.gnome.glib.GLib;
-import org.javagi.gtk.annotations.GtkCallback;
+import org.gnome.gio.Settings;
+import org.gnome.gio.SettingsBindFlags;
 import org.javagi.gtk.annotations.GtkChild;
 import org.javagi.gtk.annotations.GtkTemplate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.concurrent.ExecutorService;
 
-/**
- * Shows the current session's server and account read-only. The connection can't be edited here: a session's
- * backend and server are fixed, and changing them means logging out.
- */
+import java.util.Arrays;
+import java.util.List;
+
+import static org.javagi.util.Intl.i18n;
+
+/** The device preferences (currently audio). Account and server details live in {@link AccountDialog}. */
 @GtkTemplate(ui = "/io/github/Nyeksenn/grooveboat/prefs.ui", name = "GrooveboatPrefs")
 public class GrooveboatPrefs extends PreferencesDialog {
-    private static final Logger logger = LoggerFactory.getLogger(GrooveboatPrefs.class);
+    @GtkChild(name = "row-gapless")
+    public SwitchRow rowGapless;
 
-    @GtkChild(name = "row-backend")
-    public ActionRow rowBackend;
+    @GtkChild(name = "row-replay-gain")
+    public SwitchRow rowReplayGain;
 
-    @GtkChild(name = "row-url")
-    public ActionRow rowUrl;
+    @GtkChild(name = "row-replay-gain-mode")
+    public ComboRow rowReplayGainMode;
 
-    @GtkChild(name = "row-version")
-    public ActionRow rowVersion;
+    @GtkChild(name = "row-transcode-unmetered")
+    public ComboRow rowTranscodeUnmetered;
 
-    @GtkChild(name = "row-username")
-    public ActionRow rowUsername;
+    @GtkChild(name = "row-transcode-metered")
+    public ComboRow rowTranscodeMetered;
 
-    @GtkCallback(name = "logout-clicked")
-    public void logoutClicked() {
-        // Activate while still attached to the window, so the action resolves; then get out of the way.
-        activateActionVariant("app.logout", null);
-        close();
+    @GtkChild(name = "row-transcode-format")
+    public ComboRow rowTranscodeFormat;
+
+    @GtkChild(name = "row-transcode-unsupported")
+    public SwitchRow rowTranscodeUnsupported;
+
+    public GrooveboatPrefs(boolean replayGainAvailable) {
+        bindAudioSettings(replayGainAvailable);
+        bindStreamingSettings();
     }
 
-    public GrooveboatPrefs(MusicBackend backend, ExecutorService exec) {
-        rowBackend.setSubtitle(backend.type().displayName());
-        rowUrl.setSubtitle(GLib.markupEscapeText(backend.baseUrl(), -1));
-        rowUsername.setSubtitle(GLib.markupEscapeText(AppSettings.get().getString(AppSettings.USERNAME), -1));
-
-        UiAsync.background(exec, () -> {
-            String version;
-            try {
-                version = switch (backend.probe()) {
-                    case ServerInfo.Compatible(var name, var v) -> name + " " + v;
-                    case ServerInfo.Incompatible _ -> "Unknown";
-                };
-            } catch (IOException e) {
-                logger.warn("Couldn't query server version: {}", e.getMessage());
-                version = "Unreachable";
-            }
-            final var text = GLib.markupEscapeText(version, -1);
-            GLib.idleAddOnce(() -> rowVersion.setSubtitle(text));
+    /** Binds a combo row to a string key; the row's items are in the order of {@code keys}. */
+    private static void bindChoice(Settings settings, String key, ComboRow row, String[] keys, Runnable changed) {
+        row.setSelected(Math.max(0, List.of(keys).indexOf(settings.getString(key))));
+        row.onNotify("selected", _ -> {
+            settings.setString(key, keys[row.getSelected()]);
+            changed.run();
         });
+    }
+
+    private void bindStreamingSettings() {
+        var settings = AppSettings.get();
+        var profiles = Arrays.stream(TranscodeProfile.values()).map(TranscodeProfile::key).toArray(String[]::new);
+        var formats = Arrays.stream(TranscodeFormat.values()).map(TranscodeFormat::key).toArray(String[]::new);
+        // The format only matters while some profile (or an unsupported codec) transcodes; it stays editable anyway
+        // when "Transcode Unsupported Formats" is on, because that path uses it too.
+        Runnable updateFormatRow = () -> rowTranscodeFormat.setSensitive(
+                rowTranscodeUnmetered.getSelected() != 0 || rowTranscodeMetered.getSelected() != 0
+                        || rowTranscodeUnsupported.getActive());
+        bindChoice(settings, AppSettings.TRANSCODE_PROFILE_UNMETERED, rowTranscodeUnmetered, profiles, updateFormatRow);
+        bindChoice(settings, AppSettings.TRANSCODE_PROFILE_METERED, rowTranscodeMetered, profiles, updateFormatRow);
+        bindChoice(settings, AppSettings.TRANSCODE_FORMAT, rowTranscodeFormat, formats, () -> {
+        });
+        settings.bind(AppSettings.TRANSCODE_UNSUPPORTED, rowTranscodeUnsupported, "active", SettingsBindFlags.DEFAULT);
+        rowTranscodeUnsupported.onNotify("active", _ -> updateFormatRow.run());
+        updateFormatRow.run();
+    }
+
+    /**
+     * The audio rows read and write GSettings directly; the pipeline follows the keys (see {@code AudioSettings}).
+     * The mode is a string key shown as a list, so it is mapped by hand: index 0 is track, index 1 album.
+     */
+    private void bindAudioSettings(boolean replayGainAvailable) {
+        var settings = AppSettings.get();
+        settings.bind(AppSettings.GAPLESS_PLAYBACK, rowGapless, "active", SettingsBindFlags.DEFAULT);
+        settings.bind(AppSettings.REPLAY_GAIN_ENABLED, rowReplayGain, "active", SettingsBindFlags.DEFAULT);
+
+        rowReplayGainMode.setSelected(
+                AppSettings.REPLAY_GAIN_MODE_TRACK.equals(settings.getString(AppSettings.REPLAY_GAIN_MODE)) ? 0 : 1);
+        rowReplayGainMode.onNotify("selected", _ -> settings.setString(AppSettings.REPLAY_GAIN_MODE,
+                rowReplayGainMode.getSelected() == 0
+                        ? AppSettings.REPLAY_GAIN_MODE_TRACK : AppSettings.REPLAY_GAIN_MODE_ALBUM));
+
+        if (!replayGainAvailable) {
+            // The GStreamer ReplayGain plugin is missing; the switch would do nothing.
+            rowReplayGain.setSensitive(false);
+            rowReplayGain.setSubtitle(i18n("Requires the GStreamer ReplayGain elements (gst-plugins-good)."));
+            rowReplayGainMode.setSensitive(false);
+        }
     }
 }

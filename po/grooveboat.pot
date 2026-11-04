@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: grooveboat 0.1.0\n"
+"Project-Id-Version: grooveboat\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-01 15:19+0100\n"
+"POT-Creation-Date: 2026-11-04 17:59+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -125,7 +125,8 @@ msgid "Artists"
 msgstr ""
 
 #: data/ui/music-chooser.ui:118 data/ui/prefs.ui:55 data/ui/window.ui:77
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:207
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:259
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:298
 msgid "Log Out"
 msgstr ""
 
@@ -159,6 +160,52 @@ msgstr ""
 
 #: data/ui/prefs.ui:34
 msgid "Version"
+msgstr ""
+
+#: data/ui/prefs.ui:70
+msgid "Audio"
+msgstr ""
+
+#: data/ui/prefs.ui:74
+msgid "Playback"
+msgstr ""
+
+#: data/ui/prefs.ui:77
+msgid "Gapless Playback"
+msgstr ""
+
+#: data/ui/prefs.ui:78
+msgid "Play songs back to back without a pause."
+msgstr ""
+
+#: data/ui/prefs.ui:85
+msgid "Volume Normalization"
+msgstr ""
+
+#: data/ui/prefs.ui:86
+msgid ""
+"Evens out the loudness of songs using the ReplayGain tags in the audio "
+"files. Changes apply from the next song that is loaded."
+msgstr ""
+
+#: data/ui/prefs.ui:89
+msgid "ReplayGain"
+msgstr ""
+
+#: data/ui/prefs.ui:94
+msgid "Mode"
+msgstr ""
+
+#: data/ui/prefs.ui:95
+msgid "Album keeps the loudness differences within an album."
+msgstr ""
+
+#: data/ui/prefs.ui:100
+msgid "Track"
+msgstr ""
+
+#: data/ui/prefs.ui:101
+msgid "Album"
 msgstr ""
 
 #: data/ui/server-type-page.ui:11
@@ -219,7 +266,7 @@ msgid "Loading"
 msgstr ""
 
 #: data/ui/window.ui:58
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:156
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:170
 msgid "Connection Error"
 msgstr ""
 
@@ -325,52 +372,63 @@ msgstr ""
 msgid "Login failed"
 msgstr ""
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatApp.java:86
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatApp.java:87
 msgid "Logging Out"
 msgstr ""
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:93
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatPrefs.java:99
+msgid "Requires the GStreamer ReplayGain elements (gst-plugins-good)."
+msgstr ""
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:97
 msgid "Missing GStreamer Plugins"
 msgstr ""
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:94
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:98
 #, java-printf-format
 msgid ""
 "GrooveBoat needs these GStreamer elements to play music: %s. Install the "
 "matching packages and restart the app."
 msgstr ""
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:111
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:130
 msgid "Connecting"
 msgstr ""
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:146
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:162
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:249
 msgid "Can't reach the server. Showing your cached library."
 msgstr ""
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:151
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:167
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:256
 msgid "Session Expired"
 msgstr ""
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:152
-#, java-printf-format
-msgid ""
-"The server no longer accepts the stored login for %s. Log out and sign in "
-"again."
-msgstr ""
-
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:157
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:171
 #, java-printf-format
 msgid ""
 "Unable to reach the %s server. Please check your internet connection and try "
 "again."
 msgstr ""
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:169
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:202
+#, java-printf-format
+msgid ""
+"The server no longer accepts the stored login for %s. Log out and sign in "
+"again."
+msgstr ""
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:225
 msgid "Loading Library"
 msgstr ""
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:199
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:258
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:297
+msgid "Cancel"
+msgstr ""
+
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:290
 #, java-printf-format
 msgid ""
 "This clears the local library cache, the queue and the stored login. The "
@@ -378,19 +436,15 @@ msgid ""
 "another server."
 msgstr ""
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:202
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:293
 msgid ""
 "This clears the local library cache, the queue and the stored login. The "
 "music on your server is not affected. You can then sign in to the same or "
 "another server."
 msgstr ""
 
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:205
+#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:296
 msgid "Log Out?"
-msgstr ""
-
-#: src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java:206
-msgid "Cancel"
 msgstr ""
 
 #: src/main/java/io/github/Nyeksenn/grooveboat/ui/MusicControls.java:130

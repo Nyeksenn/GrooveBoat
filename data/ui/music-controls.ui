@@ -41,6 +41,17 @@
             </style>
           </object>
         </child>
+        <child type="overlay">
+          <!-- Codec and bitrate of the song that is playing, between the timestamps -->
+          <object class="GtkLabel" id="quality-pill">
+            <property name="halign">center</property>
+            <property name="valign">end</property>
+            <property name="visible">false</property>
+            <style>
+              <class name="quality-pill"/>
+            </style>
+          </object>
+        </child>
       </object>
     </child>
     <child>
@@ -49,6 +60,7 @@
         <property name="orientation">horizontal</property>
         <property name="halign">center</property>
         <property name="valign">center</property>
+        <property name="margin-top">8</property>
         <property name="spacing">20</property>
         <child>
           <object class="GtkButton" id="skip-back-button">

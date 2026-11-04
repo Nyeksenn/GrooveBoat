@@ -34,7 +34,8 @@ The content page is a navigation split, with the *music chooser* on one side and
 ## Dialogs
 
 - **Setup** (`SetupDialog`): a non-closable dialog with a navigation view through welcome, server type, connection and credentials pages. The pages find the dialog by walking up the widget tree, and share the chosen server type and the probed backend through it. See [Startup and Lifecycle](lifecycle.md#first-run-setup).
-- **Preferences** (`GrooveboatPrefs`): opened from the avatar or the main menu. It shows the session's server type, address, server version (queried in the background) and username, all read-only, and a Log Out button. Connection details can't be edited, because a session's server is fixed.
+- **Account** (`AccountDialog`): opened from the avatar (`app.account-settings`). It shows only the session's server type, address, server version (queried in the background) and username, all read-only, and a Log Out button. Connection details can't be edited, because a session's server is fixed.
+- **Preferences** (`GrooveboatPrefs`): opened from the main menu (`app.preferences`). It holds the device settings, currently one **Audio** page: a gapless playback switch, a ReplayGain switch and a ReplayGain mode row (track or album, only enabled while ReplayGain is on), and a **Streaming Quality** group with the quality for unmetered and metered connections, the transcoding format and a *Transcode unsupported formats* switch. The rows are bound to the `gapless-playback`, `replay-gain-*` and `transcode-*` GSettings keys; `audio.AudioSettings` forwards them to the pipeline and the playback policy.
 - **Log out confirmation**: an alert dialog explaining that the local cache, queue and stored login will be cleared and that the server's library is not affected.
 
 ## Adaptive layout
