@@ -18,6 +18,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -82,11 +86,50 @@ public final class BackendSupport {
                 .orElseThrow(() -> new IOException("Response did not contain Content-Type header"));
         var subtype = contentType.split(";")[0].split("/");
         var extension = subtype.length > 1 ? subtype[1].trim() : "img";
-        var safeId = imageId.replaceAll("[^A-Za-z0-9_.-]", "_");
-        Files.createDirectories(COVER_CACHE_PATH);
-        var imagePath = COVER_CACHE_PATH.resolve(safeId + "." + extension);
-        Files.write(imagePath, response.body());
+        return writeImage(COVER_CACHE_PATH, imageId, extension, response.body());
+    }
+
+    /**
+     * Stores {@code body} as {@code <fileStem(imageId)>.<extension>} in {@code directory}. The file appears
+     * atomically (written to a temporary file first), because several albums can share one cover and download it at
+     * the same time; a reader must never see a half-written image.
+     */
+    static Path writeImage(Path directory, String imageId, String extension, byte[] body) throws IOException {
+        Files.createDirectories(directory);
+        var safeExtension = extension.replaceAll("[^A-Za-z0-9]", "");
+        var imagePath = directory.resolve(fileStem(imageId) + "." + (safeExtension.isEmpty() ? "img" : safeExtension));
+        var temporary = Files.createTempFile(directory, ".download-", ".tmp");
+        try {
+            Files.write(temporary, body);
+            Files.move(temporary, imagePath, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        } finally {
+            Files.deleteIfExists(temporary);
+        }
         return imagePath;
+    }
+
+    private static final int MAX_STEM_LENGTH = 100;
+
+    /**
+     * A file name stem for {@code imageId}. Ids made only of safe characters are used as they are (so existing cache
+     * files keep their names). Anything else is sanitized and gets a hash of the original id appended, so ids that
+     * differ only in unsafe characters ({@code a/b} and {@code a_b}) don't end up sharing a file. Never starts with a
+     * dot, so a cached image is neither hidden nor a path component like {@code ..}.
+     */
+    static String fileStem(String imageId) {
+        if (imageId.length() <= MAX_STEM_LENGTH && imageId.matches("[A-Za-z0-9_-][A-Za-z0-9_.-]*")) {
+            return imageId;
+        }
+        var sanitized = imageId.replaceAll("[^A-Za-z0-9_.-]", "_").replaceFirst("^\\.", "_");
+        if (sanitized.length() > MAX_STEM_LENGTH) {
+            sanitized = sanitized.substring(0, MAX_STEM_LENGTH);
+        }
+        try {
+            var digest = MessageDigest.getInstance("SHA-256").digest(imageId.getBytes(StandardCharsets.UTF_8));
+            return sanitized + "-" + HexFormat.of().formatHex(digest, 0, 6);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 is required on every Java platform", e);
+        }
     }
 
     /** Deletes all files in the cover cache. Failures are logged, not thrown. */
