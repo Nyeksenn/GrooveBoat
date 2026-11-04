@@ -35,7 +35,7 @@ public final class SongQueue extends Bin {
         var listItem = (ListItem) object;
         var queueCard = (QueueCard) listItem.getChild();
         var songItem = (SongListItem) listItem.getItem();
-        queueCard.albumCover.setTexture(songItem.getCoverArt());
+        queueCard.albumCover.setCover(CoverKind.ALBUM, songItem.getAlbumId());
         queueCard.albumArtistLabel.setLabel(songItem.getArtistName());
         queueCard.songTitleLabel.setLabel(songItem.getSongName());
         listItem.bindProperty("position", queueCard, "index").syncCreate().build();

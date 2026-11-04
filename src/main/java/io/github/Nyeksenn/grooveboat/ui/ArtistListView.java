@@ -54,14 +54,13 @@ public class ArtistListView extends Box {
 
         artistCard.artistName.setLabel(artist.getArtistName());
         artistCard.artistPicture.setText(artist.getArtistName());
-        artistCard.artistPicture.setCustomImage(artist.getCoverArt());
         artistCard.setArtistId(artist.getArtistId());
+        artistCard.loadImage();
         artistCard.navView = artistNavView;
     }
 
     /** Replaces the grid's contents with the album artists in the cache. */
     public void loadItems() {
-        var coverLoader = CoverLoader.getInstance();
         latest.run(executor, () -> {
             var artists = new QArtistModel().albums.isNotEmpty().findList();
             artists.sort(Comparator.comparing(a -> a.getName() == null ? "" : a.getName(),
@@ -70,8 +69,7 @@ public class ArtistListView extends Box {
             // Built on this executor thread, not the ForkJoin common pool (see AlbumListView).
             var items = new ArrayList<ArtistListItem>(artists.size());
             for (var artist : artists) {
-                items.add(new ArtistListItem(coverLoader.loadArtist(artist.getId()), artist.getName(),
-                        artist.getId()));
+                items.add(new ArtistListItem(artist.getName(), artist.getId()));
             }
             return items;
         }, items -> {

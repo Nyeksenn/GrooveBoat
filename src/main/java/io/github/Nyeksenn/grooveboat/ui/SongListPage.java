@@ -70,7 +70,7 @@ public class SongListPage extends NavigationPage {
         songCard.songName.setLabel(song.getSongName());
         songCard.songArtist.setLabel(song.getArtistName());
         songCard.songDuration.setLabel(song.getDurationString());
-        songCard.songPicture.setTexture(song.getCoverArt());
+        songCard.songPicture.setCover(CoverKind.ALBUM, song.getAlbumId());
         songCard.setTrackNumber(song.getTrackNumber());
         songCard.setSongId(song.getSongId());
     }
@@ -79,7 +79,6 @@ public class SongListPage extends NavigationPage {
         if (this.library == null && this.executor == null) {
             var window = AppWidgets.window(this);
             var app = AppWidgets.app(this);
-            var albumTextureLoader = CoverLoader.getInstance();
 
             this.library = app.getLibrary();
             if (this.library == null) {
@@ -99,14 +98,13 @@ public class SongListPage extends NavigationPage {
                     logger.warn("No songs for album {}", albumId);
                     return;
                 }
-                var texture = albumTextureLoader.load(albumId);
                 for (var song : songs) {
                     var songAlbum = song.getAlbum();
                     if (songAlbum == null) {
                         logger.warn("Song {} has no album; leaving it out of the list", song.getId());
                         continue;
                     }
-                    var songListItem = SongListItem.of(song, songAlbum, texture);
+                    var songListItem = SongListItem.of(song, songAlbum);
                     GLib.idleAddOnce(() -> this.store.append(songListItem));
                 }
             });

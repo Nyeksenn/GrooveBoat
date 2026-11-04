@@ -3,7 +3,6 @@ package io.github.Nyeksenn.grooveboat.audio;
 import io.github.Nyeksenn.grooveboat.entities.query.QAlbumModel;
 import io.github.Nyeksenn.grooveboat.entities.query.QSongModel;
 import io.github.Nyeksenn.grooveboat.gobjects.SongListItem;
-import io.github.Nyeksenn.grooveboat.ui.CoverLoader;
 import io.github.Nyeksenn.grooveboat.ui.GrooveboatApp;
 import org.gnome.gio.ActionEntry;
 import org.gnome.glib.GLib;
@@ -25,7 +24,6 @@ import java.util.function.Consumer;
  */
 final class QueueActions {
     private static final Logger logger = LoggerFactory.getLogger(QueueActions.class);
-    private static final CoverLoader loader = CoverLoader.getInstance();
 
     private final GrooveboatApp app;
     private final QueueStore queue;
@@ -131,8 +129,7 @@ final class QueueActions {
         if (song == null) {
             return null;
         }
-        var texture = loader.load(song.getAlbum().getId());
-        return SongListItem.of(song, song.getAlbum(), texture);
+        return SongListItem.of(song, song.getAlbum());
     }
 
     /**
@@ -145,10 +142,9 @@ final class QueueActions {
         if (library == null || album == null) {
             return List.of();
         }
-        var texture = loader.load(album.getId());
         var items = new ArrayList<SongListItem>();
         for (var song : library.getSongs(albumId)) {
-            items.add(SongListItem.of(song, album, texture));
+            items.add(SongListItem.of(song, album));
         }
         return items;
     }

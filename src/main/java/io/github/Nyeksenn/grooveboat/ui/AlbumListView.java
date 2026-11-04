@@ -53,7 +53,7 @@ public class AlbumListView extends Box {
         var albumCard = (AlbumCard) listItem.getChild();
         var album = (AlbumListItem) listItem.getItem();
 
-        albumCard.albumPicture.setTexture(album.getPictureData());
+        albumCard.albumPicture.setCover(CoverKind.ALBUM, album.getAlbumId());
         albumCard.albumName.setLabel(album.getAlbumName());
         albumCard.albumArtist.setLabel(album.getAlbumArtist());
         albumCard.setAlbumId(album.getAlbumId());
@@ -62,7 +62,6 @@ public class AlbumListView extends Box {
 
     /** Replaces the grid's contents with the albums in the cache. */
     public void loadItems() {
-        var albumTextureLoader = CoverLoader.getInstance();
         latest.run(executor, () -> {
             // The grid shows each album's artists: load them in one extra query instead of one per album.
             var albums = new QAlbumModel().albumArtists.fetchQuery().findList();
@@ -71,7 +70,7 @@ public class AlbumListView extends Box {
             // parallelStream) are broken and crash GTK as soon as they are added to a list store.
             var items = new ArrayList<AlbumListItem>(albums.size());
             for (var album : albums) {
-                items.add(AlbumListItem.of(album, albumTextureLoader.load(album.getId())));
+                items.add(AlbumListItem.of(album));
             }
             return items;
         }, items -> {

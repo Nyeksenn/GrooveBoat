@@ -46,7 +46,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public final class LibrarySync implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(LibrarySync.class);
-    private static final int IMAGE_SIZE = 800;
+    private static final int IMAGE_SIZE = 512;
     private static final String ARTIST_UPSERT = """
             MERGE INTO ARTIST (id, name, artist_image_path, image_checked)
             KEY (id)
