@@ -44,6 +44,17 @@
       </object>
     </child>
     <child>
+      <!-- Codec and bitrate of the song that is playing -->
+      <object class="GtkLabel" id="quality-pill">
+        <property name="halign">center</property>
+        <property name="margin-bottom">8</property>
+        <property name="visible">false</property>
+        <style>
+          <class name="quality-pill"/>
+        </style>
+      </object>
+    </child>
+    <child>
       <!-- Transport: previous, play/pause (larger), next -->
       <object class="GtkBox">
         <property name="orientation">horizontal</property>

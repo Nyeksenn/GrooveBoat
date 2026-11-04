@@ -186,7 +186,7 @@ class SubsonicBackendTest {
     void playbackSourceIsProgressiveAndNeverLogsCredentials() throws Exception {
         var backend = new SubsonicBackend("http://music.example.org");
         backend.restoreUnverified(new Session("alice", "secret", ""));
-        var source = backend.playbackSource("s1", "audio/flac", TranscodeSettings.ORIGINAL);
+        var source = backend.playbackSource("s1", "audio/flac", 0, TranscodeSettings.ORIGINAL);
         assertThat(source.hls()).isFalse();
         assertThat(source.uri()).contains("/rest/stream").contains("id=s1").contains("format=raw");
         assertThat(source.toString()).doesNotContain("secret").doesNotContain("t=");
@@ -197,7 +197,7 @@ class SubsonicBackendTest {
         var backend = new SubsonicBackend("http://music.example.org");
         backend.restoreUnverified(new Session("alice", "secret", ""));
         var settings = new TranscodeSettings(TranscodeProfile.DATA_SAVER, TranscodeFormat.AUTO, true);
-        var source = backend.playbackSource("s1", "audio/flac", settings);
+        var source = backend.playbackSource("s1", "audio/flac", 0, settings);
         assertThat(source.hls()).isFalse();
         assertThat(source.uri()).contains("format=mp3").contains("maxBitRate=96").contains("estimateContentLength=true")
                 .doesNotContain("format=raw");

@@ -17,6 +17,7 @@ public final class SongListItem extends GObject {
     private final String albumTitle;
     private final Duration duration;
     private final String contentType;
+    private final int bitRate;
     private final Texture coverArt;
     private final String albumId;
     private final Path coverPath;
@@ -72,13 +73,18 @@ public final class SongListItem extends GObject {
         return contentType;
     }
 
+    /** Bitrate in kbit/s as reported by the server; 0 when unknown. */
+    public int getBitRate() {
+        return bitRate;
+    }
+
     /** A queue/list entry for {@code song} of {@code album}. {@code cover} is the album's decoded cover, if any. */
     public static SongListItem of(SongModel song, AlbumModel album, @Nullable Texture cover) {
         return new SongListItem(song.getTitle(), song.getId(), song.getDisplayArtist(), album.getTitle(),
-                song.getDuration(), song.getContentType(), cover, album.getId(), album.getCoverPath());
+                song.getDuration(), song.getContentType(), song.getBitRate(), cover, album.getId(), album.getCoverPath());
     }
 
-    private SongListItem(String songName, String songId, String artistName, String albumTitle, Duration duration, String contentType, Texture coverArt, String albumId, Path coverPath) {
+    private SongListItem(String songName, String songId, String artistName, String albumTitle, Duration duration, String contentType, int bitRate, Texture coverArt, String albumId, Path coverPath) {
         this.albumId = albumId;
         this.coverPath = coverPath;
         this.trackId = "/io/github/Nyeksenn/grooveboat/track/" + TRACK_COUNTER.incrementAndGet();
@@ -88,6 +94,7 @@ public final class SongListItem extends GObject {
         this.albumTitle = albumTitle;
         this.duration = duration;
         this.contentType = contentType;
+        this.bitRate = bitRate;
         this.coverArt = coverArt;
     }
 }

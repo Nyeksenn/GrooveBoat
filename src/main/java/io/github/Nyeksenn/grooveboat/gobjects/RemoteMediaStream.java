@@ -5,6 +5,7 @@ import io.github.Nyeksenn.grooveboat.audio.AppPipeline;
 import io.github.Nyeksenn.grooveboat.audio.TranscodePolicy;
 import io.github.Nyeksenn.grooveboat.backend.MusicBackend;
 import io.github.Nyeksenn.grooveboat.backend.PlaybackSource;
+import io.github.Nyeksenn.grooveboat.backend.StreamQuality;
 import org.freedesktop.gstreamer.gst.State;
 import org.gnome.glib.GLib;
 import org.gnome.gtk.MediaStream;
@@ -165,7 +166,8 @@ public final class RemoteMediaStream extends MediaStream {
             return null;
         }
         if (policy.apply(item.getContentType()) instanceof TranscodePolicy.Decision.Play play) {
-            return new Track(item, b.playbackSource(item.getSongId(), item.getContentType(), play.settings()), b);
+            return new Track(item, b.playbackSource(item.getSongId(), item.getContentType(), item.getBitRate(),
+                    play.settings()), b);
         }
         return null;
     }
@@ -197,6 +199,11 @@ public final class RemoteMediaStream extends MediaStream {
     /** The song currently loaded, or {@code null}. */
     public SongListItem getCurrentItem() {
         return current == null ? null : current.item();
+    }
+
+    /** What the current song delivers (codec, bitrate, whether transcoded), or {@code null} when unknown. */
+    public @Nullable StreamQuality getCurrentQuality() {
+        return current == null ? null : current.source().quality();
     }
 
     public boolean isSwitching() {

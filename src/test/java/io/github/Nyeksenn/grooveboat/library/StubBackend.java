@@ -133,7 +133,8 @@ final class StubBackend implements MusicBackend {
     }
 
     @Override
-    public PlaybackSource playbackSource(String songId, String contentType, TranscodeSettings transcode) {
+    public PlaybackSource playbackSource(String songId, String contentType, int bitRateKbps,
+                                         TranscodeSettings transcode) {
         return new PlaybackSource("http://stub/" + songId, false, null);
     }
 

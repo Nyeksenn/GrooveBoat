@@ -1,5 +1,6 @@
 package io.github.Nyeksenn.grooveboat.backend.jellyfin;
 
+import io.github.Nyeksenn.grooveboat.backend.StreamQuality;
 import io.github.Nyeksenn.grooveboat.backend.TranscodeFormat;
 import io.github.Nyeksenn.grooveboat.backend.TranscodeProfile;
 import io.github.Nyeksenn.grooveboat.backend.TranscodeSettings;
@@ -263,7 +264,7 @@ class JellyfinBackendTest {
 
     @Test
     void copyableCodecsPlayAsHls() throws Exception {
-        var source = loggedIn("http://jf.example.org").playbackSource("s1", "audio/flac", TranscodeSettings.ORIGINAL);
+        var source = loggedIn("http://jf.example.org").playbackSource("s1", "audio/flac", 0, TranscodeSettings.ORIGINAL);
         assertThat(source.hls()).isTrue();
         assertThat(source.playSessionId()).isNotBlank();
         assertThat(source.uri()).contains("/Audio/s1/master.m3u8").contains("audioCodec=flac")
@@ -273,7 +274,7 @@ class JellyfinBackendTest {
 
     @Test
     void otherCodecsPlayAsProgressiveDownload() throws Exception {
-        var source = loggedIn("http://jf.example.org").playbackSource("s1", "audio/x-ms-wma", TranscodeSettings.ORIGINAL);
+        var source = loggedIn("http://jf.example.org").playbackSource("s1", "audio/x-ms-wma", 0, TranscodeSettings.ORIGINAL);
         assertThat(source.hls()).isFalse();
         assertThat(source.playSessionId()).isNull();
         assertThat(source.uri()).contains("/Audio/s1/stream").contains("static=true");
@@ -282,8 +283,9 @@ class JellyfinBackendTest {
     @Test
     void transcodingAsksForTheBitrateCapAndMayCopyTheOriginal() throws Exception {
         var settings = new TranscodeSettings(TranscodeProfile.BALANCED, TranscodeFormat.AUTO, true);
-        var source = loggedIn("http://jf.example.org").playbackSource("s1", "audio/flac", settings);
+        var source = loggedIn("http://jf.example.org").playbackSource("s1", "audio/flac", 0, settings);
         assertThat(source.hls()).isTrue();
+        assertThat(source.quality()).isEqualTo(new StreamQuality("opus", 192, true));
         assertThat(source.uri()).contains("/Audio/s1/master.m3u8").contains("audioCodec=flac%2Copus")
                 .contains("audioBitRate=192000").contains("maxStreamingBitrate=192000")
                 .contains("allowAudioStreamCopy=true");
@@ -292,7 +294,7 @@ class JellyfinBackendTest {
     @Test
     void forcedTranscodeNeverAllowsCopyingAndPlaysOtherCodecsAsHls() throws Exception {
         var settings = new TranscodeSettings(TranscodeProfile.HIGH, TranscodeFormat.AAC, false);
-        var source = loggedIn("http://jf.example.org").playbackSource("s1", "audio/x-ms-wma", settings);
+        var source = loggedIn("http://jf.example.org").playbackSource("s1", "audio/x-ms-wma", 0, settings);
         assertThat(source.hls()).isTrue();
         assertThat(source.uri()).contains("audioCodec=aac&").contains("audioBitRate=320000")
                 .contains("allowAudioStreamCopy=false");
@@ -300,7 +302,7 @@ class JellyfinBackendTest {
 
     @Test
     void playbackNeedsASession() {
-        assertThatThrownBy(() -> backend("http://jf.example.org").playbackSource("s1", "audio/flac", TranscodeSettings.ORIGINAL))
+        assertThatThrownBy(() -> backend("http://jf.example.org").playbackSource("s1", "audio/flac", 0, TranscodeSettings.ORIGINAL))
                 .isInstanceOf(IllegalStateException.class);
     }
 
