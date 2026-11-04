@@ -37,5 +37,24 @@
       <default>0</default>
       <description>Timestamp of the last time that metadata was queried from the server</description>
     </key>
+    <key name="gapless-playback" type="b">
+      <default>true</default>
+      <summary>Gapless playback</summary>
+      <description>Whether songs follow each other without a pause. When off, each song ends before the next one is loaded.</description>
+    </key>
+    <key name="replay-gain-enabled" type="b">
+      <default>false</default>
+      <summary>Apply ReplayGain</summary>
+      <description>Whether the volume of each song is adjusted using the ReplayGain tags in the audio file. Applies from the next song that is loaded.</description>
+    </key>
+    <key name="replay-gain-mode" type="s">
+      <choices>
+        <choice value="track"/>
+        <choice value="album"/>
+      </choices>
+      <default>"album"</default>
+      <summary>ReplayGain mode</summary>
+      <description>"track" levels every song to the same loudness; "album" keeps the loudness differences within an album and falls back to the track gain when a song has no album gain.</description>
+    </key>
   </schema>
 </schemalist>

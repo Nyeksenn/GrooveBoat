@@ -3,6 +3,7 @@ package io.github.Nyeksenn.grooveboat.ui;
 import static org.javagi.util.Intl.i18n;
 import io.ebean.DB;
 import io.github.Nyeksenn.grooveboat.audio.AppPipeline;
+import io.github.Nyeksenn.grooveboat.audio.AudioSettings;
 import io.github.Nyeksenn.grooveboat.audio.PlaybackEvents;
 import io.github.Nyeksenn.grooveboat.audio.QueueStore;
 import io.github.Nyeksenn.grooveboat.backend.BackendSupport;
@@ -203,7 +204,7 @@ public final class GrooveboatApp extends Application {
         if (!(getActiveWindow() instanceof GrooveboatWindow win) || backend == null) {
             return;
         }
-        var prefs = new GrooveboatPrefs(backend, executors.io);
+        var prefs = new GrooveboatPrefs(backend, executors.io, pipeline.isReplayGainAvailable());
         prefs.present(win);
     }
 
@@ -223,6 +224,7 @@ public final class GrooveboatApp extends Application {
         // Created synchronously so it exists before activate() watches its bus; its main loop runs on the GStreamer executor.
         pipeline = new AppPipeline();
         executors.gst.submit(pipeline::run);
+        AudioSettings.bind(AppSettings.get(), pipeline);
         // One media stream for the app's lifetime; tracks are loaded into it.
         stream = new RemoteMediaStream(this::getBackend, pipeline, executors.io, executors.scheduler);
         playback = new PlaybackEvents(pipeline, stream, queueStore, message -> {

@@ -22,6 +22,7 @@ src/main/java/io/github/Nyeksenn/grooveboat/ui/ArtistAlbumSection.java
 src/main/java/io/github/Nyeksenn/grooveboat/ui/ConnectionPage.java
 src/main/java/io/github/Nyeksenn/grooveboat/ui/CredentialsPage.java
 src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatApp.java
+src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatPrefs.java
 src/main/java/io/github/Nyeksenn/grooveboat/ui/GrooveboatWindow.java
 src/main/java/io/github/Nyeksenn/grooveboat/ui/MusicControls.java
 src/main/java/io/github/Nyeksenn/grooveboat/ui/SongCard.java

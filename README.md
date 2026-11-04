@@ -5,7 +5,8 @@ A music player for your own server. GrooveBoat is a native GNOME app (GTK4 and l
 ## Features
 
 - Browse albums and artists, with cover art
-- Play queue with gapless playback
+- Play queue with gapless playback (can be turned off in the preferences)
+- ReplayGain volume normalization (track or album mode, off by default)
 - Original audio is streamed directly from your server and never transcoded
 - Works with Jellyfin 10.9 or newer and OpenSubsonic servers
 - Your login is stored in the system keyring, and your library is cached locally for fast startup
