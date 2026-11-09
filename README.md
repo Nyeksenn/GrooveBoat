@@ -93,3 +93,9 @@ For how the app is put together, see the [documentation](docs/README.md).
 | `docs/` | Architecture documentation |
 
 The packaging setup follows the [java-gi app template](https://codeberg.org/java-gi/app-template).
+
+## License
+
+GrooveBoat is free software, licensed under the GNU General Public License, version 3 or (at your option) any later version. See [LICENSE](LICENSE).
+
+Icons are taken from the GNOME Icon Library (CC0-1.0) and the Adwaita icon theme (used under LGPL-3.0).
