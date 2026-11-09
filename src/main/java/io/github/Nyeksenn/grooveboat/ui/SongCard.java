@@ -17,6 +17,9 @@ import org.javagi.gtk.annotations.GtkTemplate;
 public class SongCard extends Box {
     private String songId;
 
+    @GtkChild(name = "song-track")
+    public Label songTrack;
+
     @GtkChild(name = "song-picture")
     public RoundedImage songPicture;
 
@@ -45,6 +48,12 @@ public class SongCard extends Box {
         var pos = new Rectangle((int) x, (int) y, 0, 0);
         songPopover.setPointingTo(pos);
         songPopover.popup();
+    }
+
+    /** Shows the track number; a card is recycled, so a missing number (0) hides it again. */
+    public void setTrackNumber(int track) {
+        songTrack.setVisible(track > 0);
+        songTrack.setLabel(track > 0 ? String.valueOf(track) : "");
     }
 
     public void setSongId(String songId) {

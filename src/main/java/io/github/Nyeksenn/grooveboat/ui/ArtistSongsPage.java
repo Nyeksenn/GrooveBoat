@@ -43,7 +43,6 @@ public class ArtistSongsPage extends NavigationPage {
             return;
         }
         initialized = true;
-        var coverLoader = CoverLoader.getInstance();
 
         UiAsync.background(app.executors.io, () -> {
             var albums = new QAlbumModel().albumArtists.id.equalTo(artistId)
@@ -56,18 +55,17 @@ public class ArtistSongsPage extends NavigationPage {
                     continue;
                 }
                 anySongs = true;
-                var cover = coverLoader.load(album.getId());
                 // Built on this executor thread, not the ForkJoin common pool (see AlbumListView).
                 var items = new ArrayList<SongListItem>(songs.size());
                 for (var song : songs) {
-                    items.add(SongListItem.of(song, album, cover));
+                    items.add(SongListItem.of(song, album));
                 }
                 var albumId = album.getId();
                 var title = album.getTitle();
                 var year = album.getRelease_year();
                 // One section per album as soon as it is ready; widgets are created on the main thread.
                 GLib.idleAddOnce(() -> albumSections.append(
-                        new ArtistAlbumSection(albumId, title, year, cover, items)));
+                        new ArtistAlbumSection(albumId, title, year, items)));
             }
             if (!anySongs) {
                 GLib.idleAddOnce(() -> emptyLabel.setVisible(true));

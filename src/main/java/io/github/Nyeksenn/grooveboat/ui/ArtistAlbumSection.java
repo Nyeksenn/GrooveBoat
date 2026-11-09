@@ -3,7 +3,6 @@ package io.github.Nyeksenn.grooveboat.ui;
 import static org.javagi.util.Intl.i18n;
 import io.github.Nyeksenn.grooveboat.gobjects.RoundedImage;
 import io.github.Nyeksenn.grooveboat.gobjects.SongListItem;
-import org.gnome.gdk.Texture;
 import org.gnome.gio.Menu;
 import org.gnome.gio.MenuItem;
 import org.gnome.glib.Variant;
@@ -42,9 +41,9 @@ public class ArtistAlbumSection extends Box {
     }
 
     /** Must be called on the main thread; the song items may be built elsewhere. */
-    public ArtistAlbumSection(String albumId, String title, int year, Texture cover, List<SongListItem> songs) {
+    public ArtistAlbumSection(String albumId, String title, int year, List<SongListItem> songs) {
         this.albumId = albumId;
-        albumCover.setTexture(cover);
+        albumCover.setCover(CoverKind.ALBUM, albumId);
         albumTitle.setLabel(title);
         if (year > 0) {
             albumYear.setLabel(String.valueOf(year));
@@ -64,6 +63,7 @@ public class ArtistAlbumSection extends Box {
             card.songDuration.setLabel(song.getDurationString());
             // The section header already shows the album cover.
             card.songPicture.setVisible(false);
+            card.setTrackNumber(song.getTrackNumber());
             card.setSongId(song.getSongId());
             songList.append(card);
         }

@@ -2,8 +2,7 @@
 <component type="desktop-application">
   <id>io.github.Nyeksenn.grooveboat</id>
   <metadata_license>CC0-1.0</metadata_license>
-  <!-- TODO: set the real project license (no license file exists in the repository yet) -->
-  <project_license>LicenseRef-proprietary</project_license>
+  <project_license>GPL-3.0-or-later</project_license>
 
   <name>GrooveBoat</name>
   <summary>Play music from your own server</summary>

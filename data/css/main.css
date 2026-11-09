@@ -40,10 +40,27 @@
   color: var(--accent-color);
 }
 
-.highlighted {
-  background-color: color-mix(in srgb, var(--accent-color) 13%, transparent);
+.now-playing {
+  background-color: color-mix(in srgb, var(--accent-color) 10%, transparent);
+  box-shadow: inset 3px 0 0 var(--accent-color);
 }
 
+.now-playing .now-playing-icon {
+  color: var(--accent-color);
+}
+
+listview.transparent-background > row:selected {
+  background-color: transparent;
+}
+
+@media (prefers-contrast: more) {
+  .now-playing {
+    background-color: transparent;
+    box-shadow: none;
+    outline: 2px solid var(--window-fg-color);
+    outline-offset: -2px;
+  }
+}
 .padded {
   padding: 8px 12px 8px 12px;
 }

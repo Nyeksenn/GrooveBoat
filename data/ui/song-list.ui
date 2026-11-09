@@ -9,29 +9,37 @@
         <child>
           <object class="GtkBox">
             <property name="valign">start</property>
+            <property name="spacing">6</property>
+            <property name="margin-start">6</property>
+            <property name="margin-end">6</property>
+            <property name="margin-top">6</property>
+            <property name="margin-bottom">6</property>
             <child>
               <object class="GtkButton">
-                <property name="valign">start</property>
-                <property name="has-frame">false</property>
-                <property name="child">
-                  <object class="AdwButtonContent">
-                    <property name="icon-name">go-previous-symbolic</property>
-                  </object>
-                </property>
+                <property name="valign">center</property>
+                <property name="icon-name">go-previous-symbolic</property>
+                <property name="tooltip-text" translatable="yes">Back</property>
                 <property name="action-name">navigation.pop</property>
+                <style>
+                  <class name="flat"/>
+                </style>
               </object>
             </child>
             <child>
               <object class="GtkLabel" id="album-page-label">
                 <property name="hexpand">true</property>
+                <property name="valign">center</property>
+                <property name="ellipsize">end</property>
+                <style>
+                  <class name="heading"/>
+                </style>
               </object>
             </child>
             <child>
               <object class="AdwSplitButton">
-                <property name="halign">3</property>
+                <property name="valign">center</property>
                 <property name="icon-name">media-playback-start-symbolic</property>
                 <property name="menu-model">album-queue-menu</property>
-                <property name="valign">end</property>
                 <signal name="clicked" handler="play-album-clicked"/>
               </object>
             </child>
@@ -39,11 +47,13 @@
         </child>
         <child>
           <object class="AdwClamp">
+            <property name="vexpand">true</property>
             <property name="maximum-size">800</property>
             <property name="tightening-threshold">600</property>
             <property name="child">
               <object class="GtkScrolledWindow">
-                <property name="propagate-natural-height">true</property>
+                <property name="vexpand">true</property>
+                <property name="hscrollbar-policy">never</property>
                 <property name="child">
                   <object class="GtkListView" id="song-list-view">
                     <property name="orientation">1</property>

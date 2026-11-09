@@ -37,7 +37,7 @@ public class MusicPlayer extends Box {
         if (songItem != null) {
             this.playerAlbumArtist.setLabel(songItem.getArtistName());
             this.playerSongName.setLabel(songItem.getSongName());
-            this.playerAlbumPicture.setTexture(songItem.getCoverArt());
+            this.playerAlbumPicture.setCover(CoverKind.ALBUM, songItem.getAlbumId());
         }
     }
 
@@ -45,7 +45,7 @@ public class MusicPlayer extends Box {
         if (songItem != null) {
             this.playerAlbumArtist.setLabel(songItem.getArtistName());
             this.playerSongName.setLabel(songItem.getSongName());
-            this.playerAlbumPicture.setTexture(songItem.getCoverArt());
+            this.playerAlbumPicture.setCover(CoverKind.ALBUM, songItem.getAlbumId());
             this.mediaControls.setMediaStream(app.getStream());
         }
     }

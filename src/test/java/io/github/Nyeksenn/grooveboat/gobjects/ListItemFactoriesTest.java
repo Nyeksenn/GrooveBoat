@@ -28,7 +28,7 @@ class ListItemFactoriesTest {
 
     @Test
     void songItemCarriesSongAndAlbumData() {
-        var item = SongListItem.of(song, album, null);
+        var item = SongListItem.of(song, album);
 
         assertThat(item.getSongId()).isEqualTo("s1");
         assertThat(item.getSongName()).isEqualTo("The Song");
@@ -38,22 +38,20 @@ class ListItemFactoriesTest {
         assertThat(item.getCoverPath()).isEqualTo(Path.of("/covers/al1.jpeg"));
         assertThat(item.getContentType()).isEqualTo("audio/mpeg");
         assertThat(item.getDurationString()).isEqualTo("02:05");
-        assertThat(item.getCoverArt()).isNull();
     }
 
     @Test
     void everySongItemGetsItsOwnTrackId() {
-        assertThat(SongListItem.of(song, album, null).getTrackId())
-                .isNotEqualTo(SongListItem.of(song, album, null).getTrackId());
+        assertThat(SongListItem.of(song, album).getTrackId())
+                .isNotEqualTo(SongListItem.of(song, album).getTrackId());
     }
 
     @Test
     void albumItemCarriesAlbumData() {
-        var item = AlbumListItem.of(album, null);
+        var item = AlbumListItem.of(album);
 
         assertThat(item.getAlbumId()).isEqualTo("al1");
         assertThat(item.getAlbumName()).isEqualTo("The Album");
         assertThat(item.getAlbumArtist()).isEqualTo("Band");
-        assertThat(item.getPictureData()).isNull();
     }
 }

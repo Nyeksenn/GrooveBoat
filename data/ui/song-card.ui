@@ -3,11 +3,24 @@
   <template class="SongCard" parent="GtkBox">
     <property name="orientation">horizontal</property>
     <property name="halign">fill</property>
-    <property name="margin-start">10</property>
-    <property name="margin-end">10</property>
-    <property name="margin-top">10</property>
-    <property name="margin-bottom">10</property>
+    <property name="spacing">12</property>
+    <property name="margin-start">12</property>
+    <property name="margin-end">12</property>
+    <property name="margin-top">8</property>
+    <property name="margin-bottom">8</property>
 
+    <child>
+      <object class="GtkLabel" id="song-track">
+        <property name="visible">false</property>
+        <property name="valign">center</property>
+        <property name="width-chars">2</property>
+        <property name="xalign">1</property>
+        <style>
+          <class name="dimmed"/>
+          <class name="numeric"/>
+        </style>
+      </object>
+    </child>
     <child>
       <object class="RoundedImage" id="song-picture">
         <property name="pixel-size">50</property>
@@ -22,20 +35,18 @@
     <child>
       <object class="GtkBox">
         <property name="orientation">vertical</property>
-        <property name="vexpand">true</property>
         <property name="valign">center</property>
-        <property name="margin-start">10</property>
-        <property name="margin-end">10</property>
+        <property name="hexpand">true</property>
         <child>
           <object class="GtkLabel" id="song-name">
-            <property name="wrap">true</property>
+            <property name="ellipsize">end</property>
             <property name="halign">start</property>
             <property name="hexpand">true</property>
           </object>
         </child>
         <child>
           <object class="GtkLabel" id="song-artist">
-            <property name="wrap">true</property>
+            <property name="ellipsize">end</property>
             <property name="halign">start</property>
             <property name="hexpand">true</property>
             <style>
@@ -47,9 +58,12 @@
     </child>
     <child>
       <object class="GtkLabel" id="song-duration">
-        <property name="wrap">true</property>
         <property name="halign">end</property>
-        <property name="hexpand">true</property>
+        <property name="valign">center</property>
+        <style>
+          <class name="dimmed"/>
+          <class name="numeric"/>
+        </style>
       </object>
     </child>
     <child>

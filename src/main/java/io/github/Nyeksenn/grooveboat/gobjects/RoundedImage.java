@@ -1,6 +1,10 @@
 package io.github.Nyeksenn.grooveboat.gobjects;
 
+import io.github.Nyeksenn.grooveboat.ui.CoverKind;
+import io.github.Nyeksenn.grooveboat.ui.CoverLoader;
+import io.github.Nyeksenn.grooveboat.ui.CoverSizes;
 import org.gnome.gdk.Texture;
+import org.gnome.glib.GLib;
 import org.gnome.graphene.Rect;
 import org.gnome.gsk.RoundedRect;
 import org.gnome.gsk.ScalingFilter;
@@ -9,6 +13,7 @@ import org.gnome.gtk.Orientation;
 import org.gnome.gtk.Snapshot;
 import org.gnome.gtk.Widget;
 import org.javagi.base.Out;
+import org.javagi.gobject.annotations.InstanceInit;
 import org.javagi.gobject.annotations.Property;
 import org.javagi.gobject.annotations.RegisteredType;
 
@@ -21,6 +26,10 @@ public class RoundedImage extends Widget {
     private Texture texture;
     private CssProvider cssProvider;
     private String uuid;
+    private CoverKind coverKind;
+    private String coverId;
+    /** Identifies the latest cover request, so a result that arrives for a recycled row is dropped. */
+    private int coverRequest;
 
     public int getPixelSize() {
         return pixelSize;
@@ -37,6 +46,75 @@ public class RoundedImage extends Widget {
     public void setTexture(Texture texture) {
         this.texture = texture;
         queueDraw();
+    }
+
+    /**
+     * Shows the album cover or artist image {@code id}, decoded at the smallest size level that covers this widget's
+     * physical pixels. A {@code null} id clears the image. Main thread only; widgets are recycled by list views, so
+     * a rebind simply calls this again.
+     */
+    public void setCover(CoverKind kind, String id) {
+        var same = kind == coverKind && java.util.Objects.equals(id, coverId);
+        this.coverKind = kind;
+        this.coverId = id;
+        if (id == null) {
+            coverRequest++;
+            setTexture(null);
+            return;
+        }
+        if (!same) {
+            // Don't show the previous row's image while the new one loads.
+            setTexture(null);
+        }
+        refreshCover();
+    }
+
+    /** The device scale of the surface this widget is on; fractional on fractional-scaling desktops. */
+    private double deviceScale() {
+        var native_ = getNative();
+        if (native_ != null) {
+            var surface = native_.getSurface();
+            if (surface != null) {
+                return surface.getScale();
+            }
+        }
+        return getScaleFactor();
+    }
+
+    /** Picks the size level for the current size and scale and loads it, showing a nearby level meanwhile. */
+    private void refreshCover() {
+        if (coverId == null) {
+            return;
+        }
+        var kind = coverKind;
+        var id = coverId;
+        var logical = Math.max(pixelSize, Math.max(getWidth(), getHeight()));
+        var bucket = CoverSizes.bucketFor(logical, deviceScale());
+        var loader = CoverLoader.getInstance();
+
+        var exact = loader.peekExact(kind, id, bucket);
+        if (exact != null) {
+            coverRequest++;
+            setTexture(exact);
+            return;
+        }
+        var fallback = loader.peekBest(kind, id, bucket);
+        if (fallback != null) {
+            setTexture(fallback);
+        }
+        var request = ++coverRequest;
+        loader.loadAsync(kind, id, bucket).thenAccept(result -> GLib.idleAddOnce(() -> {
+            if (request == coverRequest && result.isPresent()) {
+                setTexture(result.get());
+            }
+        }));
+    }
+
+    @InstanceInit
+    public void init() {
+        // The scale changes when the window moves to another monitor; the size when the layout does.
+        onNotify("scale-factor", _ -> refreshCover());
+        onMap(this::refreshCover);
     }
 
     @Property(name = "radius")
@@ -81,7 +159,11 @@ public class RoundedImage extends Widget {
             var roundedRect = new RoundedRect().initFromRect(textureRect, radius);
             snapshot.pushRoundedClip(roundedRect);
 
-            snapshot.appendScaledTexture(texture, ScalingFilter.TRILINEAR, textureRect);
+            // Textures come in size levels at most 2x the drawn size, which plain bilinear filtering handles. Only
+            // a much larger one (a fallback level) needs mipmaps to avoid shimmering.
+            var drawnPixels = scaledWidth * deviceScale();
+            var filter = texWidth > 2 * drawnPixels ? ScalingFilter.TRILINEAR : ScalingFilter.LINEAR;
+            snapshot.appendScaledTexture(texture, filter, textureRect);
             snapshot.pop();
         } else {
             super.snapshot(snapshot);

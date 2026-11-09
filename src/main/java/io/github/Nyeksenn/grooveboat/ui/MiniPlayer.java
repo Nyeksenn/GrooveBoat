@@ -63,7 +63,7 @@ public class MiniPlayer extends Box {
 
     public void initStream(SongListItem item) {
         if (item != null) {
-            albumCover.setTexture(item.getCoverArt());
+            albumCover.setCover(CoverKind.ALBUM, item.getAlbumId());
             songTitleLabel.setLabel(item.getSongName());
             albumArtistLabel.setLabel(item.getArtistName());
         }
